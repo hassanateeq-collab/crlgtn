@@ -15,7 +15,20 @@ interface ListingDraft {
   name: string
   max_occupancy: number
   active: boolean
+  bed_config: string
+  size_sqm: string
+  description: string
   rates: { P1: string; P2: string; P3: string } // strings in form state; integers at submit
+}
+
+interface PhotoDraft {
+  storage_path: string
+  /** '' = property-level photo; otherwise the room-type name it belongs to. */
+  listing_name: string
+  caption: string
+  is_cover: boolean
+  /** Signed URL for thumbnail display; never persisted. */
+  previewUrl: string
 }
 
 interface AddonDraft {
@@ -28,6 +41,9 @@ const emptyListing = (): ListingDraft => ({
   name: '',
   max_occupancy: 2,
   active: true,
+  bed_config: '',
+  size_sqm: '',
+  description: '',
   rates: { P1: '', P2: '', P3: '' },
 })
 
@@ -52,6 +68,17 @@ export function VendorEditor() {
   const [bracket, setBracket] = useState('')
   const [commission, setCommission] = useState('')
   const [notes, setNotes] = useState('')
+  // Property profile (migration 006)
+  const [description, setDescription] = useState('')
+  const [subtype, setSubtype] = useState('')
+  const [address, setAddress] = useState('')
+  const [phone, setPhone] = useState('')
+  const [checkinTime, setCheckinTime] = useState('')
+  const [checkoutTime, setCheckoutTime] = useState('')
+  const [cancellationPolicy, setCancellationPolicy] = useState('')
+  const [noshowPolicy, setNoshowPolicy] = useState('')
+  const [photos, setPhotos] = useState<PhotoDraft[]>([])
+  const [uploading, setUploading] = useState(false)
   const [listings, setListings] = useState<ListingDraft[]>([emptyListing()])
   const [verified, setVerified] = useState<Record<string, boolean>>({})
   const [inclusions, setInclusions] = useState('')
@@ -77,7 +104,7 @@ export function VendorEditor() {
   useEffect(() => {
     if (isNew) return
     async function load() {
-      const [v, ls, rates, va, inc, ad] = await Promise.all([
+      const [v, ls, rates, va, inc, ad, med] = await Promise.all([
         supabase.from('vendors').select('*').eq('id', id).single(),
         supabase.from('listings').select('*').eq('vendor_id', id).order('name'),
         supabase
@@ -88,6 +115,11 @@ export function VendorEditor() {
         supabase.from('vendor_amenities').select('verified_at, amenities(code)').eq('vendor_id', id),
         supabase.from('inclusions').select('label').eq('vendor_id', id).order('label'),
         supabase.from('addons').select('label, price_pkr, unit').eq('vendor_id', id).order('label'),
+        supabase
+          .from('media')
+          .select('storage_path, caption, sort, is_cover, listing_id, listings(name)')
+          .eq('vendor_id', id)
+          .order('sort'),
       ])
       if (v.error) { setError(v.error.message); return }
 
@@ -98,6 +130,36 @@ export function VendorEditor() {
       setBracket(v.data.price_bracket ?? '')
       setCommission(v.data.commission_pct?.toString() ?? '')
       setNotes(v.data.notes ?? '')
+      setDescription(v.data.description ?? '')
+      setSubtype(v.data.property_subtype ?? '')
+      setAddress(v.data.address ?? '')
+      setPhone(v.data.phone ?? '')
+      setCheckinTime(v.data.checkin_time ?? '')
+      setCheckoutTime(v.data.checkout_time ?? '')
+      setCancellationPolicy(v.data.cancellation_policy ?? '')
+      setNoshowPolicy(v.data.noshow_policy ?? '')
+
+      // Media rows + signed URLs for thumbnails (private bucket, 1h validity).
+      const medRows = (med.data ?? []) as unknown as {
+        storage_path: string
+        caption: string | null
+        is_cover: boolean
+        listings: { name: string } | null
+      }[]
+      if (medRows.length) {
+        const { data: signed } = await supabase.storage
+          .from('media')
+          .createSignedUrls(medRows.map((m) => m.storage_path), 3600)
+        setPhotos(
+          medRows.map((m, i) => ({
+            storage_path: m.storage_path,
+            listing_name: m.listings?.name ?? '',
+            caption: m.caption ?? '',
+            is_cover: m.is_cover,
+            previewUrl: signed?.[i]?.signedUrl ?? '',
+          })),
+        )
+      }
 
       const rateByListing = new Map<string, Record<string, number>>()
       for (const r of rates.data ?? []) {
@@ -109,6 +171,9 @@ export function VendorEditor() {
         name: l.name,
         max_occupancy: l.max_occupancy,
         active: l.active,
+        bed_config: l.bed_config ?? '',
+        size_sqm: l.size_sqm?.toString() ?? '',
+        description: l.description ?? '',
         rates: {
           P1: rateByListing.get(l.id)?.P1?.toString() ?? '',
           P2: rateByListing.get(l.id)?.P2?.toString() ?? '',
@@ -140,6 +205,37 @@ export function VendorEditor() {
     setListings((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
   }
 
+  /** Upload straight to the private media bucket; registration happens on save. */
+  async function addPhotos(files: FileList | null) {
+    if (!files?.length) return
+    setUploading(true)
+    setError(null)
+    try {
+      for (const file of Array.from(files)) {
+        const path = `vendor/${id && !isNew ? id : 'new'}/${crypto.randomUUID()}-${file.name}`
+        const { error: upErr } = await supabase.storage.from('media').upload(path, file)
+        if (upErr) throw new Error(`${file.name}: ${upErr.message}`)
+        const { data: signed } = await supabase.storage
+          .from('media')
+          .createSignedUrl(path, 3600)
+        setPhotos((p) => [
+          ...p,
+          {
+            storage_path: path,
+            listing_name: '',
+            caption: '',
+            is_cover: p.length === 0, // first photo becomes the cover by default
+            previewUrl: signed?.signedUrl ?? '',
+          },
+        ])
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Upload failed')
+    } finally {
+      setUploading(false)
+    }
+  }
+
   async function save(e: FormEvent) {
     e.preventDefault()
     setBusy(true)
@@ -167,6 +263,14 @@ export function VendorEditor() {
           price_bracket: bracket || null,
           commission_pct: commission ? Number(commission) : null,
           notes: notes.trim() || null,
+          description: description.trim() || null,
+          property_subtype: subtype.trim() || null,
+          address: address.trim() || null,
+          phone: phone.trim() || null,
+          checkin_time: checkinTime || null,
+          checkout_time: checkoutTime || null,
+          cancellation_policy: cancellationPolicy.trim() || null,
+          noshow_policy: noshowPolicy.trim() || null,
         },
         listings: listings
           .filter((l) => l.name.trim())
@@ -174,12 +278,22 @@ export function VendorEditor() {
             name: l.name.trim(),
             max_occupancy: l.max_occupancy,
             active: l.active,
+            bed_config: l.bed_config.trim() || null,
+            size_sqm: l.size_sqm ? parseInt(l.size_sqm, 10) : null,
+            description: l.description.trim() || null,
             rates: Object.fromEntries(
               Object.entries(l.rates)
                 .filter(([, v]) => v.trim() !== '')
                 .map(([k, v]) => [k, parseInt(v, 10)]),
             ),
           })),
+        media: photos.map((p, i) => ({
+          storage_path: p.storage_path,
+          listing_name: p.listing_name || null,
+          caption: p.caption.trim() || null,
+          sort: i,
+          is_cover: p.is_cover,
+        })),
         amenities: amenityList.map((a) => ({
           code: a.code,
           verified: verified[a.code] === true,
@@ -284,13 +398,169 @@ export function VendorEditor() {
           </Field>
         </div>
         <div className="mt-4">
-          <Field label="Notes">
+          <Field label="Notes (internal)">
             <textarea
               className={`${selectCls} min-h-16`}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
             />
           </Field>
+        </div>
+      </Card>
+
+      <Card title="Property profile" footer={
+        <span className="text-xs text-ink/60">
+          What corporates see on the property page — write it like a Booking.com
+          listing, not an internal note.
+        </span>
+      }>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Property type">
+            <select className={selectCls} value={subtype} onChange={(e) => setSubtype(e.target.value)}>
+              <option value="">—</option>
+              {['hotel', 'business hotel', 'boutique hotel', 'guesthouse', 'serviced apartment'].map(
+                (s) => (
+                  <option key={s} value={s}>{s}</option>
+                ),
+              )}
+            </select>
+          </Field>
+          <Field label="Front desk phone">
+            <Input placeholder="+92 21 …" value={phone} onChange={(e) => setPhone(e.target.value)} />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Address">
+              <Input
+                placeholder="Plot 12, Khayaban-e-Roomi, Clifton Block 5, Karachi"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+              />
+            </Field>
+          </div>
+          <Field label="Check-in from">
+            <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
+          </Field>
+          <Field label="Check-out until">
+            <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
+          </Field>
+          <div className="sm:col-span-2">
+            <Field label="Description">
+              <textarea
+                className={`${selectCls} min-h-28`}
+                placeholder="A quiet business hotel two minutes from the Clifton seafront…"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </Field>
+          </div>
+          <Field label="Cancellation policy" hint="Hotel-set wording; snapshotted onto every booking">
+            <textarea
+              className={`${selectCls} min-h-20`}
+              placeholder="Free cancellation until 48h before check-in…"
+              value={cancellationPolicy}
+              onChange={(e) => setCancellationPolicy(e.target.value)}
+            />
+          </Field>
+          <Field label="No-show policy">
+            <textarea
+              className={`${selectCls} min-h-20`}
+              placeholder="First night charged on no-show…"
+              value={noshowPolicy}
+              onChange={(e) => setNoshowPolicy(e.target.value)}
+            />
+          </Field>
+        </div>
+      </Card>
+
+      <Card title="Photos" footer={
+        <span className="text-xs text-ink/60">
+          Fixed shot list, one format (spec §2). First photo is the cover unless you
+          change it. Assign room photos to their room type.
+        </span>
+      }>
+        <div className="space-y-3">
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            disabled={uploading}
+            className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-md file:border file:border-hairline file:bg-paper file:px-3 file:py-1.5 file:text-sm"
+            onChange={(e) => {
+              addPhotos(e.target.files)
+              e.target.value = ''
+            }}
+          />
+          {uploading && <p className="text-xs text-ink/50">Uploading…</p>}
+          {photos.length > 0 && (
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {photos.map((p, i) => (
+                <li key={p.storage_path} className="flex gap-3 rounded-md border border-hairline p-2">
+                  {p.previewUrl ? (
+                    <img
+                      src={p.previewUrl}
+                      alt={p.caption || 'Property photo'}
+                      className="size-20 shrink-0 rounded object-cover"
+                    />
+                  ) : (
+                    <div className="size-20 shrink-0 rounded bg-sage" />
+                  )}
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Input
+                      placeholder="Caption"
+                      value={p.caption}
+                      onChange={(e) =>
+                        setPhotos((ph) =>
+                          ph.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)),
+                        )
+                      }
+                    />
+                    <div className="flex items-center gap-2">
+                      <select
+                        className={`${selectCls} !py-1 text-xs`}
+                        value={p.listing_name}
+                        onChange={(e) =>
+                          setPhotos((ph) =>
+                            ph.map((x, j) =>
+                              j === i ? { ...x, listing_name: e.target.value } : x,
+                            ),
+                          )
+                        }
+                      >
+                        <option value="">Property</option>
+                        {listings
+                          .filter((l) => l.name.trim())
+                          .map((l) => (
+                            <option key={l.name} value={l.name.trim()}>
+                              {l.name.trim()}
+                            </option>
+                          ))}
+                      </select>
+                      <label className="flex shrink-0 items-center gap-1 text-xs">
+                        <input
+                          type="radio"
+                          name="cover"
+                          checked={p.is_cover && !p.listing_name}
+                          disabled={!!p.listing_name}
+                          onChange={() =>
+                            setPhotos((ph) => ph.map((x, j) => ({ ...x, is_cover: j === i })))
+                          }
+                        />
+                        cover
+                      </label>
+                      <button
+                        type="button"
+                        aria-label="Remove photo"
+                        className="ml-auto text-ink/40 hover:text-ink"
+                        onClick={() => setPhotos((ph) => ph.filter((_, j) => j !== i))}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </Card>
 
@@ -323,6 +593,31 @@ export function VendorEditor() {
                     <option value="no">no</option>
                   </select>
                 </Field>
+              </div>
+              <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                <Field label="Bed configuration">
+                  <Input
+                    placeholder="1 king / 2 twin"
+                    value={l.bed_config}
+                    onChange={(e) => setListing(i, { bed_config: e.target.value })}
+                  />
+                </Field>
+                <Field label="Size (m²)">
+                  <Input
+                    inputMode="numeric" className="tabular" placeholder="—"
+                    value={l.size_sqm}
+                    onChange={(e) => setListing(i, { size_sqm: e.target.value.replace(/\D/g, '') })}
+                  />
+                </Field>
+                <div className="sm:col-span-1">
+                  <Field label="Room description">
+                    <Input
+                      placeholder="City view, work desk…"
+                      value={l.description}
+                      onChange={(e) => setListing(i, { description: e.target.value })}
+                    />
+                  </Field>
+                </div>
               </div>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
                 {(['P1', 'P2', 'P3'] as const).map((code) => (

@@ -4,8 +4,10 @@ import { IdentityProvider, useIdentity } from '@/lib/identity'
 import { SignIn } from '@/routes/SignIn'
 import { Foundations } from '@/routes/Foundations'
 import { OpsLayout } from '@/routes/ops/OpsLayout'
+import { Dashboard } from '@/routes/ops/Dashboard'
 import { Vendors } from '@/routes/ops/Vendors'
 import { VendorEditor } from '@/routes/ops/VendorEditor'
+import { PropertyPage } from '@/routes/ops/PropertyPage'
 import { Corporates } from '@/routes/ops/Corporates'
 import { CorporateEditor } from '@/routes/ops/CorporateEditor'
 
@@ -14,7 +16,7 @@ function Home() {
   if (loading) return null
   // Ops land in the console; corporates keep the diagnostics screen until the
   // M2 portal shell replaces it.
-  if (identity?.isOps) return <Navigate to="/ops/vendors" replace />
+  if (identity?.isOps) return <Navigate to="/ops" replace />
   return <Foundations />
 }
 
@@ -38,10 +40,11 @@ function Gate() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/ops" element={<OpsLayout />}>
-          <Route index element={<Navigate to="vendors" replace />} />
+          <Route index element={<Dashboard />} />
           <Route path="vendors" element={<Vendors />} />
           <Route path="vendors/new" element={<VendorEditor />} />
           <Route path="vendors/:id" element={<VendorEditor />} />
+          <Route path="vendors/:id/page" element={<PropertyPage />} />
           <Route path="corporates" element={<Corporates />} />
           <Route path="corporates/new" element={<CorporateEditor />} />
           <Route path="corporates/:id" element={<CorporateEditor />} />

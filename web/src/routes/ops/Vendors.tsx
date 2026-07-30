@@ -68,6 +68,12 @@ export function Vendors() {
                   <Link to={`/ops/vendors/${v.id}`} className="font-medium text-deep hover:underline">
                     {v.name}
                   </Link>
+                  <Link
+                    to={`/ops/vendors/${v.id}/page`}
+                    className="ml-2 text-xs text-ink/40 hover:text-ink"
+                  >
+                    view page
+                  </Link>
                 </td>
                 <td className="px-4 py-2.5">
                   <span className={`rounded-full px-2 py-0.5 text-xs ${statusTone[v.status] ?? ''}`}>

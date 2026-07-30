@@ -10,6 +10,7 @@ import { Button } from '@/components/ui'
  */
 
 const tabs = [
+  { to: '/ops', label: 'Dashboard', end: true },
   { to: '/ops/vendors', label: 'Vendors' },
   { to: '/ops/corporates', label: 'Corporates' },
   { to: '/ops/diagnostics', label: 'Diagnostics' },
@@ -39,6 +40,7 @@ export function OpsLayout() {
               <NavLink
                 key={t.to}
                 to={t.to}
+                end={t.end}
                 className={({ isActive }) =>
                   `rounded-md px-3 py-1.5 text-sm ${
                     isActive

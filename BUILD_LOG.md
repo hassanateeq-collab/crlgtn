@@ -81,3 +81,45 @@ The M0 gate "a direct client-side insert fails" surfaced a subtlety: with no wri
 - Corporate portal shell: layout + spine, booking files list, `ef_upsert_booking_file` (name, dates, rooms jsonb, deal-breakers, corridor, auto_accept), ref generation CF-{seq}-KHI, resume-from-draft.
 - Reminder: M2 gate requires explicit cross-tenant file isolation test.
 - Still open: email provider (M4 deadline), WABA registration, fee amount, B1–B5 boundaries.
+
+---
+
+## 2026-07-30 — Session 2b · M1.5 OTA-grade listings + dashboard scaffold
+
+Owner review: listings too thin ("should stand next to Booking.com/Agoda") and no
+central place to see everything. Both addressed; plan amended.
+
+**Plan amendments (owner-driven)**
+- New standing requirement: property pages at OTA grade — profile, imagery, room
+  detail — for ops preview now and the corporate results/detail pages at M3.
+- **M5 scope now explicitly includes the central Reservations view**: all bookings
+  across all vendors, filterable by hotel/corporate/status/stay dates, today's
+  check-ins/outs on top. (The spec's live request board was always in M4; the
+  consolidated reservations dashboard is now named alongside it.)
+
+**Migration 006 — property detail**
+- vendors: description, property_subtype, address, phone, checkin/checkout_time,
+  cancellation_policy, noshow_policy (free text; M5 snapshots them per booking).
+- listings: description, bed_config, size_sqm.
+- `media` table (vendor- or listing-scoped, sort, caption, one cover per property)
+  + private `media` storage bucket: all authenticated read via signed URLs, ops-only
+  write. No public bucket — closed-access platform.
+
+**Function + console**
+- ef_onboard_vendor v2: accepts profile fields, room detail, and a media[] registry
+  (replace-when-present; files uploaded by console first, rows registered on save).
+- VendorEditor: property-profile card, photo manager (multi-upload, captions,
+  room assignment, cover picker), room detail fields.
+- New **PropertyPage** (/ops/vendors/:id/page): OTA-style — gallery, header with
+  stars/type/corridor/bracket, description, verified-amenity chips (unverified
+  marked ops-only), inclusions, Good-to-know sidebar (address, times, policies,
+  BTC line verbatim), room cards with bed/size/rates, add-ons. Built to be reused
+  by the corporate portal at M3, where RLS trims it automatically.
+- New **Dashboard** (/ops): supply & demand counts live now; Live request board
+  (M4) and Reservations (M5) sections scaffolded in place.
+
+**Verified in browser**
+- Corniche Suites enriched: full profile + 5 placeholder photos (canvas-generated;
+  real photography stays a §12 launch item) → property page renders gallery, room
+  photos, policies, BTC block; dashboard shows 4 live hotels / 2 bookable rooms /
+  3 corporates / 7 users. Responsive at narrow width.
