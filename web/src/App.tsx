@@ -1,7 +1,22 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { SessionProvider, useSession } from '@/lib/session'
+import { IdentityProvider, useIdentity } from '@/lib/identity'
 import { SignIn } from '@/routes/SignIn'
 import { Foundations } from '@/routes/Foundations'
+import { OpsLayout } from '@/routes/ops/OpsLayout'
+import { Vendors } from '@/routes/ops/Vendors'
+import { VendorEditor } from '@/routes/ops/VendorEditor'
+import { Corporates } from '@/routes/ops/Corporates'
+import { CorporateEditor } from '@/routes/ops/CorporateEditor'
+
+function Home() {
+  const { identity, loading } = useIdentity()
+  if (loading) return null
+  // Ops land in the console; corporates keep the diagnostics screen until the
+  // M2 portal shell replaces it.
+  if (identity?.isOps) return <Navigate to="/ops/vendors" replace />
+  return <Foundations />
+}
 
 function Gate() {
   const { session, loading } = useSession()
@@ -19,10 +34,22 @@ function Gate() {
   if (!session) return <SignIn />
 
   return (
-    <Routes>
-      <Route path="/" element={<Foundations />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <IdentityProvider>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/ops" element={<OpsLayout />}>
+          <Route index element={<Navigate to="vendors" replace />} />
+          <Route path="vendors" element={<Vendors />} />
+          <Route path="vendors/new" element={<VendorEditor />} />
+          <Route path="vendors/:id" element={<VendorEditor />} />
+          <Route path="corporates" element={<Corporates />} />
+          <Route path="corporates/new" element={<CorporateEditor />} />
+          <Route path="corporates/:id" element={<CorporateEditor />} />
+          <Route path="diagnostics" element={<Foundations />} />
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </IdentityProvider>
   )
 }
 

@@ -49,3 +49,35 @@ The M0 gate "a direct client-side insert fails" surfaced a subtlety: with no wri
 **Carried forward / next session (M1)**
 - Ops console shell (role-gated) · `ef_onboard_vendor` · listings + `listing_rates` (base catalog) · packages P1–P3 seeded · amenity checklist with verification stamps · `ef_upsert_corporate` · agreements + Storage upload.
 - Open: email provider decision (needed by M4 at the latest); Meta WABA registration start; corporate fee amount (spec §13.1); B1–B5 PKR boundaries (§13.3).
+
+---
+
+## 2026-07-30 — Session 2 · M1 Supply & ops core
+
+**Owner access fixed**
+- hassanateeq@gmail.com provisioned as `ops_admin` (auth user + ops_users row + claim). Root cause of "no email code": (1) closed-access means unknown emails silently get nothing — by design; (2) the default Supabase email template sends a magic *link*, but our sign-in expects the 6-digit `{{ .Token }}` code. Template must be edited in Dashboard → Auth → Email Templates → Magic Link (CLI unauthenticated, couldn't do it programmatically). Until then, built-in SMTP also caps at ~2 mails/hour.
+- Second GoTrue lesson recorded: manually inserted auth.users rows must have all token columns as `''`, not NULL, or the token grant 500s.
+
+**Migration 005 — catalog & agreements**
+- `packages` (P1–P3 seeded; P4 space reserved) · `listings` · `listing_rates` with the two-layer model (corporate_id NULL = base, set = negotiated; partial unique indexes per layer) · `amenities` (5 seeded from spec §13.7) · `vendor_amenities` (verified_at/verified_by — unverified claims invisible to corporates via RLS) · `inclusions` · `addons` · `allotments` (reserved, ops-only) · `agreements` (+ private `agreements` Storage bucket, ops-only policies).
+- Key RLS decisions: rates visible to a corporate only for live vendors' active listings AND (base OR own corporate_id) — negotiated-deal confidentiality is row-level; amenity claims without verified_at are ops-only.
+
+**Edge Functions**
+- `ef_onboard_vendor`: whole onboarding in one call (vendor → listings by name → base rates replace-open-row → amenity checklist with verification stamps → inclusions/addons replace-when-present → agreement append-only). Ops-gated in-function.
+- `ef_upsert_corporate`: corporate + credit profile + users upsert-by-email; user deletion deliberately out of scope of the edit form.
+
+**Ops console (web/)**
+- `IdentityProvider` (ef_whoami once per session) routes ops → /ops, corporates → portal placeholder.
+- /ops: Vendors list + full onboarding editor (listings with P1–P3 rate grid, amenity checklist, inclusions, add-ons, agreement w/ PDF upload to Storage) · Corporates list + credit-profile editor with users grid · Diagnostics (the M0 checks, kept).
+
+**M1 done-gate results — all pass**
+- Corniche Suites (TEST) onboarded complete via ef_onboard_vendor: 2 listings, 5 base rates, 4 amenity records (3 verified), 2 inclusions, 1 addon, 1 agreement. Editor form verified rendering + hydrating in browser.
+- Negotiated override: Northbridge P1 deal 22,000 resolves over base 24,000; Meridian still resolves 24,000 and cannot see Northbridge's row (RLS-verified from all three perspectives); ops sees both.
+- Unverified amenity (pool) hidden from corporates, visible to ops.
+- ef_upsert_corporate round-trip verified (Karachi Freight Co TEST + 1 user).
+- Advisors: zero RLS findings on all 9 new tables (only pre-existing leaked-password WARN, moot for OTP-only, revisit M8).
+
+**Carried forward / next session (M2)**
+- Corporate portal shell: layout + spine, booking files list, `ef_upsert_booking_file` (name, dates, rooms jsonb, deal-breakers, corridor, auto_accept), ref generation CF-{seq}-KHI, resume-from-draft.
+- Reminder: M2 gate requires explicit cross-tenant file isolation test.
+- Still open: email provider (M4 deadline), WABA registration, fee amount, B1–B5 boundaries.

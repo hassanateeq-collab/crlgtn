@@ -102,3 +102,63 @@ export interface WhoAmI {
 }
 
 export const whoami = () => callFunction<WhoAmI>('ef_whoami')
+
+// ---- M1: ops console --------------------------------------------------------
+
+export interface VendorPayload {
+  vendor: {
+    id?: string
+    name: string
+    vendor_type?: string
+    status?: string
+    corridor_id?: string | null
+    stars_assigned?: number | null
+    price_bracket?: string | null
+    commission_pct?: number | null
+    notes?: string | null
+  }
+  listings?: {
+    name: string
+    max_occupancy?: number
+    active?: boolean
+    rates?: Record<string, number>
+  }[]
+  amenities?: { code: string; verified: boolean }[]
+  inclusions?: string[]
+  addons?: { label: string; price_pkr: number; unit?: string }[]
+  agreement?: {
+    tier?: string | null
+    version?: string
+    doc_url?: string | null
+    signed_digital_at?: string | null
+    signed_physical_at?: string | null
+  }
+}
+
+export const onboardVendor = (payload: VendorPayload) =>
+  callFunction<{ vendor: { id: string } }>(
+    'ef_onboard_vendor',
+    payload as unknown as Record<string, unknown>,
+  )
+
+export interface CorporatePayload {
+  corporate: {
+    id?: string
+    name: string
+    status?: string
+    credit_limit_pkr?: number
+    credit_terms?: string
+    security_type?: string
+    security_amount_pkr?: number
+    fee_waived_until?: string | null
+    approval_required?: boolean
+    notes?: string | null
+  }
+  users?: { role: string; name: string; email: string; phone?: string }[]
+}
+
+export const upsertCorporate = (payload: CorporatePayload) =>
+  callFunction<{ corporate: { id: string } }>(
+    'ef_upsert_corporate',
+    payload as unknown as Record<string, unknown>,
+  )
