@@ -123,3 +123,60 @@ central place to see everything. Both addressed; plan amended.
   real photography stays a §12 launch item) → property page renders gallery, room
   photos, policies, BTC block; dashboard shows 4 live hotels / 2 bookable rooms /
   3 corporates / 7 users. Responsive at narrow width.
+
+---
+
+## 2026-07-31 — Session 3 · M2 Corporate portal shell
+
+**Migrations 007–008**
+- `booking_files`: ref (unique), corporate_id, name, status (draft default),
+  check_in/out (CHECK out > in), rooms jsonb, dealbreakers jsonb, corridor_id,
+  auto_accept, window_minutes/window_expires_at (empty until M4/M5), created_by.
+- `travelers` (name required, email/phone optional).
+- RLS: files scoped by corporate_id-or-ops; travelers via file join. SELECT-only.
+- `next_booking_ref()` SECURITY DEFINER → 'CF-' || app.booking_file_ref_seq ||
+  '-KHI', seq starts 2601; EXECUTE revoked from clients — only Edge Functions
+  draw refs.
+
+**ef_upsert_booking_file**
+- corp_booker/corp_admin only (ops refused; approver/finance read-only via RLS).
+- Validates dates, 1–9 rooms of 1–6 guests, dealbreakers ⊆ dealbreaker-eligible
+  amenity codes; travelers replace-when-present.
+- Drafts only: non-draft edits → 409; cross-tenant id probes → 404
+  (indistinguishable from missing — no existence leak).
+- Ref assigned once at creation, never client-supplied.
+
+**Portal UI**
+- PortalLayout (topbar: Corlington + company name); corporate users now land at
+  /files (Foundations screen retired from home; still at /ops/diagnostics).
+- Files list: drafts float to top, Resume/Open per status.
+- FileEditor with the §10 spine: mono ref, status, stay + computed nights,
+  rooms/guests summary, decision-window slot (brass countdown arrives M5),
+  Save draft. Form: name, dates, corridor, rooms steppers, deal-breaker chips
+  (from amenities where dealbreaker_eligible), auto-accept, optional travelers.
+  Sent files render read-only (fieldset disabled + notice).
+
+**M2 done-gate results — all pass**
+- CF-2601-KHI created by Bilal (Northbridge) with 2 rooms + 1 traveler; resumed:
+  same ref, 3 rooms, dates extended, auto_accept on; full page reload → list
+  shows draft, editor rehydrates spine + all fields.
+- Cross-tenant (Zeeshan/Meridian): list 0 rows · direct id fetch 0 rows ·
+  function update blocked not_found · travelers 0 rows.
+- Advisor caught migration 008's revoke as incomplete (EXECUTE still inherited
+  via PUBLIC's default grant on new functions). Migration 009 revokes from
+  PUBLIC and grants service_role only — probe confirms anon/authenticated 42501,
+  service_role ok. Lesson: functions need `revoke ... from public`, same shape
+  as migration 004 for tables. Advisors clean again after fix.
+
+**Dev notes**
+- bilal@ / zeeshan@ .test users got dev passwords for gate testing — replace or
+  remove all .test auth users before launch (M8 checklist).
+
+**Carried forward / next session (M3 — Search & results)**
+- Results query: active live vendors ∩ corridor ∩ verified deal-breakers →
+  property cards (stars, corridor, bracket, verified amenities, inclusions,
+  P1–P3 rates resolved per corporate — negotiated over base) · package pick per
+  hotel · select ≤3 with priority order, blocking message at 3.
+- Reuse PropertyPage under a corporate route for the detail view.
+- Still open: email provider (M4 deadline), WABA registration, fee amount,
+  B1–B5 boundaries.

@@ -162,3 +162,42 @@ export const upsertCorporate = (payload: CorporatePayload) =>
     'ef_upsert_corporate',
     payload as unknown as Record<string, unknown>,
   )
+
+// ---- M2: booking files ------------------------------------------------------
+
+export interface BookingFile {
+  id: string
+  ref: string
+  corporate_id: string
+  name: string
+  status: string
+  check_in: string
+  check_out: string
+  rooms: { guests: number }[]
+  dealbreakers: string[]
+  corridor_id: string | null
+  auto_accept: boolean
+  window_minutes: number | null
+  window_expires_at: string | null
+  updated_at: string
+}
+
+export interface BookingFilePayload {
+  file: {
+    id?: string
+    name: string
+    check_in: string
+    check_out: string
+    rooms: { guests: number }[]
+    dealbreakers: string[]
+    corridor_id?: string | null
+    auto_accept?: boolean
+  }
+  travelers?: { name: string; email?: string; phone?: string }[]
+}
+
+export const upsertBookingFile = (payload: BookingFilePayload) =>
+  callFunction<{
+    file: BookingFile
+    travelers: { id: string; name: string; email: string | null; phone: string | null }[]
+  }>('ef_upsert_booking_file', payload as unknown as Record<string, unknown>)

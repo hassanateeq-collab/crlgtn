@@ -10,14 +10,16 @@ import { VendorEditor } from '@/routes/ops/VendorEditor'
 import { PropertyPage } from '@/routes/ops/PropertyPage'
 import { Corporates } from '@/routes/ops/Corporates'
 import { CorporateEditor } from '@/routes/ops/CorporateEditor'
+import { PortalLayout } from '@/routes/portal/PortalLayout'
+import { Files } from '@/routes/portal/Files'
+import { FileEditor } from '@/routes/portal/FileEditor'
 
 function Home() {
   const { identity, loading } = useIdentity()
   if (loading) return null
-  // Ops land in the console; corporates keep the diagnostics screen until the
-  // M2 portal shell replaces it.
+  // Ops land in the console; corporate users in the portal.
   if (identity?.isOps) return <Navigate to="/ops" replace />
-  return <Foundations />
+  return <Navigate to="/files" replace />
 }
 
 function Gate() {
@@ -39,6 +41,11 @@ function Gate() {
     <IdentityProvider>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route element={<PortalLayout />}>
+          <Route path="/files" element={<Files />} />
+          <Route path="/files/new" element={<FileEditor />} />
+          <Route path="/files/:id" element={<FileEditor />} />
+        </Route>
         <Route path="/ops" element={<OpsLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="vendors" element={<Vendors />} />
