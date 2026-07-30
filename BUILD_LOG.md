@@ -180,3 +180,47 @@ central place to see everything. Both addressed; plan amended.
 - Reuse PropertyPage under a corporate route for the detail view.
 - Still open: email provider (M4 deadline), WABA registration, fee amount,
   B1–B5 boundaries.
+
+---
+
+## 2026-07-31 — Session 3b · M3 Search & results
+
+**Supply enrichment (test data, via ef_onboard_vendor as ops)**
+- Harbourline Grand: 2 rooms w/ rates, verified wifi+pool+meeting+power, profile.
+- Faisal Court: 1 room, verified wifi+power. Airside: 1 room, verified power only.
+- Verified-amenity matrix now discriminates: pool → Harbourline only (Corniche's
+  claim stays unverified on purpose); indoor_parking → Corniche only.
+
+**Results page (/files/:id/results)**
+- Client-side query under RLS (live vendors, verified amenities, own+base rates
+  are all RLS-enforced; page filtering is business logic, not security).
+- Matching: corridor (if set) ∩ all dealbreakers verified ∩ has a listing that
+  fits the largest room's guests AND has ≥1 open rate. Sorted stars desc.
+- Cards: signed cover photo, stars/subtype/corridor/bracket, description,
+  verified chips, inclusions, room + package selects (packages without rates
+  hidden), resolved nightly rate with "your corporate rate" tag on negotiated.
+- Selection: ≤3 in click order with priority badges; 4th click → explanatory
+  cap message (spec's exact rationale); fixed tray shows picks + disabled
+  "Send request — offers in 15 minutes" awaiting M4's ef_send_rfq.
+- FileEditor spine gained "Find hotels" (draft files only).
+- PropertyPage now dual-context: /property/:id inside the portal (back-to-results
+  nav, no ops annotations) vs /ops preview unchanged.
+
+**M3 done-gate results — all pass (browser-verified)**
+- Deal-breaker exactness: [] → 4 matches · ['pool'] → Harbourline only (unverified
+  Corniche claim excluded) · ['fast_wifi','indoor_parking'] → Corniche only.
+- Rate resolution: Bilal (Northbridge) sees Corniche Deluxe King P1 at 22,000
+  with corporate-rate tag; Zeeshan (Meridian) sees 24,000 untagged.
+- Cap: three selected with #1/#2/#3 badges; fourth click blocked with message;
+  tray reads 3/3.
+- Airside card offers only P1/P2 (no P3 rate exists) — package filter correct.
+
+**Carried forward / next session (M4 — RFQ engine)**
+- ef_send_rfq (≤3 offers, window rule: 180 min std / 60 min when check-in ≤48h,
+  notifications) · ef_notify dispatcher (email first, WhatsApp behind) · vendor
+  magic-link page + ef_vendor_respond (hashed single-use expiring tokens) ·
+  offer timeline on corporate board · ef_sla_monitor cron (10-min alert).
+- Results selection feeds ef_send_rfq: {vendor_id, listing_id, package_code,
+  rate_pkr, priority}[] — shape already assembled in Results tray state.
+- BLOCKER TO RESOLVE: real email provider (built-in SMTP is 2/hr and
+  team-only) — decide before M4 notifications can be tested end-to-end.

@@ -188,12 +188,22 @@ export function FileEditor() {
             <dd className="text-xs text-ink/40">starts when offers arrive</dd>
           </div>
         </dl>
-        <div className="border-t border-hairline px-4 py-3">
+        <div className="space-y-2 border-t border-hairline px-4 py-3">
           <Button type="submit" disabled={busy || readOnly} className="w-full">
             {busy ? 'Saving…' : readOnly ? 'Locked' : 'Save draft'}
           </Button>
+          {!isNew && fileStatus === 'draft' && (
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => navigate(`/files/${id}/results`)}
+            >
+              Find hotels
+            </Button>
+          )}
           {savedAt && !error && (
-            <p className="mt-2 text-center text-xs text-ink/40">Saved {savedAt}</p>
+            <p className="text-center text-xs text-ink/40">Saved {savedAt}</p>
           )}
         </div>
       </aside>

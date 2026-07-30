@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { pkrPlain } from '@/lib/format'
 import { Notice } from '@/components/ui'
@@ -52,6 +52,11 @@ interface MediaItem {
 
 export function PropertyPage() {
   const { id } = useParams()
+  const location = useLocation()
+  const navigate = useNavigate()
+  // Same component, two contexts: the ops console preview and the corporate
+  // detail view (M3). Ops-only affordances key off this.
+  const inOps = location.pathname.startsWith('/ops')
   const [property, setProperty] = useState<Property | null>(null)
   const [rooms, setRooms] = useState<Room[]>([])
   const [rates, setRates] = useState<Map<string, Record<string, number>>>(new Map())
@@ -145,12 +150,24 @@ export function PropertyPage() {
   return (
     <article className="space-y-6">
       <nav className="text-xs text-ink/50">
-        <Link to="/ops/vendors" className="hover:text-ink">Vendors</Link>
-        {' / '}
-        <Link to={`/ops/vendors/${property.id}`} className="hover:text-ink">
-          {property.name}
-        </Link>
-        {' / property page'}
+        {inOps ? (
+          <>
+            <Link to="/ops/vendors" className="hover:text-ink">Vendors</Link>
+            {' / '}
+            <Link to={`/ops/vendors/${property.id}`} className="hover:text-ink">
+              {property.name}
+            </Link>
+            {' / property page'}
+          </>
+        ) : (
+          <button
+            type="button"
+            className="hover:text-ink"
+            onClick={() => navigate(-1)}
+          >
+            ← Back to results
+          </button>
+        )}
       </nav>
 
       {/* ---- header ---------------------------------------------------------- */}
@@ -229,7 +246,7 @@ export function PropertyPage() {
                     }`}
                   >
                     {a.label}
-                    {a.verified ? ' ✓' : ' (unverified — hidden from corporates)'}
+                    {a.verified ? ' ✓' : inOps ? ' (unverified — hidden from corporates)' : ''}
                   </li>
                 ))}
               </ul>

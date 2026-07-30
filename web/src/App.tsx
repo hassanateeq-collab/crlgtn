@@ -13,6 +13,7 @@ import { CorporateEditor } from '@/routes/ops/CorporateEditor'
 import { PortalLayout } from '@/routes/portal/PortalLayout'
 import { Files } from '@/routes/portal/Files'
 import { FileEditor } from '@/routes/portal/FileEditor'
+import { Results } from '@/routes/portal/Results'
 
 function Home() {
   const { identity, loading } = useIdentity()
@@ -45,6 +46,8 @@ function Gate() {
           <Route path="/files" element={<Files />} />
           <Route path="/files/new" element={<FileEditor />} />
           <Route path="/files/:id" element={<FileEditor />} />
+          <Route path="/files/:id/results" element={<Results />} />
+          <Route path="/property/:id" element={<PropertyPage />} />
         </Route>
         <Route path="/ops" element={<OpsLayout />}>
           <Route index element={<Dashboard />} />
