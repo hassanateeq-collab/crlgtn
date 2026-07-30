@@ -1,0 +1,57 @@
+@import 'tailwindcss';
+
+/* ============================================================================
+   Corlington design tokens — spec §10.
+   Visual polish is a development-phase activity; these values are the frozen
+   part. Brass is reserved for holds and countdowns and is used nowhere else.
+   ============================================================================ */
+@theme {
+  --color-ink: #14241f;
+  --color-pine: #1d5c4d;
+  --color-deep: #12443a;
+  --color-sage: #eaf1ed;
+  --color-paper: #f6f8f6;
+  --color-brass: #a97d2b;
+  --color-hairline: #d9e0da;
+
+  --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Spline Sans Mono', ui-monospace, monospace;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Sentence case, plain verbs — the display face carries headings only. */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
+  }
+
+  /* Refs, money and timers are always monospaced so columns of figures line up
+     and a booking ref is never mistaken for prose. */
+  .tabular {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-pine);
+    outline-offset: 2px;
+  }
+}

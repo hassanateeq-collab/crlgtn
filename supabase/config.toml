@@ -1,0 +1,62 @@
+project_id = "cfnaxfvoshbxjnqbrfgu"
+
+[api]
+enabled = true
+port = 54321
+# `app` is deliberately absent: RLS helper functions must not be reachable via PostgREST.
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.migrations]
+schema_paths = []
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Corlington is closed-access: accounts are provisioned by ops, never self-served.
+enable_signup = false
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = false
+double_confirm_changes = true
+enable_confirmations = true
+# Email OTP (6-digit code), not magic links — spec M0.
+otp_length = 6
+otp_expiry = 600
+# NOTE: built-in Supabase SMTP is capped at ~2-3 emails/hour and is for M0 testing only.
+# A real provider must be configured under [auth.email.smtp] before M4.
+
+[auth.sms]
+enable_signup = false
+enable_confirmations = false
+
+# Every function verifies JWT — spec §4, hard rule. The vendor magic-link responder
+# (M4) is the sole planned exception and will authenticate by hashed single-use token.
+[functions.ef_whoami]
+verify_jwt = true
