@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { pkrPlain } from '@/lib/format'
-import type { BookingFile } from '@/lib/api'
+import { sendRfq, ApiError, type BookingFile } from '@/lib/api'
 import { Button, Notice } from '@/components/ui'
 
 /**
@@ -77,6 +77,29 @@ export function Results() {
   const [capMessage, setCapMessage] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [sending, setSending] = useState(false)
+
+  async function send() {
+    if (!file || selection.length === 0) return
+    setSending(true)
+    setError(null)
+    try {
+      await sendRfq(
+        file.id,
+        selection.map((s, i) => ({
+          vendor_id: s.vendorId,
+          listing_id: s.listingId,
+          package_code: s.packageCode,
+          priority: i + 1,
+        })),
+      )
+      // Straight to the board — the countdown is already running.
+      navigate(`/files/${file.id}`)
+    } catch (err: unknown) {
+      setError(err instanceof ApiError ? err.message : 'Sending failed')
+      setSending(false)
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -439,8 +462,9 @@ export function Results() {
             </ol>
             <div className="flex items-center gap-3">
               <span className="text-xs text-ink/50">{selection.length}/3 hotels</span>
-              <Button type="button" disabled title="RFQ sending arrives with the next milestone (M4)">
-                Send request — offers in 15 minutes
+              {/* "Offers back in 15 minutes" — never "booked in 15" (spec §2). */}
+              <Button type="button" disabled={sending} onClick={send}>
+                {sending ? 'Sending…' : 'Send request — offers in 15 minutes'}
               </Button>
             </div>
           </div>

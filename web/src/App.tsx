@@ -1,4 +1,5 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { VendorRespond } from '@/routes/VendorRespond'
 import { SessionProvider, useSession } from '@/lib/session'
 import { IdentityProvider, useIdentity } from '@/lib/identity'
 import { SignIn } from '@/routes/SignIn'
@@ -25,6 +26,17 @@ function Home() {
 
 function Gate() {
   const { session, loading } = useSession()
+  const location = useLocation()
+
+  // The vendor magic-link page is public by design: hotels hold no accounts in
+  // MVP, the URL token is the credential. It must never bounce to sign-in.
+  if (location.pathname.startsWith('/respond/')) {
+    return (
+      <Routes>
+        <Route path="/respond/:token" element={<VendorRespond />} />
+      </Routes>
+    )
+  }
 
   // Session restore is async on refresh; don't flash the sign-in screen.
   if (loading) {

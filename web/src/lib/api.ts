@@ -201,3 +201,71 @@ export const upsertBookingFile = (payload: BookingFilePayload) =>
     file: BookingFile
     travelers: { id: string; name: string; email: string | null; phone: string | null }[]
   }>('ef_upsert_booking_file', payload as unknown as Record<string, unknown>)
+
+// ---- M4: RFQ engine ---------------------------------------------------------
+
+export interface RfqOffer {
+  id: string
+  vendor_id: string
+  listing_id: string
+  package_code: string
+  rate_pkr: number
+  priority: number
+  status: string
+  sent_at: string
+  viewed_at?: string | null
+  responded_at?: string | null
+  counter?: { listing_id: string | null; note: string | null } | null
+}
+
+export const sendRfq = (
+  bookingFileId: string,
+  selections: { vendor_id: string; listing_id: string; package_code: string; priority: number }[],
+) =>
+  callFunction<{ file: BookingFile; offers: RfqOffer[] }>('ef_send_rfq', {
+    booking_file_id: bookingFileId,
+    selections,
+  })
+
+/**
+ * The vendor respond endpoint is public (token-authenticated, verify_jwt off),
+ * so it bypasses callFunction's session requirement entirely.
+ */
+export interface VendorOfferView {
+  ref: string
+  hotel: string
+  room: string
+  bed_config: string | null
+  package_code: string
+  rate_pkr: number
+  check_in: string
+  check_out: string
+  rooms: { guests: number }[]
+  status: string
+  counter: { listing_id: string | null; note: string | null } | null
+  window_expires_at: string
+  alternates?: { id: string; name: string; bed_config: string | null }[]
+}
+
+export async function vendorRespond(
+  token: string,
+  action: 'view' | 'accept' | 'counter' | 'decline',
+  counter?: { listing_id?: string; note?: string },
+): Promise<VendorOfferView> {
+  let res: Response
+  try {
+    res = await fetch(`${SUPABASE_URL}/functions/v1/ef_vendor_respond`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, action, ...(counter ? { counter } : {}) }),
+    })
+  } catch {
+    throw new ApiError('network_error', 'Could not reach the server.', 0)
+  }
+  const payload = await res.json().catch(() => null)
+  if (!payload) throw new ApiError('bad_response', `Unexpected response (${res.status})`, res.status)
+  if (!payload.ok) {
+    throw new ApiError(payload.error.code, payload.error.message, res.status)
+  }
+  return payload.data as VendorOfferView
+}

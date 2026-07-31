@@ -224,3 +224,79 @@ central place to see everything. Both addressed; plan amended.
   rate_pkr, priority}[] — shape already assembled in Results tray state.
 - BLOCKER TO RESOLVE: real email provider (built-in SMTP is 2/hr and
   team-only) — decide before M4 notifications can be tested end-to-end.
+
+---
+
+## 2026-07-31 — Session 4 · M4 RFQ engine
+
+**Migration 010**
+- `rfq_offers`: file/vendor/listing/package/rate/priority + status machine,
+  token_hash (sha-256, unique) + token_expires_at (= window end), counter jsonb,
+  ops_override/ops_evidence (M5), sla_flagged_at. Unique (file, vendor) and
+  (file, priority). Column-level revoke: corporates cannot SELECT token_hash or
+  ops_evidence even on their own offers (⇒ board queries must list columns
+  explicitly; `select *` 403s for corporate roles — by design).
+- `notifications`: event/recipient/channel/template/payload/status/provider_id +
+  dedupe_key unique (idempotency, the M8 double-send defence built in early).
+- **DEVIATION:** spec §7's ef_sla_monitor implemented as in-database
+  `app.sla_sweep()` on pg_cron (`corlington_sla_sweep`, every minute) — no HTTP
+  hop, no service key in cron. Flags quiet (≥10 min) open offers once, writes
+  ops notification + audit row. M5's expire sweep will follow the same pattern.
+
+**ef_send_rfq**
+- Booker/admin only; file must be own + draft; guarded transition (`eq status
+  draft`) kills double-send races. ≤3 selections, distinct vendors, distinct
+  priorities 1-3. Rates re-resolved server-side (negotiated-over-base) — the
+  client's displayed rate is advisory only.
+- Window rule: 180 min standard / 60 min when check-in ≤48h (env-overridable
+  WINDOW_STANDARD_MIN/WINDOW_URGENT_MIN). PKT midnight math done in +05:00.
+- Tokens generated per offer; raw token exists only in the magic link, which is
+  stored in the vendor notification payload (ops can read + forward manually via
+  WhatsApp until WABA lands — that IS the MVP ops flow).
+
+**ef_vendor_respond** (verify_jwt = false — the sole exception, token-auth)
+- view (sent→viewed) · accept (→hold, binding) · counter (alt listing and/or
+  note; validated against vendor's own active listings) · decline. Guarded
+  update (.in status [sent,viewed]) = single-use + race-safe. Lazy expiry on
+  click after window end. Invalid and expired tokens both read as generic 404.
+  File requested→responded on first response. Corporate booker notified
+  (portal channel) on hold/counter. Audit attributed to vendor_users contact.
+- Fix during verification: response body echoed the pre-update status (stale
+  in-memory row) — vendor confirmation screen would have shown the old state.
+  DB was always correct; v2 syncs the row before rendering.
+
+**Frontend**
+- /respond/:token — public vendor page (bypasses the auth gate; the token is
+  the credential): request card, brass countdown, Accept/Counter/Decline,
+  counter form with alternate-room select, confirmation + expired states.
+- Results "Send request — offers in 15 minutes" wired to ef_send_rfq.
+- FileEditor: OffersBoard (5s polling while window open; explicit column list
+  per the RLS note) + live brass countdown in the spine.
+
+**M4 done-gate results — all pass**
+- Send: 4-hotel attempt → 422 with the spec's cap message; 3-hotel send →
+  file requested, window 180, offers p1/p2/p3 with server-resolved rates
+  (Corniche = Northbridge's 22,000 negotiated); resend → 409.
+- Magic links: 3 produced (in notification payloads, email rows queued
+  awaiting provider key). Vendor page renders with countdown; accept →
+  hold (browser click); re-accept → 409 already_responded; counter with note
+  → countered, then decline attempt → 409; decline → declined; garbage token
+  → 404. File → responded.
+- Board (Bilal): #1 on hold · #2 countered with the hotel's note rendered ·
+  #3 declined · spine countdown live at 2:53:52. 5s polling ⇒ "within seconds".
+- Window rule: far check-in → 180; check-in tomorrow (CF-2604) → 60.
+- SLA: backdated offer flagged on sweep, ops alert + audit row written,
+  second run flags 0 (idempotent), cron job active (* * * * *).
+- Advisors clean (pre-existing OTP-moot WARN only).
+
+**Carried forward / next session (M5 — Window, holds & booking)**
+- ef_book_offer as single transaction with row locking: re-check hold/countered
+  → booking + policy snapshots → release siblings → queue voucher → notify
+  winner/losers. Double-book race test is the gate.
+- app.expire_sweep() on pg_cron (lapse windows → offers expired, holds
+  released, file expired).
+- Auto-accept: first hold triggers book server-side (ef_vendor_respond hook).
+- ef_ops_override_accept requiring ops_evidence (wa_msg_id + email_msg_id).
+- Still open: email provider key (queue drains automatically once
+  RESEND_API_KEY + MAIL_FROM secrets are set), WABA registration, fee amount,
+  B1–B5 boundaries.

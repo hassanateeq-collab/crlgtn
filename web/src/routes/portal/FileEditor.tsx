@@ -2,8 +2,9 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { upsertBookingFile, ApiError } from '@/lib/api'
-import { datePkt } from '@/lib/format'
+import { countdown, datePkt } from '@/lib/format'
 import { Button, Card, Field, Input, Notice } from '@/components/ui'
+import { OffersBoard } from './OffersBoard'
 
 /**
  * The booking file form (spec §9) with the file spine — the signature element
@@ -44,6 +45,20 @@ export function FileEditor() {
   const [error, setError] = useState<string | null>(null)
   const [savedAt, setSavedAt] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(isNew)
+  const [windowExpiresAt, setWindowExpiresAt] = useState<string | null>(null)
+  const [now, setNow] = useState(Date.now())
+
+  // Tick only while a decision window could be running.
+  useEffect(() => {
+    if (!windowExpiresAt) return
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [windowExpiresAt])
+
+  const windowRemaining = windowExpiresAt
+    ? new Date(windowExpiresAt).getTime() - now
+    : null
+  const windowOpen = windowRemaining !== null && windowRemaining > 0
 
   const readOnly = fileStatus !== 'draft'
 
@@ -86,6 +101,7 @@ export function FileEditor() {
       setDealbreakers(new Set((f.data.dealbreakers ?? []) as string[]))
       setCorridorId(f.data.corridor_id ?? '')
       setAutoAccept(f.data.auto_accept)
+      setWindowExpiresAt(f.data.window_expires_at)
       setTravelers(
         (t.data ?? []).map((x) => ({
           name: x.name,
@@ -184,8 +200,16 @@ export function FileEditor() {
           </div>
           <div>
             <dt className="text-xs text-ink/50">Decision window</dt>
-            {/* Brass is reserved for exactly this — the countdown arrives at M5. */}
-            <dd className="text-xs text-ink/40">starts when offers arrive</dd>
+            {/* Brass is reserved for exactly this. */}
+            {windowOpen ? (
+              <dd className="tabular mt-0.5 inline-block rounded-md bg-brass/15 px-2 py-1 text-sm text-brass">
+                {countdown(windowRemaining!)}
+              </dd>
+            ) : windowExpiresAt ? (
+              <dd className="text-xs text-ink/40">window ended</dd>
+            ) : (
+              <dd className="text-xs text-ink/40">starts when the request is sent</dd>
+            )}
           </div>
         </dl>
         <div className="space-y-2 border-t border-hairline px-4 py-3">
@@ -220,6 +244,10 @@ export function FileEditor() {
         {error && <Notice tone="error">{error}</Notice>}
         {readOnly && (
           <Notice>This file has been sent and can no longer be edited.</Notice>
+        )}
+
+        {!isNew && readOnly && id && (
+          <OffersBoard fileId={id} windowOpen={windowOpen} />
         )}
 
         <fieldset disabled={readOnly} className="space-y-6">
