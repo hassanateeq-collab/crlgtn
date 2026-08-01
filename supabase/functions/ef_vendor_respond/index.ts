@@ -54,6 +54,18 @@ Deno.serve(async (req: Request) => {
       return fail(req, 400, "bad_request", "token and action are required");
     }
 
+    // Rate limit (M8): 30 requests/min per caller on the only unauthenticated
+    // surface. Counted BEFORE the token lookup so scans hit the wall fast.
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const { data: allowed } = await admin.rpc("check_rate_limit", {
+      p_key: `vr:${ip}`,
+      p_max: 30,
+      p_window_secs: 60,
+    });
+    if (allowed === false) {
+      return fail(req, 429, "rate_limited", "Too many requests; try again in a minute");
+    }
+
     // ---- authenticate by token -------------------------------------------
     const tokenHash = await hashToken(token);
     const { data: offer } = await admin

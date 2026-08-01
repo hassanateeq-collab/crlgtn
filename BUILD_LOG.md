@@ -464,3 +464,42 @@ deposit balance, read-only list with BTC payment note.
   functions · magic-link rate-limit review · notification idempotency spot
   check · UAT: five golden paths on clean data · purge .test data + seed
   users · real launch supply · Meta templates · Resend secrets · tax sign-off.
+
+---
+
+## 2026-08-01 — Session 5d · M8 Hardening & launch prep
+
+**Security audit — all clean**
+- RLS: 27/27 public tables rowsecurity ON, exactly one SELECT policy each,
+  ZERO write policies (writes are privilege-revoked, migration 004).
+- Functions: 10 deployed, 9 verify_jwt=true; sole exception ef_vendor_respond
+  (token-auth by design). The PMS lesson, checked function by function.
+- Advisors: security + performance both clean except the leaked-password WARN
+  (moot for OTP; dashboard toggle listed in LAUNCH.md cutover).
+
+**Magic-link rate limiting (migration 014 + vendor_respond v5)**
+- Fixed-window per-IP counter (app.rl_hits + public.check_rate_limit,
+  service-role-only), 30/min on the sole unauthenticated surface, counted
+  BEFORE token lookup; hourly GC cron. Live test: exactly 30×404 then 5×429.
+
+**Idempotency** — 81 notifications, 81 distinct dedupe keys, zero duplicates
+across the entire dev history (RFQ sends, holds, bookings, releases, vouchers,
+handovers, invoices, sweeps).
+
+**Golden path #2 completed (counter-accepted)** — CF-2610: Northbridge sent
+Corniche Deluxe King @22,000 negotiated → hotel countered Executive Twin →
+booker accepted → booked the REVISED room at its own rate (21,000 base; the
+original 22,000 correctly NOT carried over), total 42,000, invoice CI-1006 due
++30d from checkout (Sep 29 ✓), voucher PDF issued. All five golden paths now
+machine-verified at least once in development.
+
+**Launch artifacts**
+- LAUNCH.md: cutover steps (Resend secrets, SMTP, auth template, APP_BASE_URL,
+  ALLOWED_ORIGINS, WABA parallel track), supply-loading procedure, the 5-path
+  production UAT table, and the owner's non-software gate.
+- scripts/purge-test-data.sql: ordered purge of all (TEST)/.test entities;
+  audit_log deliberately retained (append-only history).
+
+**SOFTWARE COMPLETE M0–M8.** Remaining to go-live is operational: Resend
+secrets, hosting, WABA, real supply + agreements, production UAT re-run,
+pilot booking. All enumerated in LAUNCH.md.
