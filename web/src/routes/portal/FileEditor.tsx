@@ -47,6 +47,12 @@ export function FileEditor() {
   const [loaded, setLoaded] = useState(isNew)
   const [windowExpiresAt, setWindowExpiresAt] = useState<string | null>(null)
   const [now, setNow] = useState(Date.now())
+  const [refreshKey, setRefreshKey] = useState(0)
+  const [booking, setBooking] = useState<{
+    grand_total_pkr: number
+    nights: number
+    vendors: { name: string } | null
+  } | null>(null)
 
   // Tick only while a decision window could be running.
   useEffect(() => {
@@ -102,6 +108,15 @@ export function FileEditor() {
       setCorridorId(f.data.corridor_id ?? '')
       setAutoAccept(f.data.auto_accept)
       setWindowExpiresAt(f.data.window_expires_at)
+
+      if (f.data.status === 'confirmed' || f.data.status === 'completed') {
+        const { data: bk } = await supabase
+          .from('bookings')
+          .select('grand_total_pkr, nights, vendors(name)')
+          .eq('booking_file_id', id)
+          .maybeSingle()
+        setBooking((bk as never) ?? null)
+      }
       setTravelers(
         (t.data ?? []).map((x) => ({
           name: x.name,
@@ -112,7 +127,7 @@ export function FileEditor() {
       setLoaded(true)
     }
     load()
-  }, [id, isNew])
+  }, [id, isNew, refreshKey])
 
   const nights = useMemo(() => {
     if (!checkIn || !checkOut) return null
@@ -246,8 +261,23 @@ export function FileEditor() {
           <Notice>This file has been sent and can no longer be edited.</Notice>
         )}
 
+        {booking && (
+          <Notice>
+            Booked — {booking.vendors?.name} · {booking.nights} night
+            {booking.nights > 1 ? 's' : ''} · total{' '}
+            <span className="tabular font-medium">
+              PKR {booking.grand_total_pkr.toLocaleString('en-PK')}
+            </span>
+            . Nothing payable at the desk except personal extras.
+          </Notice>
+        )}
+
         {!isNew && readOnly && id && (
-          <OffersBoard fileId={id} windowOpen={windowOpen} />
+          <OffersBoard
+            fileId={id}
+            windowOpen={windowOpen}
+            onBooked={() => setRefreshKey((k) => k + 1)}
+          />
         )}
 
         <fieldset disabled={readOnly} className="space-y-6">

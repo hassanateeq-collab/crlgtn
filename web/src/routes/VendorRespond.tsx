@@ -86,7 +86,7 @@ export function VendorRespond() {
   }
   if (!offer) return shell(<p className="text-sm text-ink/50">Loading request…</p>)
 
-  const answered = ['hold', 'countered', 'declined'].includes(offer.status)
+  const answered = ['hold', 'countered', 'declined', 'booked'].includes(offer.status)
 
   return shell(
     <div className="space-y-5">
@@ -134,6 +134,8 @@ export function VendorRespond() {
 
       {answered ? (
         <Notice>
+          {offer.status === 'booked' &&
+            'Accepted and booked — this request had instant booking on. Guest details follow before check-in.'}
           {offer.status === 'hold' &&
             'Accepted. The rooms are on hold — we will confirm or release them when the corporate decides, before the window ends.'}
           {offer.status === 'countered' &&

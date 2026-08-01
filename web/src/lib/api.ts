@@ -227,6 +227,29 @@ export const sendRfq = (
     selections,
   })
 
+export interface BookingResult {
+  booking_id: string
+  ref: string
+  vendor_name: string
+  listing_id: string
+  rate_pkr: number
+  nights: number
+  rooms: number
+  grand_total_pkr: number
+}
+
+export const bookOffer = (offerId: string) =>
+  callFunction<BookingResult>('ef_book_offer', { offer_id: offerId })
+
+export const opsOverrideAccept = (
+  offerId: string,
+  evidence: { wa_msg_id: string; email_msg_id: string },
+) =>
+  callFunction<{ offer_id: string; status: string; booking: BookingResult | null }>(
+    'ef_ops_override_accept',
+    { offer_id: offerId, evidence },
+  )
+
 /**
  * The vendor respond endpoint is public (token-authenticated, verify_jwt off),
  * so it bypasses callFunction's session requirement entirely.

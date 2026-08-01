@@ -243,9 +243,23 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // NOTE: the auto-accept short-circuit (file.auto_accept && hold → book
-    // instantly) lands in M5 with ef_book_offer's transaction. Until then a
-    // hold is a hold, never a booking — safe in both directions.
+    // Auto-accept (M5): the first hold books instantly, server-side, with no
+    // corporate click. The transaction re-checks everything under lock, so a
+    // second racing acceptor fails inside book_offer, not here.
+    if (nextStatus === "hold" && file.auto_accept) {
+      const { data: booked, error: bookErr } = await admin.rpc("book_offer", {
+        p_offer_id: offer.id,
+        p_actor_type: "system",
+        p_actor_id: null,
+      });
+      if (!bookErr && booked) {
+        offer.status = "booked";
+      } else if (bookErr) {
+        // The hold stands; booking failure here is a race loss or config gap,
+        // never a reason to fail the vendor's accept.
+        console.error("auto_accept_book_failed", { offer_id: offer.id, error: bookErr.message });
+      }
+    }
 
     return json(req, 200, { ok: true, data: offerView() });
   } catch (err) {

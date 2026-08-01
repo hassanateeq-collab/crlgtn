@@ -300,3 +300,74 @@ central place to see everything. Both addressed; plan amended.
 - Still open: email provider key (queue drains automatically once
   RESEND_API_KEY + MAIL_FROM secrets are set), WABA registration, fee amount,
   B1–B5 boundaries.
+
+---
+
+## 2026-08-01 — Session 5 · M5 Window, holds & booking
+
+**Migration 011**
+- `bookings` with policy SNAPSHOTS (cancellation/no-show text captured at
+  booking time — voucher/dispute truth), nights, integer-PKR totals, unique
+  (booking_file_id) = "at most one booked offer per file" as an index.
+- `public.book_offer(offer, actor_type, actor_id)` — THE transaction, in
+  Postgres where the locks live: lock offer→file (fixed order, no deadlocks),
+  re-check status/window under lock, resolve counter's revised listing + its
+  own rate, insert booking, offer→booked, siblings→released (with per-loser
+  notifications), file→confirmed, audit, winner/booker/voucher-queue
+  notifications. SECURITY DEFINER, EXECUTE service_role-only (migration-009
+  pattern). Called from three places: corporate click, auto-accept, override.
+- `app.expire_sweep()` on pg_cron (every minute): T-15 warning once per file
+  (window_warned_at), then lapse — open offers→expired + vendor notices,
+  file→expired + booker notice + audit.
+- booking totals: rate × nights × room-count. Rooms means jsonb array length.
+
+**Functions**
+- ef_book_offer: authz + ownership check, then rpc; DB errcodes mapped to
+  404/409/422. Race loser gets a clean 409.
+- ef_ops_override_accept: refuses without BOTH wa_msg_id and email_msg_id
+  (non-blank); hold with ops_override + evidence {ids, agent}; books
+  immediately when the file is auto-accept.
+- ef_vendor_respond v3: first hold on an auto_accept file calls book_offer as
+  system actor — vendor's confirmation shows "booked instantly".
+
+**UI**
+- OffersBoard: Book / Accept-counter-&-book buttons (booker/admin, window
+  open); FileEditor shows the booked summary with BTC line.
+- Ops Dashboard: Live request board is REAL now (open files, countdowns, SLA
+  chase chips, inline override-accept with the two evidence fields) and the
+  central Reservations view the owner asked for in M1.5 (all bookings across
+  all vendors: ref, corporate, hotel, stay, total, booked-at).
+
+**M5 done-gate results — all pass**
+- Double-book race: Promise.allSettled on hold+countered → exactly one
+  fulfilled (Harbourline, 76,000 = 38,000×2n×1r), loser 409; offers end
+  booked/released/released; file confirmed; exactly 1 bookings row.
+- Window kill: the sweep's first cron tick organically expired all three
+  dead-window M4 files — holds/counters→expired, files→expired, 3 booker
+  notices + 3 vendor lapse notices + 3 audit rows.
+- Auto-accept: vendor accept on CF-2606 returned status=booked, zero
+  corporate clicks; totals 28,000 (14,000×2n).
+- Override: missing/blank evidence → 422; with both ids → hold carrying
+  ops_override+evidence; corporate then booked it (CF-2607, 16,000).
+- Dashboard verified in browser: reservations table shows all 3 bookings with
+  correct totals; live board empty (all settled) with override UI in place.
+- Advisors: clean (pre-existing OTP-moot WARN only).
+
+**Deviations / notes**
+- ef_expire_sweep implemented as app.expire_sweep() in-database (same
+  rationale as the SLA sweep; recorded once more for the M8 checklist).
+- Approval workflow (corp_approver routing) still deliberately unbuilt —
+  per-corporate toggle exists; enforcement is a later milestone (spec allows).
+- The five golden paths for M8 UAT now have 4/5 machine-verified precedents
+  (normal book, counter accepted, auto-accept, window expiry, ops override —
+  counter-accepted-and-booked exercised in the race test's losing branch and
+  the earlier M4 counter; will re-run all five cleanly at M8 on prod data).
+
+**Carried forward / next (M6 — Voucher & handover)**
+- ef_issue_voucher worker: drain 'issue_voucher' queue → PDF (ref, guest,
+  hotel, dates, rooms, package, inclusions/exclusions, BTC block verbatim,
+  policies FROM SNAPSHOTS) → Storage → traveler email when details exist →
+  vendor handover. Gate: voucher shows snapshot policy even after ops edits
+  the hotel's current policy.
+- Still open: RESEND_API_KEY + MAIL_FROM (now blocking voucher emails too),
+  WABA, fee amount, B1–B5 boundaries.

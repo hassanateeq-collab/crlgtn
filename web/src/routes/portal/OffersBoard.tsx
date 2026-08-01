@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { bookOffer, ApiError } from '@/lib/api'
+import { useIdentity } from '@/lib/identity'
 import { pkrPlain, dateTimePkt } from '@/lib/format'
-import { Card } from '@/components/ui'
+import { Button, Card, Notice } from '@/components/ui'
 
 /**
  * The response board (M4): live offer statuses for a sent file. Polls every
@@ -48,8 +50,35 @@ const statusLine: Record<string, string> = {
   booked: 'Booked',
 }
 
-export function OffersBoard({ fileId, windowOpen }: { fileId: string; windowOpen: boolean }) {
+export function OffersBoard({
+  fileId,
+  windowOpen,
+  onBooked,
+}: {
+  fileId: string
+  windowOpen: boolean
+  onBooked?: () => void
+}) {
   const [offers, setOffers] = useState<BoardOffer[]>([])
+  const { identity } = useIdentity()
+  const [bookingId, setBookingId] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  const canBook =
+    identity?.corporateRole === 'corp_booker' || identity?.corporateRole === 'corp_admin'
+
+  async function book(offerId: string) {
+    setBookingId(offerId)
+    setError(null)
+    try {
+      await bookOffer(offerId)
+      onBooked?.()
+    } catch (err: unknown) {
+      setError(err instanceof ApiError ? err.message : 'Booking failed')
+    } finally {
+      setBookingId(null)
+    }
+  }
 
   useEffect(() => {
     let active = true
@@ -76,6 +105,11 @@ export function OffersBoard({ fileId, windowOpen }: { fileId: string; windowOpen
 
   return (
     <Card title="Offers">
+      {error && (
+        <div className="mb-3">
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
       <ol className="divide-y divide-hairline">
         {offers.map((o) => (
           <li key={o.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
@@ -103,6 +137,19 @@ export function OffersBoard({ fileId, windowOpen }: { fileId: string; windowOpen
             <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusTone[o.status] ?? ''}`}>
               {o.status === 'hold' ? 'on hold' : o.status}
             </span>
+            {canBook && windowOpen && ['hold', 'countered'].includes(o.status) && (
+              <Button
+                type="button"
+                disabled={bookingId !== null}
+                onClick={() => book(o.id)}
+              >
+                {bookingId === o.id
+                  ? 'Booking…'
+                  : o.status === 'countered'
+                    ? 'Accept counter & book'
+                    : 'Book'}
+              </Button>
+            )}
           </li>
         ))}
       </ol>
