@@ -14,11 +14,15 @@ file is what stands between that and a live pilot booking.*
      (six-digit code), not just the link.
    - Queued notifications drain automatically on the next send attempt; for
      the backlog, re-trigger via ef_issue_voucher / re-runs as needed.
-2. **Frontend hosting**
-   - Deploy `web/` (Vercel or equivalent). Set env `VITE_SUPABASE_URL`,
-     `VITE_SUPABASE_PUBLISHABLE_KEY`.
-   - Edge Function secrets: `APP_BASE_URL=https://<portal-domain>` (magic
-     links are built from it) and `ALLOWED_ORIGINS=https://<portal-domain>`.
+2. **Frontend hosting — DONE 2026-08-01**
+   - Live at **https://crlgtn.vercel.app** (Vercel project `crlgtn`,
+     production; builds pull `web/` from the public GitHub repo).
+   - STILL REQUIRED to activate it (Supabase → Edge Functions → Secrets):
+     `ALLOWED_ORIGINS=https://crlgtn.vercel.app,http://localhost:5173`
+     `APP_BASE_URL=https://crlgtn.vercel.app`
+     Until set, the deployed portal signs in but function calls are blocked
+     by CORS (localhost keeps working); magic links keep pointing at
+     localhost until APP_BASE_URL is set.
 3. **WhatsApp (parallel track — do not block launch)**
    - Register the NEW Corlington WABA (own number, own display name — the
      Hamsun sender must never appear, spec §1). Submit templates for:
