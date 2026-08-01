@@ -14,6 +14,7 @@ import { corsHeaders, preflight } from "../_shared/cors.ts";
 import { adminClient } from "../_shared/context.ts";
 import { hashToken } from "../_shared/token.ts";
 import { notify } from "../_shared/notify.ts";
+import { issueVoucher } from "../_shared/voucher.ts";
 
 interface RespondBody {
   token?: string;
@@ -254,6 +255,8 @@ Deno.serve(async (req: Request) => {
       });
       if (!bookErr && booked) {
         offer.status = "booked";
+        const bId = (booked as { booking_id?: string })?.booking_id;
+        if (bId) await issueVoucher(admin, bId);
       } else if (bookErr) {
         // The hold stands; booking failure here is a race loss or config gap,
         // never a reason to fail the vendor's accept.

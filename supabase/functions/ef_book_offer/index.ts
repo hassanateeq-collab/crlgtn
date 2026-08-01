@@ -10,6 +10,7 @@
 
 import { serveEdge, type EdgeContext } from "../_shared/handler.ts";
 import { badRequest, conflict, forbidden, notFound, unprocessable } from "../_shared/errors.ts";
+import { issueVoucher } from "../_shared/voucher.ts";
 
 serveEdge("ef_book_offer", async ({ admin, actor, body }: EdgeContext) => {
   if (actor.actorType !== "corporate_user") {
@@ -53,6 +54,11 @@ serveEdge("ef_book_offer", async ({ admin, actor, body }: EdgeContext) => {
     }
     throw unprocessable(`booking failed: ${msg}`);
   }
+
+  // Voucher auto-issues right here (M6); a failure logs and never unwinds the
+  // booking — ops can re-issue from ef_issue_voucher.
+  const bookingId = (data as { booking_id?: string })?.booking_id;
+  if (bookingId) await issueVoucher(admin, bookingId);
 
   // Audit is written inside the transaction, atomically with the booking.
   return data;
