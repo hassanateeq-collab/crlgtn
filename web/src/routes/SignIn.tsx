@@ -15,14 +15,31 @@ import { Button, Field, Input, Notice } from '@/components/ui'
  * enumerate which companies Corlington works with.
  */
 
-type Stage = 'email' | 'code'
+type Stage = 'email' | 'code' | 'password'
 
 export function SignIn() {
   const [stage, setStage] = useState<Stage>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
+  const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  async function signInWithPassword(e: FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setError(null)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    })
+    setBusy(false)
+    if (error) {
+      // Same neutrality as the OTP path: wrong email and wrong password are
+      // indistinguishable, so this form can't enumerate accounts either.
+      setError('That email and password combination is not valid.')
+    }
+  }
 
   async function requestCode(e: FormEvent) {
     e.preventDefault()
@@ -91,6 +108,60 @@ export function SignIn() {
             {error && <Notice tone="error">{error}</Notice>}
             <Button type="submit" disabled={busy} className="w-full">
               {busy ? 'Sending…' : 'Send code'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setStage('password')
+                setError(null)
+              }}
+            >
+              Sign in with a password instead
+            </Button>
+          </form>
+        ) : stage === 'password' ? (
+          <form onSubmit={signInWithPassword} className="space-y-4">
+            <p className="text-sm text-ink/70">
+              Password sign-in — for accounts the Corlington desk has issued a
+              password to.
+            </p>
+            <Field label="Work email">
+              <Input
+                type="email"
+                required
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@company.com"
+              />
+            </Field>
+            <Field label="Password">
+              <Input
+                type="password"
+                required
+                autoFocus={email.length > 0}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </Field>
+            {error && <Notice tone="error">{error}</Notice>}
+            <Button type="submit" disabled={busy} className="w-full">
+              {busy ? 'Checking…' : 'Sign in'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={() => {
+                setStage('email')
+                setPassword('')
+                setError(null)
+              }}
+            >
+              Use an email code instead
             </Button>
           </form>
         ) : (

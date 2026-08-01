@@ -7,11 +7,18 @@
  * origin with credentials is exactly the mistake worth designing out.
  */
 
-const DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"];
+// The production portal is a known, fixed origin — baked in so functions work
+// the moment they're deployed. ALLOWED_ORIGINS overrides (it REPLACES this
+// list, so include every origin you want when setting it).
+const DEFAULT_ORIGINS = [
+  "https://crlgtn.vercel.app",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
 
 function allowlist(): string[] {
   const configured = Deno.env.get("ALLOWED_ORIGINS");
-  if (!configured) return DEV_ORIGINS;
+  if (!configured) return DEFAULT_ORIGINS;
   return configured.split(",").map((o) => o.trim()).filter(Boolean);
 }
 
