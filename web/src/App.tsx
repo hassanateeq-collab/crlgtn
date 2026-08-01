@@ -11,6 +11,8 @@ import { VendorEditor } from '@/routes/ops/VendorEditor'
 import { PropertyPage } from '@/routes/ops/PropertyPage'
 import { Corporates } from '@/routes/ops/Corporates'
 import { CorporateEditor } from '@/routes/ops/CorporateEditor'
+import { Money } from '@/routes/ops/Money'
+import { Invoices } from '@/routes/portal/Invoices'
 import { PortalLayout } from '@/routes/portal/PortalLayout'
 import { Files } from '@/routes/portal/Files'
 import { FileEditor } from '@/routes/portal/FileEditor'
@@ -60,6 +62,7 @@ function Gate() {
           <Route path="/files/:id" element={<FileEditor />} />
           <Route path="/files/:id/results" element={<Results />} />
           <Route path="/property/:id" element={<PropertyPage />} />
+          <Route path="/invoices" element={<Invoices />} />
         </Route>
         <Route path="/ops" element={<OpsLayout />}>
           <Route index element={<Dashboard />} />
@@ -70,6 +73,7 @@ function Gate() {
           <Route path="corporates" element={<Corporates />} />
           <Route path="corporates/new" element={<CorporateEditor />} />
           <Route path="corporates/:id" element={<CorporateEditor />} />
+          <Route path="money" element={<Money />} />
           <Route path="diagnostics" element={<Foundations />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />

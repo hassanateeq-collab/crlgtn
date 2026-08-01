@@ -416,3 +416,51 @@ booker/admin own).
   monthly vendor settlement (gross − commission_pct), exportable.
 - Gate: one booking per credit-terms value → correctly dated invoices;
   deposit corporate draws down; test-month settlement reconciles to the rupee.
+
+---
+
+## 2026-08-01 — Session 5c · M7 Money
+
+**Migration 013**
+- invoices (unique per booking; number CI-{seq} from app.invoice_number_seq;
+  tax jsonb placeholder pending §13.2 sign-off) · payments (bank_transfer |
+  deposit_drawdown) · deposits (amount vs balance, balance_pkr >= 0 CHECK) ·
+  settlements (unique vendor+period; draft→approved→paid; draft recomputable).
+- `generate_invoice_for_booking()`: due = checkout / +7 / +15 / +30 by the
+  corporate's terms; standing deposit with covering balance auto-draws down
+  and marks the invoice paid, atomically (corporate + deposit rows locked).
+- **book_offer() now invoices inside the booking transaction** — booking,
+  voucher queue, sibling release AND invoice are one atomic unit.
+- app.finance_sweep() daily 08:00 PKT: due-in-3 reminder (dedupe-once),
+  sent→overdue flip + notice + audit.
+- run_settlement(period): per vendor, stays checked out in period; commission
+  = round(gross × pct); cron on the 1st for the prior month; draft rows
+  recompute on re-run, approved/paid are immutable.
+
+**ef_finance** — DEVIATION from spec §7: ef_generate_invoice + ef_record_payment
++ ef_settlement_run consolidated behind one ops-only endpoint with an action
+discriminator (identical scaffolding; split later if needed). record_payment
+supports partial payments (paid only when cumulative ≥ amount) and manual
+drawdowns that respect the ledger.
+
+**UI** — Ops "Money" tab: invoices w/ inline record-payment, deposit balances,
+settlements (period run + CSV export). Portal "Invoices" page: open total,
+deposit balance, read-only list with BTC payment note.
+
+**M7 done-gate results — all pass**
+- Dating: d7→Sep 3, d15→Sep 11, d30→Sep 26 (all from Aug 27 checkout),
+  d30/Sept→Oct 3. on_checkout→due = checkout exactly (CI-1005).
+- Deposit: Meridian booking CF-2609 (one vendor tap: booking + voucher +
+  invoice + drawdown) → CI-1005 paid by auto-drawdown, balance 200,000→184,000.
+- Payments: partial 50k leaves overdue; +26k flips paid; pay-again → 409.
+- Overdue: backdated CI-1001 flipped once with notice + audit; second sweep 0.
+- Settlement 2026-08 reconciled BY HAND to the rupee: Harbourline 76,000/9,120/
+  66,880 (12%) · Faisal 28,000/2,800/25,200 (10%) · Airside 32,000/2,560/29,440
+  (8%, two stays) · Sept checkout correctly excluded.
+- Money tab + portal invoices verified rendering in browser.
+
+**Carried forward / next (M8 — Hardening & launch)**
+- RLS pass on every table (advisors clean) · JWT audit of all deployed
+  functions · magic-link rate-limit review · notification idempotency spot
+  check · UAT: five golden paths on clean data · purge .test data + seed
+  users · real launch supply · Meta templates · Resend secrets · tax sign-off.
