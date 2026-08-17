@@ -73,13 +73,16 @@ input:focus{outline:none;border-color:var(--pine)}
 .mapwrap svg{display:block;width:100%;height:auto}
 .mapcap{font-size:11.5px;color:var(--soft);padding:8px 13px;border-top:1px solid var(--hair);background:#fff}
 .mapcap b{color:var(--ink);font-weight:650}
-g.z ellipse{fill:#E6EEE8;stroke:#CBD8CF;stroke-width:1.3;cursor:pointer;transition:fill .18s,opacity .18s}
+g.z ellipse{fill:#DDE8DD;stroke:#B7C7BA;stroke-width:1.3;cursor:pointer;transition:fill .18s,opacity .18s}
+g.z ellipse.hit{fill:transparent;stroke:none}
+g.z path.ld{stroke:#A9B6AD;stroke-width:1;fill:none}
 g.z text{font:600 11px "Instrument Sans";fill:#4a5c53;pointer-events:none}
-g.z:hover ellipse{stroke:var(--brass)}
-g.z.soft ellipse{fill:#DCE9E0}
-g.z.on ellipse{fill:var(--pine);stroke:var(--deep)}
-g.z.on text{fill:#fff}
-g.z.dim{opacity:.42}
+g.z:hover ellipse:not(.hit){stroke:var(--brass)}
+g.z.soft ellipse:not(.hit){fill:#D5E4D6}
+g.z.on ellipse:not(.hit){fill:var(--pine);stroke:var(--deep)}
+g.z.on text{fill:var(--deep);font-weight:700}
+g.z.on path.ld{stroke:var(--deep)}
+g.z.dim{opacity:.38}
 .tgl{display:flex;align-items:flex-start;gap:12px;background:var(--paper);border-radius:14px;padding:14px 16px;cursor:pointer}
 .tgl .sw{flex:none;width:38px;height:22px;border-radius:99px;background:#ccd8d1;position:relative;transition:.15s;margin-top:2px}
 .tgl .sw:after{content:"";position:absolute;top:2.5px;left:2.5px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.15s}
@@ -206,32 +209,39 @@ g.z.dim{opacity:.42}
         <label class="f" id="corBlock"><b>Area — optional, narrows the search</b>
           <div class="chips" id="fCor"></div>
           <div class="mapwrap">
-            <svg id="kmap" viewBox="0 0 560 330" role="img" aria-label="Karachi area map">
-              <rect width="560" height="330" fill="#F2F6F1"/>
-              <path d="M0,250 Q120,238 220,258 Q330,280 440,272 Q500,268 560,282 L560,330 L0,330 Z" fill="#D8E6EA"/>
-              <text x="70" y="314" font-style="italic" font-size="11" letter-spacing="3" fill="#8FADB6" font-family="Instrument Sans">ARABIAN SEA</text>
-              <path d="M140,122 L192,172" stroke="#CBD8CF" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
-              <path d="M207,222 L258,240" stroke="#CBD8CF" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
-              <path d="M212,194 L468,114" stroke="#C2B490" stroke-width="2" stroke-dasharray="6 5" fill="none" opacity=".65"/>
+            <svg id="kmap" viewBox="0 0 560 596" role="img" aria-label="Karachi map — real boundary, key areas">
+              <rect width="560" height="596" fill="#F3F5F2"/>
+              <path d="M0,596 L0.0,449.1 L105.7,487.2 L187.1,595.7 L345.4,448.2 L348.5,443.7 L373.3,428.6 L389.4,424.1 L395.8,419.9 L401.2,420.1 L412.4,425.8 L421.2,422.7 L426.6,423.8 L446.6,435.8 L453.4,435.9 L456.5,433.2 L470.4,428.7 L483.5,428.9 L489.8,434.2 L491.8,434.2 L496.1,430.1 L502.5,429.6 L502.5,427.6 L498.2,422.5 L498.8,416.0 L496.4,406.2 L498.6,401.3 L496.7,396.4 L512.7,397.3 L517.2,399.6 L523.6,410.8 L532.3,417.4 L552.2,423.7 L560.0,423.8 L560,596 Z" fill="#D8E6EA"/>
+              <path d="M0.0,449.1 L105.7,487.2 L187.1,595.7 L345.4,448.2 L348.5,443.7 L373.3,428.6 L389.4,424.1 L395.8,419.9 L401.2,420.1 L412.4,425.8 L421.2,422.7 L426.6,423.8 L446.6,435.8 L453.4,435.9 L456.5,433.2 L470.4,428.7 L483.5,428.9 L489.8,434.2 L491.8,434.2 L496.1,430.1 L502.5,429.6 L502.5,427.6 L498.2,422.5 L498.8,416.0 L496.4,406.2 L498.6,401.3 L496.7,396.4 L512.7,397.3 L517.2,399.6 L523.6,410.8 L532.3,417.4 L552.2,423.7 L560.0,423.8 L534.5,360.5 L532.8,309.2 L530.2,297.1 L521.8,284.8 L499.8,259.0 L494.5,255.7 L477.3,252.2 L450.7,243.8 L444.7,238.3 L438.4,235.1 L437.9,232.1 L439.4,230.8 L437.6,228.8 L440.1,227.7 L447.4,213.0 L447.1,205.5 L447.1,202.7 L452.3,200.4 L454.5,192.7 L458.9,186.1 L459.6,181.7 L465.0,176.1 L468.7,166.2 L470.7,164.3 L473.6,156.2 L474.1,143.3 L480.4,131.3 L482.3,123.2 L484.5,122.4 L483.9,112.6 L490.0,109.0 L491.0,100.4 L490.3,90.2 L485.0,78.2 L482.7,31.1 L477.2,12.8 L472.8,7.1 L457.7,0.0 L453.1,22.2 L434.1,39.5 L423.2,59.9 L417.1,66.2 L402.5,75.6 L398.8,81.9 L395.7,92.4 L387.5,100.4 L383.8,122.7 L386.5,134.7 L375.2,150.0 L380.3,159.0 L372.3,170.2 L363.1,187.6 L360.8,196.7 L354.7,204.4 L326.4,222.2 L322.8,234.9 L318.3,243.7 L317.0,250.9 L316.3,259.2 L319.7,263.8 L320.0,266.6 L318.6,270.1 L308.7,278.5 L297.0,298.7 L286.5,305.9 L278.6,314.4 L253.7,316.0 L243.0,320.7 L236.4,326.8 L231.7,334.4 L220.2,334.9 L211.6,338.9 L209.7,343.8 L204.3,349.8 L187.8,362.1 L186.1,367.0 L175.7,378.9 L172.2,377.5 L157.4,381.2 L131.0,383.8 Z" fill="#EDF3EC" stroke="#5F7268" stroke-width="2" stroke-linejoin="round"/>
+              <ellipse cx="342" cy="392" rx="105" ry="56" transform="rotate(-8 342 392)" fill="#E4EAE2"/>
+              <text x="360" y="180" text-anchor="middle" font-size="11" letter-spacing="3" fill="#B6C2B9" font-family="Instrument Sans">GADAP · OUTER KARACHI</text>
+              <text x="120" y="500" font-style="italic" font-size="12" letter-spacing="3" fill="#8FADB6" font-family="Instrument Sans">ARABIAN SEA</text>
+              <text x="448" y="444" font-size="9.5" fill="#8FADB6" font-family="Instrument Sans">⚓ Port Qasim</text>
+              <path d="M303,390 L322,384 L400,350" stroke="#C2B490" stroke-width="1.6" stroke-dasharray="5 4" fill="none" opacity=".7"/>
               <g class="z" data-z="SITE" onclick="zoneTap('SITE')">
-                <ellipse cx="120" cy="95" rx="70" ry="40" transform="rotate(-8 120 95)"/>
-                <text x="120" y="99" text-anchor="middle">SITE</text></g>
+                <ellipse cx="281" cy="352" rx="17" ry="14"/><ellipse class="hit" cx="281" cy="352" rx="28" ry="25"/>
+                <path class="ld" d="M244,336 L268,344"/>
+                <text x="242" y="340" text-anchor="end">SITE</text></g>
               <g class="z" data-z="Saddar" onclick="zoneTap('Saddar')">
-                <ellipse cx="205" cy="195" rx="46" ry="28"/>
-                <text x="205" y="199" text-anchor="middle">Saddar</text></g>
+                <ellipse cx="301" cy="392" rx="12" ry="10"/><ellipse class="hit" cx="301" cy="392" rx="23" ry="21"/>
+                <path class="ld" d="M252,404 L288,396"/>
+                <text x="250" y="408" text-anchor="end">Saddar</text></g>
               <g class="z" data-z="Shahrah-e-Faisal" onclick="zoneTap('Shahrah-e-Faisal')">
-                <ellipse cx="330" cy="155" rx="112" ry="23" transform="rotate(-12 330 155)"/>
-                <text x="330" y="160" text-anchor="middle">Shahrah-e-Faisal</text></g>
+                <ellipse cx="356" cy="373" rx="40" ry="9" transform="rotate(-21 356 373)"/><ellipse class="hit" cx="356" cy="373" rx="46" ry="19" transform="rotate(-21 356 373)"/>
+                <path class="ld" d="M448,395 L385,381"/>
+                <text x="452" y="399" text-anchor="start">Shahrah-e-Faisal</text></g>
               <g class="z" data-z="Airport" onclick="zoneTap('Airport')">
-                <ellipse cx="478" cy="105" rx="50" ry="33"/>
-                <text x="478" y="109" text-anchor="middle">✈ Airport</text></g>
+                <ellipse cx="407" cy="347" rx="16" ry="12"/><ellipse class="hit" cx="407" cy="347" rx="27" ry="23"/>
+                <path class="ld" d="M448,336 L424,342"/>
+                <text x="452" y="340" text-anchor="start">✈ Airport</text></g>
               <g class="z" data-z="Clifton/DHA" onclick="zoneTap('Clifton/DHA')">
-                <ellipse cx="315" cy="240" rx="108" ry="26" transform="rotate(-3 315 240)"/>
-                <text x="315" y="244" text-anchor="middle">Clifton / DHA</text></g>
-              <text x="533" y="32" font-size="11" font-weight="600" fill="#8a978f" font-family="Instrument Sans">N</text>
-              <path d="M537,48 l0,-12 m-4,4 l4,-4 4,4" stroke="#8a978f" stroke-width="1.5" fill="none"/>
+                <ellipse cx="336" cy="424" rx="40" ry="9.5" transform="rotate(9 336 424)"/><ellipse class="hit" cx="336" cy="424" rx="46" ry="19" transform="rotate(9 336 424)"/>
+                <path class="ld" d="M336,462 L336,436"/>
+                <text x="336" y="474" text-anchor="middle">Clifton / DHA</text></g>
+              <text x="533" y="34" font-size="11" font-weight="600" fill="#8a978f" font-family="Instrument Sans">N</text>
+              <path d="M537,50 l0,-12 m-4,4 l4,-4 4,4" stroke="#8a978f" stroke-width="1.5" fill="none"/>
             </svg>
-            <div class="mapcap"><b>Karachi</b> — every property is filed under one of these areas. Tap a zone or a chip; each new city gets its own map.</div>
+            <div class="mapcap"><b>Karachi</b> — real city boundary; every property is filed under one of the five shaded areas. Tap a zone or a chip. Boundary data © OpenStreetMap contributors.</div>
           </div></label>
         <label class="f" id="catBlock" style="display:none"><b id="catLbl">Car category</b>
           <div class="chips" id="fCat"></div>

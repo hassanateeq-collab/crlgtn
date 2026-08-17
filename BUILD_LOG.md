@@ -668,3 +668,17 @@ yet list transfer bookings.
   areas**, and every city Corlington opens gets its own such map (map data
   per-city, zones = the corridors table already in the schema). Applies to
   hotels and apartments; rent-a-car stays area-free by the earlier decision.
+
+## 2026-08-18 — Redline: area map now uses the REAL Karachi boundary
+
+- Owner rejected the abstract blob sketch — the map must show the entire
+  Karachi, properly outlined. Rebuilt: actual Karachi Division boundary from
+  OpenStreetMap (relation 6080948), Douglas-Peucker-simplified to ~110 points,
+  equirectangular-projected, baked into the prototype as a static SVG path —
+  still zero runtime dependencies/tiles. Sea drawn from the true coastline
+  chain; Gadap/outer Karachi labeled so the empty north reads deliberate;
+  Port Qasim + north arrow for orientation. The five zones sit at their real
+  positions (slightly spread for readability) with leader-line labels; same
+  interactions (chip↔zone sync, pine shading, dim others). Attribution
+  "Boundary data © OpenStreetMap contributors" in the caption (ODbL).
+- Same recipe for every future city: fetch boundary once, simplify, embed.
