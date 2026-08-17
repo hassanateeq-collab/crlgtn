@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Corlington — prototype gallery</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@500..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2b26;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F7F9F7;--brass:#A97D2B;--hair:#E3E9E4;--soft:#66756d}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 "Instrument Sans",sans-serif;padding:44px 24px 90px}
+.wrap{max-width:880px;margin:0 auto}
+.tagline{font:600 11px "Instrument Sans";letter-spacing:.12em;color:var(--brass);text-transform:uppercase;margin-bottom:10px}
+h1{font:650 30px "Bricolage Grotesque";letter-spacing:-.015em;display:flex;align-items:center;gap:12px}
+h1 i{width:9px;height:9px;border-radius:50%;background:var(--brass);flex:none}
+.sub{color:var(--soft);font-size:14px;margin:8px 0 30px;max-width:64ch}
+.sect{font:600 12px "Instrument Sans";letter-spacing:.06em;color:var(--soft);text-transform:uppercase;margin:30px 0 12px}
+a.card{display:flex;align-items:center;gap:18px;background:#fff;border-radius:18px;box-shadow:0 1px 3px rgba(20,36,31,.05);padding:18px 22px;margin-bottom:12px;text-decoration:none;color:var(--ink);transition:box-shadow .15s;flex-wrap:wrap}
+a.card:hover{box-shadow:0 2px 6px rgba(20,36,31,.08),0 14px 32px -18px rgba(20,36,31,.22)}
+.num{flex:none;width:38px;height:38px;border-radius:12px;background:var(--sage);display:grid;place-items:center;font:650 14px "Spline Sans Mono";color:var(--deep)}
+.card b{font:650 15.5px "Instrument Sans";display:block}
+.card small{color:var(--soft);font-size:12.5px;display:block;margin-top:1px}
+.chip{margin-left:auto;border-radius:99px;padding:5px 13px;font:600 11.5px "Instrument Sans";flex:none}
+.ok{background:var(--sage);color:var(--deep)}
+.rev{background:#FBF3E2;color:var(--brass)}
+.soon{background:#eef0ee;color:#8a978f}
+.note{background:var(--sage);border-radius:14px;padding:14px 18px;font-size:13px;color:var(--deep);margin-top:26px}
+.note b{font-weight:650}
+.arch{opacity:.66}
+@media(max-width:640px){.chip{margin-left:0}}
+</style></head><body>
+<div class="wrap">
+  <div class="tagline">Prototype gallery · front-end only · mock data</div>
+  <h1><i></i>Corlington — every screen so far</h1>
+  <div class="sub">The booker's journey, in order. Everything is clickable; nothing is saved.
+  Reload any page to reset its state. Redlines welcome on any screen at any time.</div>
+
+  <div class="sect">The corporate journey</div>
+  <a class="card" href="sign-in.html">
+    <span class="num">1</span>
+    <span><b>Sign-in · corporate front door</b>
+    <small>Work email → 6-digit code · password option · closed-access, no sign-up</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="portal-home.html">
+    <span class="num">2</span>
+    <span><b>Portal home + new booking file</b>
+    <small>Stats, needs-your-decision, drafts, trips · 4-service form: hotels / apartments / rent-a-car / transfer</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="corporate-listing.html">
+    <span class="num">3</span>
+    <span><b>Hotel listing · search results</b>
+    <small>Real Karachi set · P1–P3 rate ladder on every card · negotiated-first · 3-hotel tray</small></span>
+    <span class="chip ok">approved</span></a>
+  <a class="card" href="property-inner.html">
+    <span class="num">4</span>
+    <span><b>Property inner page</b>
+    <small>Fixed shot list, lightbox · dining exactly · corporate courtesies · categories A/B/C with occupancy pricing</small></span>
+    <span class="chip ok">approved</span></a>
+
+  <div class="sect">The vendor's side</div>
+  <a class="card" href="sign-in.html#vendor">
+    <span class="num">5</span>
+    <span><b>Vendor magic link · hotel front office</b>
+    <small>No password · reply-window countdown · accept holds rooms · counter = alternates or discounts, never above card</small></span>
+    <span class="chip rev">in review</span></a>
+
+  <div class="sect">Ops — Corlington's own console</div>
+  <a class="card" href="credit-matrix.html">
+    <span class="num">6</span>
+    <span><b>Credit matrix</b>
+    <small>Hotel tiers HT1–HT4 × corporate A/B/C · pair overrides · the cash-flow rule</small></span>
+    <span class="chip ok">approved</span></a>
+  <a class="card" style="cursor:default" onclick="return false">
+    <span class="num">7</span>
+    <span><b>Ops console — dashboard · live board · money</b>
+    <small>The last design batch — starts on your go</small></span>
+    <span class="chip soon">up next</span></a>
+
+  <div class="sect">Archive — direction studies</div>
+  <a class="card arch" href="direction-b-atlas.html">
+    <span class="num">B</span>
+    <span><b>Atlas — the chosen language</b>
+    <small>Imagery-led, ink chips, brass "your rate" · now the product-wide direction</small></span>
+    <span class="chip ok">chosen</span></a>
+  <a class="card arch" href="direction-a-ledger.html">
+    <span class="num">A</span>
+    <span><b>Ledger</b><small>Not chosen</small></span></a>
+  <a class="card arch" href="direction-c-terminal.html">
+    <span class="num">C</span>
+    <span><b>Terminal</b><small>Not chosen</small></span></a>
+
+  <div class="note"><b>How to test:</b> start at 1 and walk down. Each page resets on reload.
+  The magic-link page (5) is best tried on a phone — that's where hotel staff will tap it.</div>
+</div>
+</body></html>

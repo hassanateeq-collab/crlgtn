@@ -231,6 +231,7 @@ h3.sect{font:650 15px "Bricolage Grotesque";padding:18px 22px 0}
 <script>
 function pv(b,v){document.querySelectorAll('.proto button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById(v).classList.add('on');window.scrollTo(0,0)}
+if(location.hash==='#vendor')pv(document.querySelectorAll('.proto button')[1],'vendor');
 /* sign-in steps */
 function toCode(){const v=document.getElementById('em').value||'you@company.com.pk';
  document.getElementById('emEcho').textContent=v;
