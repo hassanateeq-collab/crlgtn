@@ -603,3 +603,17 @@ yet list transfer bookings.
   the category; CTA flips to "Save & find cars". Wiring note for later:
   booking_files needs a car_category field (or reuse must_haves JSON) and
   car listings/V-packages should carry a category tag.
+
+## 2026-08-18 — Parked-features register created (BACKLOG.md)
+
+- Owner will keep dropping feature decisions mid-build that are NOT for
+  immediate construction. New standing structure: **BACKLOG.md** is the parked
+  -features queue — every such idea gets an F-### entry with a "Build when"
+  trigger the moment it is spoken; sessions must check BACKLOG.md when they
+  reach a trigger point. BUILD_LOG.md stays the decisions-of-record register.
+- **F-001 recorded: booking countersign by official company email.** Before a
+  booking is final, a confirmation email goes to the corporate's OFFICIAL
+  address of record (set at onboarding, not the booker's login); the confirmer
+  clicks and types their name + designation to countersign. Purpose: leaked
+  booker credentials alone cannot commit the company (fraud guard). Built as a
+  per-corporate toggle when the booking flow is wired; details in BACKLOG.md.
