@@ -54,7 +54,12 @@ const PACKAGE_LABELS: Record<string, string> = {
   P1: 'Room only',
   P2: 'Room + breakfast',
   P3: 'Room + half board',
+  V1: 'Self-drive',
+  V2: 'With driver',
+  V3: 'Driver + fuel',
 }
+
+const PKG_ORDER = ['P1', 'P2', 'P3', 'V1', 'V2', 'V3'] as const
 
 export function Results() {
   const { id } = useParams()
@@ -113,8 +118,12 @@ export function Results() {
         supabase
           .from('vendors')
           .select('id, name, property_subtype, stars_assigned, price_bracket, corridor_id, description')
-          .eq('vendor_type', 'hotel'),
-        supabase.from('listings').select('id, vendor_id, name, max_occupancy, bed_config').eq('active', true),
+          .eq('vendor_type', bf.service === 'car' ? 'rent_a_car' : 'hotel'),
+        supabase
+          .from('listings')
+          .select('id, vendor_id, name, max_occupancy, bed_config')
+          .eq('active', true)
+          .eq('listing_type', bf.service === 'car' ? 'vehicle' : 'room_type'),
         supabase
           .from('listing_rates')
           .select('listing_id, package_code, rate_pkr, corporate_id')
@@ -209,7 +218,7 @@ export function Results() {
         )
         // A hotel with no room that fits and prices is not a result.
         const usable = fitListings.filter((l) =>
-          ['P1', 'P2', 'P3'].some((p) => resolveRate(l.id, p) !== null),
+          PKG_ORDER.some((p) => resolveRate(l.id, p) !== null),
         )
         return { vendor: v, listings: usable }
       })
@@ -224,7 +233,7 @@ export function Results() {
     const m = matches.find((x) => x.vendor.id === vendorId)
     if (!m) return null
     const l = m.listings[0]
-    const pkg = (['P1', 'P2', 'P3'] as const).find((p) => resolveRate(l.id, p))
+    const pkg = PKG_ORDER.find((p) => resolveRate(l.id, p))
     return pkg ? { listingId: l.id, pkg } : null
   }
 
@@ -271,7 +280,7 @@ export function Results() {
       {/* Atlas header: title + the file's constraints as filter chips. */}
       <div className="flex flex-wrap items-center gap-2.5">
         <h1 className="mr-auto font-display text-2xl font-bold tracking-tight">
-          Hotels for {file.name}
+          {file.service === 'car' ? 'Vehicles' : 'Hotels'} for {file.name}
         </h1>
         {file.dealbreakers.map((c) => (
           <span
@@ -376,7 +385,8 @@ export function Results() {
                       PKR {pkrPlain(resolved.rate)}
                     </div>
                     <div className="text-[10.5px] opacity-75">
-                      per night · {PACKAGE_LABELS[pick.pkg].toLowerCase()}
+                      per {file.service === 'car' ? 'day' : 'night'} ·{' '}
+                      {PACKAGE_LABELS[pick.pkg].toLowerCase()}
                     </div>
                   </div>
                 )}
@@ -427,14 +437,16 @@ export function Results() {
                   )}
                   <div className="mb-3 mt-1.5 text-xs text-ink/50">
                     {[pickedListing?.bed_config,
-                      pickedListing ? `sleeps ${pickedListing.max_occupancy}` : null]
+                      pickedListing
+                        ? `${file.service === 'car' ? 'seats' : 'sleeps'} ${pickedListing.max_occupancy}`
+                        : null]
                       .filter(Boolean)
                       .join(' · ')}
                   </div>
 
                   {/* Package segments with live prices. */}
                   <div className="mb-3 flex rounded-xl bg-paper p-1">
-                    {(['P1', 'P2', 'P3'] as const).map((p) => {
+                    {PKG_ORDER.map((p) => {
                       const r = resolveRate(pick.listingId, p)
                       if (!r) return null
                       const on = pick.pkg === p

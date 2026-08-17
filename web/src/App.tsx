@@ -17,6 +17,7 @@ import { PortalLayout } from '@/routes/portal/PortalLayout'
 import { Files } from '@/routes/portal/Files'
 import { FileEditor } from '@/routes/portal/FileEditor'
 import { Results } from '@/routes/portal/Results'
+import { Transfers } from '@/routes/portal/Transfers'
 
 function Home() {
   const { identity, loading } = useIdentity()
@@ -63,6 +64,7 @@ function Gate() {
           <Route path="/files/:id/results" element={<Results />} />
           <Route path="/property/:id" element={<PropertyPage />} />
           <Route path="/invoices" element={<Invoices />} />
+          <Route path="/transfers" element={<Transfers />} />
         </Route>
         <Route path="/ops" element={<OpsLayout />}>
           <Route index element={<Dashboard />} />

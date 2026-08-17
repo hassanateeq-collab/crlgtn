@@ -32,6 +32,7 @@ export function FileEditor() {
 
   const [ref, setRef] = useState<string | null>(null)
   const [fileStatus, setFileStatus] = useState('draft')
+  const [service, setService] = useState<'hotel' | 'car'>('hotel')
   const [name, setName] = useState('')
   const [checkIn, setCheckIn] = useState('')
   const [checkOut, setCheckOut] = useState('')
@@ -96,6 +97,7 @@ export function FileEditor() {
       }
       setRef(f.data.ref)
       setFileStatus(f.data.status)
+      setService(f.data.service ?? 'hotel')
       setName(f.data.name)
       setCheckIn(f.data.check_in)
       setCheckOut(f.data.check_out)
@@ -146,6 +148,7 @@ export function FileEditor() {
         file: {
           ...(isNew ? {} : { id }),
           name: name.trim(),
+          service,
           check_in: checkIn,
           check_out: checkOut,
           rooms,
@@ -281,20 +284,44 @@ export function FileEditor() {
         )}
 
         <fieldset disabled={readOnly} className="space-y-6">
-          <Card title="Trip">
+          {isNew && (
+            <div className="flex rounded-xl bg-white p-1 shadow-[0_1px_2px_rgba(20,36,31,.08)]">
+              {(
+                [
+                  { key: 'hotel', label: 'Hotels' },
+                  { key: 'car', label: 'Rent-a-car' },
+                ] as const
+              ).map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition ${
+                    service === s.key
+                      ? 'bg-deep text-paper shadow'
+                      : 'text-ink/55 hover:text-ink'
+                  }`}
+                  onClick={() => setService(s.key)}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
+
+          <Card title={service === 'car' ? 'Rental' : 'Trip'}>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="sm:col-span-3">
                 <Field label="File name" hint="For your own list — e.g. 'Audit team, March visit'">
                   <Input required value={name} onChange={(e) => setName(e.target.value)} />
                 </Field>
               </div>
-              <Field label="Check-in">
+              <Field label={service === 'car' ? 'From (first day)' : 'Check-in'}>
                 <Input
                   type="date" required value={checkIn}
                   onChange={(e) => setCheckIn(e.target.value)}
                 />
               </Field>
-              <Field label="Check-out">
+              <Field label={service === 'car' ? 'Until (return day)' : 'Check-out'}>
                 <Input
                   type="date" required value={checkOut} min={checkIn || undefined}
                   onChange={(e) => setCheckOut(e.target.value)}
@@ -314,11 +341,13 @@ export function FileEditor() {
             </div>
           </Card>
 
-          <Card title="Rooms">
+          <Card title={service === 'car' ? 'Vehicles' : 'Rooms'}>
             <div className="space-y-2">
               {rooms.map((r, i) => (
                 <div key={i} className="flex items-center gap-3">
-                  <span className="w-16 text-sm text-ink/60">Room {i + 1}</span>
+                  <span className="w-20 text-sm text-ink/60">
+                    {service === 'car' ? 'Vehicle' : 'Room'} {i + 1}
+                  </span>
                   <select
                     className={`${selectCls} !w-40`}
                     value={r.guests}
@@ -328,9 +357,9 @@ export function FileEditor() {
                       )
                     }
                   >
-                    {[1, 2, 3, 4, 5, 6].map((n) => (
+                    {(service === 'car' ? [1, 2, 3, 4, 6, 8, 10, 12] : [1, 2, 3, 4, 5, 6]).map((n) => (
                       <option key={n} value={n}>
-                        {n} guest{n > 1 ? 's' : ''}
+                        {n} {service === 'car' ? 'passenger' : 'guest'}{n > 1 ? 's' : ''}
                       </option>
                     ))}
                   </select>
@@ -357,6 +386,7 @@ export function FileEditor() {
             </div>
           </Card>
 
+          {service === 'car' ? null : (
           <Card
             title="Deal-breakers"
             footer={
@@ -394,6 +424,7 @@ export function FileEditor() {
               })}
             </div>
           </Card>
+          )}
 
           <Card
             title="Urgency"

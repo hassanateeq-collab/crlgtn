@@ -503,3 +503,39 @@ machine-verified at least once in development.
 **SOFTWARE COMPLETE M0–M8.** Remaining to go-live is operational: Resend
 secrets, hosting, WABA, real supply + agreements, production UAT re-run,
 pilot booking. All enumerated in LAUNCH.md.
+
+---
+
+## 2026-08-18 — Session 6 · Atlas redesign round 1 + verticals
+
+**Page-by-page restart (owner unhappy with visual depth).** Process agreed:
+design-first, 3 directions mocked (Ledger/Atlas/Terminal, kept under
+web/public/mockups) → owner picked **B "Atlas"** (imagery-led, OTA-grade).
+Results page rebuilt in Atlas: hero-image cards, floating ink rate chip with
+brass YOUR RATE on negotiated, sage amenity pills, room panel with live-priced
+package segments, 15-minute promise under every Select. Logic untouched.
+Property page + remaining screens continue next rounds (tasks #1–#4).
+
+**Verticals activated (owner decisions 2026-08-18):**
+- **Rent-a-car = RFQ**, same machinery as hotels (owner corrected my
+  instant-book suggestion). Migration 015: booking_files.service
+  ('hotel'|'car'), package codes widened to [PV] with V1 self-drive /
+  V2 with driver / V3 driver+fuel. Results/FileEditor service-aware
+  (Vehicles/passengers/seats/per-day). E2E VERIFIED: CF-2612-KHI — Corolla V2
+  11,000×2 days = 22,000 booked via send→accept→book, invoice CI-1007.
+- **Transfers = both standalone + add-on.** Migrations 016/017:
+  transfer_bookings (TF-{seq}-KHI), invoices.transfer_booking_id,
+  public.book_transfer() atomic (rate resolve → booking → invoice dated from
+  TRAVEL date → deposit drawdown → handover notification → audit), 
+  ef_book_transfer endpoint, portal Transfers page (route cards at fixed
+  prices, pickup/dropoff toggle, flight no, address). E2E VERIFIED:
+  TF-501-KHI Airport↔Clifton 3,500, PK-301, invoice CI-1008.
+- Seed: Karachi Executive Cars (TEST) — Corolla/Hiace with V-rates + 2 routes.
+- Bug caught in verify: Results' usable-listing filter still hardcoded
+  P-codes → 0 car matches; fixed to PKG_ORDER.
+
+**Deferred (tracked in tasks):** transfer-as-add-on UI on hotel bookings ·
+vehicle wording in voucher PDF (currently prints room-style labels for car
+bookings) · ef_onboard_vendor still validates P-codes only (ops can't onboard
+V rates via console yet; seeds/SQL meanwhile) · ops Money/Reservations don't
+yet list transfer bookings.

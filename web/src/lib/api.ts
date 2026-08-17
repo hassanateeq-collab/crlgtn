@@ -170,6 +170,7 @@ export interface BookingFile {
   ref: string
   corporate_id: string
   name: string
+  service: 'hotel' | 'car'
   status: string
   check_in: string
   check_out: string
@@ -186,6 +187,7 @@ export interface BookingFilePayload {
   file: {
     id?: string
     name: string
+    service?: 'hotel' | 'car'
     check_in: string
     check_out: string
     rooms: { guests: number }[]
@@ -240,6 +242,28 @@ export interface BookingResult {
 
 export const bookOffer = (offerId: string) =>
   callFunction<BookingResult>('ef_book_offer', { offer_id: offerId })
+
+// ---- Transfers (instant book, fixed route prices) ---------------------------
+
+export interface TransferResult {
+  transfer_id: string
+  ref: string
+  route: string
+  vendor_name: string
+  price_pkr: number
+  invoice_number: string
+  invoice_status: string
+}
+
+export const bookTransfer = (input: {
+  listing_id: string
+  direction: 'pickup' | 'dropoff'
+  travel_at: string
+  flight_no?: string
+  passengers: number
+  pickup_point?: string
+  dropoff_point?: string
+}) => callFunction<TransferResult>('ef_book_transfer', input)
 
 export const opsOverrideAccept = (
   offerId: string,

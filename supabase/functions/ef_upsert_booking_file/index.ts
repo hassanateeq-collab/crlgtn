@@ -80,9 +80,17 @@ serveEdge("ef_upsert_booking_file", async ({ admin, actor, body, functionName }:
     }
   }
 
+  // Service decides which vendors the file searches: 'hotel' (default) or
+  // 'car' — cars run the identical RFQ machinery (owner decision 2026-08-18).
+  const service = (fileIn.service as string) ?? "hotel";
+  if (!["hotel", "car"].includes(service)) {
+    throw unprocessable("service must be hotel or car");
+  }
+
   const row = {
     corporate_id: corporateId,
     name,
+    service,
     check_in: checkIn,
     check_out: checkOut,
     rooms: rooms.map((r) => ({ guests: r.guests })),

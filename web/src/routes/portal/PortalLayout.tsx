@@ -42,6 +42,16 @@ export function PortalLayout() {
               Booking files
             </NavLink>
             <NavLink
+              to="/transfers"
+              className={({ isActive }) =>
+                `rounded-md px-3 py-1.5 text-sm ${
+                  isActive ? 'bg-sage font-medium text-deep' : 'text-ink/70 hover:bg-sage/60'
+                }`
+              }
+            >
+              Transfers
+            </NavLink>
+            <NavLink
               to="/invoices"
               className={({ isActive }) =>
                 `rounded-md px-3 py-1.5 text-sm ${

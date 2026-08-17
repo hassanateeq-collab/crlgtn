@@ -1,0 +1,15 @@
+-- Corlington · migration 017 · book_transfer() — instant transfer booking.
+--
+-- One transaction: route+vendor validation → rate resolve (negotiated over
+-- base; V2 because transfers are always driven) → transfer row (TF-{seq}-KHI)
+-- → invoice with credit terms dated from the TRAVEL date → deposit
+-- auto-drawdown when the balance covers → vendor WhatsApp handover queued →
+-- audit. SECURITY DEFINER, EXECUTE service_role-only — the same lockdown
+-- pattern as book_offer (migrations 011/009 lessons).
+--
+-- Errcodes: P0002 route_not_found · P0003 vendor_not_live / travel_in_past ·
+-- P0004 too_many_passengers / no_route_rate. ef_book_transfer maps these to
+-- 404/409/422.
+--
+-- Full body as applied lives in Supabase (migration `017_book_transfer`);
+-- it is the source of truth and identical to production.
