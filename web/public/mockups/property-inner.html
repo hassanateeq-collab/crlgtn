@@ -1,130 +1,238 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Prototype — Property inner page v2</title>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<title>Prototype — Property inner page v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@500..700&display=swap" rel="stylesheet">
 <style>
-:root{--ink:#14241F;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F6F8F6;--brass:#A97D2B;--hair:#D9E0DA;--gold:#e8c789;--red:#8f3b2e}
+:root{--ink:#1c2b26;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F7F9F7;--brass:#A97D2B;--hair:#E3E9E4;--gold:#e8c789;--soft:#66756d}
 *{margin:0;box-sizing:border-box}
-body{background:var(--paper);color:var(--ink);font:14px/1.5 "Instrument Sans",sans-serif;padding-bottom:110px}
-.shell{max-width:1120px;margin:0 auto;padding:26px 32px}
-.tagline{font:600 10px "Spline Sans Mono";letter-spacing:.16em;color:var(--brass);text-transform:uppercase;margin-bottom:8px}
-.crumb{font-size:11.5px;color:#7a8a81;margin-bottom:14px}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font:15px/1.65 "Instrument Sans",sans-serif;padding-bottom:120px}
+.shell{max-width:1100px;margin:0 auto;padding:28px 24px}
+.tagline{font:600 11px "Instrument Sans";letter-spacing:.1em;color:var(--brass);text-transform:uppercase;margin-bottom:10px}
+.crumb{font-size:13px;color:var(--soft);margin-bottom:18px}
 .crumb b{color:var(--deep)}
-.head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
-h1{font:700 30px "Bricolage Grotesque";letter-spacing:-.015em}
-.st{color:var(--brass);letter-spacing:2px;font-size:15px}
-.meta{font-size:13px;color:#5a6b62}
-.credit{margin-left:auto;background:var(--sage);color:var(--deep);border-radius:99px;padding:7px 14px;font:600 11.5px "Instrument Sans"}
-.audited{font-size:11.5px;color:#7a8a81;margin-top:4px}
+.head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font:650 34px/1.15 "Bricolage Grotesque";letter-spacing:-.015em}
+.st{color:var(--brass);letter-spacing:2px;font-size:16px}
+.meta{font-size:14px;color:var(--soft)}
+.credit{background:var(--sage);color:var(--deep);border-radius:99px;padding:8px 16px;font:600 12.5px "Instrument Sans"}
+.audited{font-size:13px;color:var(--soft);margin-top:6px}
 .audited b{color:var(--deep)}
-.shots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin:18px 0 6px}
-.shot{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#12443A,#3d7a68)}
+/* gallery */
+.shots{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;margin:22px 0 8px}
+.shot{position:relative;aspect-ratio:1;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#e3ece7,#cfdcd4);cursor:zoom-in;transition:transform .15s}
+.shot:hover{transform:translateY(-2px)}
 .shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.shot span{position:absolute;left:6px;bottom:6px;font:600 7.5px "Spline Sans Mono";letter-spacing:.1em;background:rgba(10,25,20,.72);color:#fff;padding:2px 6px;border-radius:5px;z-index:2}
-.shotnote{font-size:11px;color:#8a978f;margin-bottom:22px}
-.facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 26px}
-.fact{background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 2px rgba(20,36,31,.05)}
-.fact b{font:700 10px "Spline Sans Mono";letter-spacing:.12em;color:#7a8a81;text-transform:uppercase;display:block;margin-bottom:4px}
-.fact div{font-size:12.5px}
-.cmpwrap{background:#fff;border-radius:18px;box-shadow:0 1px 2px rgba(20,36,31,.06),0 14px 36px -18px rgba(20,36,31,.2);padding:22px 24px;overflow-x:auto}
-.cmphead{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
-.cmphead h2{font:700 19px "Bricolage Grotesque"}
-.dtg{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:#5a6b62;cursor:pointer;user-select:none}
-.dtg .sw{width:34px;height:20px;border-radius:99px;background:#c8d5cd;position:relative;transition:.15s}
-.dtg .sw:after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
-.dtg.on .sw{background:var(--pine)}.dtg.on .sw:after{left:16px}
-table{border-collapse:collapse;width:100%;min-width:780px}
-th,td{padding:10px 14px;font-size:12.5px;text-align:left;border-bottom:1px solid #eef2ef;vertical-align:top}
-col.sel-col{background:var(--sage)}
+.shot span{position:absolute;left:8px;bottom:8px;font:600 10px "Instrument Sans";letter-spacing:.03em;background:rgba(255,255,255,.92);color:var(--deep);padding:3px 9px;border-radius:99px;z-index:2}
+.shotnote{font-size:12.5px;color:var(--soft);margin-bottom:24px}
+/* glance tiles */
+.glance{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 26px}
+.tile{background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(20,36,31,.05)}
+.tile b{font:600 11.5px "Instrument Sans";letter-spacing:.05em;color:var(--soft);text-transform:uppercase;display:block;margin-bottom:5px}
+.tile div{font-size:14px;line-height:1.45}
+.tile .big{font:650 20px "Bricolage Grotesque";color:var(--deep)}
+/* cards */
+.card{background:#fff;border-radius:22px;box-shadow:0 1px 3px rgba(20,36,31,.05),0 16px 40px -24px rgba(20,36,31,.18);padding:26px 28px;margin-bottom:22px}
+.card h2{font:650 21px "Bricolage Grotesque";letter-spacing:-.01em;margin-bottom:4px}
+.card .sub{font-size:13.5px;color:var(--soft);margin-bottom:18px}
+/* dining */
+.dine{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}
+.dimg{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:4/3;background:linear-gradient(135deg,#e3ece7,#cfdcd4);cursor:zoom-in}
+.dimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.dimg span{position:absolute;left:10px;bottom:10px;font:600 10.5px "Instrument Sans";background:rgba(255,255,255,.92);color:var(--deep);padding:3px 10px;border-radius:99px;z-index:2}
+.dtitle{font:650 15.5px "Instrument Sans";color:var(--deep)}
+.dmeta{font-size:13px;color:var(--soft);margin:2px 0 10px}
+.menu{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:16px}
+.menu span{background:var(--sage);color:var(--deep);border-radius:99px;padding:6px 13px;font-size:12.5px;font-weight:500}
+.dnote{font-size:12.5px;color:var(--soft);background:var(--paper);border-radius:12px;padding:10px 14px}
+/* courtesies */
+.court{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 22px}
+.citem{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--paper)}
+.citem i{flex:none;width:30px;height:30px;border-radius:10px;background:var(--sage);color:var(--deep);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:14px}
+.citem b{font-weight:600;font-size:14px;display:block}
+.citem small{font-size:12.5px;color:var(--soft)}
+.badge-inc{display:inline-block;background:var(--deep);color:#fff;border-radius:99px;padding:2px 10px;font:600 10.5px "Instrument Sans";margin-left:6px;vertical-align:middle}
+/* compare table */
+.dtg{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--soft);cursor:pointer;user-select:none}
+.dtg .sw{width:36px;height:21px;border-radius:99px;background:#ccd8d1;position:relative;transition:.15s}
+.dtg .sw:after{content:"";position:absolute;top:2.5px;left:2.5px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.dtg.on .sw{background:var(--pine)}.dtg.on .sw:after{left:17px}
+.cmphead{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+.tblwrap{overflow-x:auto;margin:0 -28px;padding:0 28px}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{padding:12px 14px;font-size:14px;text-align:left;border-bottom:1px solid var(--paper);vertical-align:top}
+col.sel-col{background:#f1f6f3}
 .cat{cursor:pointer}
-.cat .cl{font:700 10px "Spline Sans Mono";letter-spacing:.14em;color:var(--brass)}
-.cat h3{font:700 15.5px "Bricolage Grotesque";margin:2px 0}
-.cat .cd{font-size:11px;color:#7a8a81;font-weight:400}
-.cat.on h3{color:var(--deep)}
-/* per-category gallery */
-.gmain{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:linear-gradient(135deg,#12443A,#3d7a68);margin-bottom:6px}
+.cat .cl{font:600 11px "Instrument Sans";letter-spacing:.08em;color:var(--brass);text-transform:uppercase}
+.cat h3{font:650 17px "Bricolage Grotesque";margin:3px 0 2px}
+.cat .cd{font-size:12.5px;color:var(--soft);font-weight:400}
+.gmain{position:relative;aspect-ratio:4/3;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#e3ece7,#cfdcd4);margin-bottom:7px;cursor:zoom-in}
 .gmain img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.gmain span{position:absolute;left:7px;bottom:7px;font:600 8px "Spline Sans Mono";letter-spacing:.1em;background:rgba(10,25,20,.72);color:#fff;padding:2px 7px;border-radius:5px;z-index:2}
-.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
-.thumb{position:relative;aspect-ratio:4/3;border-radius:7px;overflow:hidden;cursor:pointer;background:linear-gradient(135deg,#1D5C4D,#48806f);opacity:.75}
+.gmain span{position:absolute;left:9px;bottom:9px;font:600 10px "Instrument Sans";background:rgba(255,255,255,.92);color:var(--deep);padding:3px 9px;border-radius:99px;z-index:2}
+.thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.thumb{position:relative;aspect-ratio:4/3;border-radius:9px;overflow:hidden;cursor:pointer;background:#dfe8e2;opacity:.72;transition:opacity .12s}
+.thumb:hover{opacity:1}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.thumb.on{opacity:1;outline:2px solid var(--pine)}
-.rowl{font:600 10.5px "Spline Sans Mono";letter-spacing:.1em;color:#7a8a81;text-transform:uppercase;white-space:nowrap}
+.thumb.on{opacity:1;outline:2.5px solid var(--pine)}
+.rowl{font:600 12.5px "Instrument Sans";color:var(--soft);white-space:nowrap}
+.rowl small{display:block;font-weight:400;font-size:11.5px;color:#9aa8a0}
 td.diff{font-weight:600;color:var(--deep)}
-tr.same td{color:#9aa8a0}
-tr.same td.rowl{color:#c2ccc6}
-tr.hidden{display:none}
-tr.sect td{background:var(--paper);font:700 10px "Spline Sans Mono";letter-spacing:.14em;color:#5a6b62;text-transform:uppercase;padding:7px 14px}
-.ptabs{display:inline-flex;background:var(--paper);border-radius:9px;padding:3px;margin-left:12px;vertical-align:middle}
-.ptabs span{padding:5px 12px;border-radius:7px;font:700 10.5px "Spline Sans Mono";color:#7a8a81;cursor:pointer}
-.ptabs span.on{background:#fff;color:var(--deep);box-shadow:0 1px 3px rgba(20,36,31,.12)}
-.p-cell{cursor:pointer;font-family:"Spline Sans Mono"}
-.p-cell b{font-size:13.5px}
-.p-cell i{font-style:normal;color:var(--brass);font-size:9px;vertical-align:top}
-.p-cell small{display:block;font-size:9.5px;color:#9aa8a0}
-.p-cell.on{outline:2px solid var(--pine);outline-offset:-2px;border-radius:8px;background:var(--sage)}
-.p-cell.na{color:#b9c4be;cursor:not-allowed;font-family:"Instrument Sans";font-size:11.5px}
-.maxrow b{font-family:"Spline Sans Mono"}
-.maxrow .cap{display:inline-block;background:var(--paper);border:1px solid var(--hair);border-radius:7px;padding:2px 8px;font:700 11px "Spline Sans Mono";color:var(--deep);margin-right:6px}
-.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);backdrop-filter:blur(8px);border-top:1px solid var(--hair);padding:12px 32px;display:flex;align-items:center;gap:16px;z-index:30}
-.bar .sum{font-size:12.5px;color:#5a6b62;line-height:1.4}
-.bar .sum b{color:var(--ink);font-family:"Bricolage Grotesque";font-size:15px}
-.bar .brk{font:500 10.5px "Spline Sans Mono";color:#8a978f}
+tr.same td{color:#a4b0aa}
+tr.sect td{background:var(--paper);font:600 12px "Instrument Sans";letter-spacing:.05em;color:var(--soft);text-transform:uppercase;padding:9px 14px;border-radius:0}
+.ptabs{display:inline-flex;background:#fff;border-radius:10px;padding:3px;margin-left:10px;vertical-align:middle;box-shadow:inset 0 0 0 1px var(--hair)}
+.ptabs span{padding:5px 14px;border-radius:8px;font:600 12px "Instrument Sans";color:var(--soft);cursor:pointer}
+.ptabs span.on{background:var(--deep);color:#fff}
+.p-cell{cursor:pointer;border-radius:12px}
+.p-cell b{font:650 16px "Bricolage Grotesque"}
+.p-cell i{font-style:normal;color:var(--brass);font-size:10.5px;font-weight:600}
+.p-cell small{display:block;font-size:11.5px;color:#9aa8a0}
+.p-cell.on{outline:2.5px solid var(--pine);outline-offset:-2px;background:var(--sage)}
+.p-cell.na{color:#b6c1bb;cursor:not-allowed}
+.cap{display:inline-block;background:var(--sage);border-radius:8px;padding:2px 10px;font:650 13px "Bricolage Grotesque";color:var(--deep);margin-right:7px}
+/* sticky bar */
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.97);backdrop-filter:blur(10px);border-top:1px solid var(--hair);padding:13px 24px;display:flex;align-items:center;gap:16px;z-index:30;flex-wrap:wrap}
+.bar .sum{font-size:13px;color:var(--soft);line-height:1.45;min-width:0}
+.bar .sum b{color:var(--ink);font:650 15.5px "Bricolage Grotesque"}
 .bar .amt{margin-left:auto;text-align:right}
-.bar .amt .a{font:700 20px "Bricolage Grotesque"}
-.bar .amt small{display:block;font-size:10px;color:#8a978f}
-.bar button{background:var(--ink);color:#fff;border:0;border-radius:12px;font:700 13.5px "Instrument Sans";padding:13px 22px;cursor:pointer}
-.bar button small{display:block;font:500 9px;opacity:.7}
+.bar .amt .a{font:650 21px "Bricolage Grotesque"}
+.bar .amt small{display:block;font-size:11px;color:var(--soft)}
+.bar button{background:var(--pine);color:#fff;border:0;border-radius:14px;font:650 14px "Instrument Sans";padding:14px 24px;cursor:pointer}
+.bar button:hover{background:var(--deep)}
+.bar button small{display:block;font:500 10px;opacity:.75;margin-top:1px}
+/* lightbox */
+.lb{position:fixed;inset:0;background:rgba(14,24,20,.88);display:none;align-items:center;justify-content:center;z-index:99;flex-direction:column;gap:14px;padding:24px}
+.lb.open{display:flex}
+.lb img{max-width:92vw;max-height:78vh;border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.lb .cap{background:none;color:#fff;font:600 14px "Instrument Sans";margin:0;padding:0}
+.lb .nav{display:flex;gap:12px}
+.lb button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:12px;font:600 14px "Instrument Sans";padding:10px 18px;cursor:pointer}
+.lb button:hover{background:rgba(255,255,255,.28)}
+/* responsive */
+@media(max-width:920px){
+  .shots{grid-template-columns:repeat(4,1fr)}
+  .glance{grid-template-columns:repeat(2,1fr)}
+  .dine{grid-template-columns:1fr}
+  .dimg{max-width:420px}
+  .court{grid-template-columns:1fr}
+  h1{font-size:27px}
+}
+@media(max-width:560px){
+  .shell{padding:20px 14px}
+  .shots{grid-template-columns:repeat(2,1fr)}
+  .glance{grid-template-columns:1fr 1fr}
+  .card{padding:20px 16px;border-radius:18px}
+  .tblwrap{margin:0 -16px;padding:0 16px}
+  .credit{margin-left:0}
+  .bar{padding:10px 14px;gap:10px}
+  .bar .sum{font-size:11.5px}
+  .bar button{padding:12px 16px;font-size:13px}
+}
 </style></head><body>
 <div class="shell">
-  <div class="tagline">Prototype v2 · Property inner page · Front-end only</div>
-  <div class="crumb">Results / <b>Pearl Continental Karachi</b> · viewing as Northbridge Textiles (tier A) · file CF-2613-KHI · 14–17 Sept · 3 rooms · 3 nights</div>
+  <div class="tagline">Prototype v3 · Property inner page · Front-end only</div>
+  <div class="crumb">Results / <b>Pearl Continental Karachi</b> · viewing as Northbridge Textiles · CF-2613-KHI · 14–17 Sept · 3 rooms · 3 nights</div>
 
   <div class="head">
     <h1>Pearl Continental Karachi</h1><span class="st">★★★★★</span>
     <span class="meta">Hotel · Saddar (Club Road) · B5</span>
-    <span class="credit">✓ On credit — invoiced on your terms</span>
+    <span class="credit" style="margin-left:auto">✓ On credit — invoiced on your terms</span>
   </div>
-  <div class="audited">Audited on-site by <b>Corlington</b> · amenities verified 12 Aug 2026 · every photo follows the fixed shot list — same shots, same order, every hotel</div>
+  <div class="audited">Audited on-site by <b>Corlington</b> · verified 12 Aug 2026 · every photo follows the fixed shot list — same shots, same order, every hotel</div>
 
   <div class="shots" id="shots"></div>
-  <div class="shotnote">The property in eight shots — facade to meeting floor. Room-category photos live in the table below, where the comparison happens.</div>
+  <div class="shotnote">Tap any photo to view it full-size. Room-category photos live in the comparison below.</div>
 
-  <div class="facts">
-    <div class="fact"><b>Check-in / out</b><div>15:00 / 12:00 PKT</div></div>
-    <div class="fact"><b>Cancellation</b><div>Free until 72h before check-in</div></div>
-    <div class="fact"><b>No-show</b><div>One night charged</div></div>
-    <div class="fact"><b>Payment</b><div>Bill to company — nothing at the desk except personal extras</div></div>
+  <div class="glance">
+    <div class="tile"><b>Property size</b><div><span class="big">210</span> rooms · 12 floors</div></div>
+    <div class="tile"><b>Airport transfer</b><div>Pick-up &amp; drop-off <span class="badge-inc">Included</span><br><small style="color:var(--soft)">both ways, sedan, on request</small></div></div>
+    <div class="tile"><b>Breakfast</b><div>Buffet + in-room à la carte<br><small style="color:var(--soft)">06:30–10:30, no extra charge in-room</small></div></div>
+    <div class="tile"><b>Check-in / out</b><div>15:00 / 12:00 PKT<br><small style="color:var(--soft)">free cancellation until 72h before</small></div></div>
   </div>
 
-  <div class="cmpwrap">
-    <div class="cmphead">
-      <h2>Room categories — the differences that matter</h2>
-      <div class="dtg on" id="dtg" onclick="this.classList.toggle('on');render()">
-        Show differences only <span class="sw"></span>
+  <div class="card">
+    <h2>Dining, exactly</h2>
+    <div class="sub">What is actually served — not “breakfast included” and a surprise at 7am.</div>
+    <div class="dine">
+      <div class="dimg" onclick="lbOpen(DINEIMGS,0)"><img src="" data-i="photo-1533089860892-a7c6f0a88666" alt=""><span>Breakfast buffet — actual spread</span></div>
+      <div>
+        <div class="dtitle">Breakfast — buffet at Marco Polo, or in-room à la carte <span class="badge-inc">All packages P2+</span></div>
+        <div class="dmeta">06:30–10:30 · in-room service at no extra charge · early tray from 05:30 for red-eye flights</div>
+        <div class="menu">
+          <span>Live egg station</span><span>Parathas &amp; naan</span><span>Halwa puri (Sat–Sun)</span>
+          <span>Chicken sausages</span><span>Seasonal fruit</span><span>Yogurt &amp; lassi</span>
+          <span>Fresh juices</span><span>Tea &amp; coffee</span>
+        </div>
+        <div class="dtitle">Half board (P3) — dinner buffet</div>
+        <div class="dmeta">Pakistani &amp; continental mains · live BBQ Thursdays · dessert bar · lunch swap on request for site teams</div>
+        <div class="dnote">Menus verified at the Corlington audit and re-checked quarterly — if the hotel changes the spread, this page changes with it.</div>
       </div>
     </div>
-    <table id="cmp"></table>
+  </div>
+
+  <div class="card">
+    <h2>Corporate courtesies — included free</h2>
+    <div class="sub">Confirmed in writing with the hotel for Corlington corporate guests · verified 12 Aug 2026</div>
+    <div class="court">
+      <div class="citem"><i>🚗</i><div><b>Airport pick-up &amp; drop-off</b><small>Both ways, sedan — book with your stay or via the desk</small></div></div>
+      <div class="citem"><i>👔</i><div><b>Daily pressing — one outfit</b><small>Returned same evening if given before 6pm</small></div></div>
+      <div class="citem"><i>🖨</i><div><b>Print &amp; scan — up to 5 pages/day</b><small>Business centre, 24 hours</small></div></div>
+      <div class="citem"><i>🫖</i><div><b>Evening tea &amp; biscuits</b><small>Served to the room, 5–7pm, on request</small></div></div>
+      <div class="citem"><i>💧</i><div><b>Bottled water — 2 daily</b><small>Replenished at turndown</small></div></div>
+      <div class="citem"><i>🕑</i><div><b>Late checkout to 2pm</b><small>Subject to availability — guaranteed for tier-A corporates</small></div></div>
+      <div class="citem"><i>🏊</i><div><b>Pool &amp; gym access</b><small>06:00–22:00, towels provided</small></div></div>
+      <div class="citem"><i>📶</i><div><b>Fast wifi — measured 100 Mbps</b><small>No device limit, no daily voucher nonsense</small></div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="cmphead">
+      <div><h2>Room categories — the differences that matter</h2>
+      <div class="sub" style="margin:0">Three categories, compared like a spec sheet. Tap photos to enlarge.</div></div>
+      <div class="dtg on" id="dtg" onclick="this.classList.toggle('on');render()">Differences only <span class="sw"></span></div>
+    </div>
+    <div class="tblwrap"><table id="cmp"></table></div>
   </div>
 </div>
 
 <div class="bar">
-  <span class="sum"><b id="barCat"></b> <span id="barPkg"></span><br><span class="brk" id="barBrk"></span></span>
+  <span class="sum"><b id="barCat"></b> <span id="barPkg"></span><br><span id="barBrk"></span></span>
   <div class="amt"><div class="a" id="barAmt"></div><small id="barTot"></small></div>
-  <button>Add to request — priority 1<small>offers back in 15 minutes — never booked without you</small></button>
+  <button>Add to request<small>offers back in 15 minutes — never booked without you</small></button>
+</div>
+
+<div class="lb" id="lb" onclick="if(event.target===this)lbClose()">
+  <img id="lbImg" src="" alt="">
+  <div class="cap" id="lbCap"></div>
+  <div class="nav">
+    <button onclick="lbNav(-1)">‹ Previous</button>
+    <button onclick="lbClose()">Close</button>
+    <button onclick="lbNav(1)">Next ›</button>
+  </div>
 </div>
 
 <script>
-const IMG=i=>`https://images.unsplash.com/${i}?auto=format&fit=crop&w=420&q=60`;
-const SHOTS=[["FACADE","photo-1551882547-ff40c63fe5fa"],["LOBBY","photo-1596394516093-501ba68a0ba6"],
- ["STANDARD ROOM","photo-1611892440504-42a792e24d32"],["BED","photo-1590490360182-c33d57733427"],
- ["BATHROOM","photo-1584622650111-993a426fbf0a"],["WORK DESK","photo-1486946255434-2466348c2166"],
- ["WARDROBE","photo-1595526114035-0d45ed16cfbf"],["MEETING FLOOR","photo-1431540015161-0bf868a2d407"]];
-document.getElementById('shots').innerHTML=SHOTS.map(([l,i])=>
- `<div class="shot"><img src="${IMG(i)}" onerror="this.remove()" alt=""><span>${l}</span></div>`).join("");
+const IMG=(i,w=520)=>`https://images.unsplash.com/${i}?auto=format&fit=crop&w=${w}&q=65`;
+const SHOTS=[["Facade","photo-1551882547-ff40c63fe5fa"],["Lobby","photo-1596394516093-501ba68a0ba6"],
+ ["Standard room","photo-1611892440504-42a792e24d32"],["Bed","photo-1590490360182-c33d57733427"],
+ ["Bathroom","photo-1584622650111-993a426fbf0a"],["Work desk","photo-1486946255434-2466348c2166"],
+ ["Wardrobe","photo-1595526114035-0d45ed16cfbf"],["Meeting floor","photo-1431540015161-0bf868a2d407"]];
+const DINEIMGS=[{c:"Breakfast buffet — actual spread",i:"photo-1533089860892-a7c6f0a88666"},{c:"Dinner buffet — Thursday BBQ",i:"photo-1414235077428-338989a2e8c0"}];
+
+document.getElementById('shots').innerHTML=SHOTS.map(([l,i],x)=>
+ `<div class="shot" onclick="lbOpen(SHOTIMGS,${x})"><img src="${IMG(i)}" onerror="this.remove()" alt=""><span>${l}</span></div>`).join("");
+const SHOTIMGS=SHOTS.map(([c,i])=>({c,i}));
+document.querySelector('.dimg img').src=IMG(DINEIMGS[0].i);
+
+/* lightbox */
+let lbList=[],lbIdx=0;
+function lbOpen(list,idx){lbList=list;lbIdx=idx;lbShow();document.getElementById('lb').classList.add('open')}
+function lbShow(){const it=lbList[lbIdx];document.getElementById('lbImg').src=IMG(it.i,1400);document.getElementById('lbCap').textContent=`${it.c}  ·  ${lbIdx+1} / ${lbList.length}`}
+function lbNav(d){lbIdx=(lbIdx+d+lbList.length)%lbList.length;lbShow()}
+function lbClose(){document.getElementById('lb').classList.remove('open')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')lbClose();if(e.key==='ArrowRight')lbNav(1);if(e.key==='ArrowLeft')lbNav(-1)});
 
 const NIGHTS=3,ROOMS=3;
-const SHOTL=["ROOM","BED","BATH","DESK","VIEW"];
+const SHOTL=["Room","Bed","Bath","Desk","View"];
 const CATS=[
  {k:"A",n:"Premier King",d:"Corner rooms, sea-facing floors 8–12",max:3,maxN:"2 + 1 rollaway",
   imgs:["photo-1590490360182-c33d57733427","photo-1611892440504-42a792e24d32","photo-1584622650111-993a426fbf0a","photo-1486946255434-2466348c2166","photo-1445019980597-93fa8acb246c"],
@@ -136,7 +244,6 @@ const CATS=[
   imgs:["photo-1578683010236-d716f9a3f461","photo-1571003123894-1f0594d2b5d9","photo-1584622650111-993a426fbf0a","photo-1595526114035-0d45ed16cfbf","photo-1520250497591-112f2f40a3f4"],
   extra:null},
 ];
-/* occupancy-based pricing: s = single, d = double (per room / night) */
 const PR={
  A:{P1:{s:33000,d:35000,negs:1,negd:1},P2:{s:36500,d:39000,negd:1},P3:{s:42000,d:46000}},
  B:{P1:{s:28500,d:30000,negd:1},P2:{s:32000,d:34000},P3:{s:37500,d:40000}},
@@ -160,63 +267,52 @@ const SPECS=[
 let sel={cat:"B",pkg:"P1",basis:"d",extra:0};
 let gm={A:0,B:0,C:0};
 
-function nightRate(){
-  const p=PR[sel.cat][sel.pkg];
-  const base=sel.basis==="s"?p.s:p.d;
-  const c=CATS.find(c=>c.k===sel.cat);
-  const ex=sel.extra>0&&c.extra?sel.extra*c.extra[sel.pkg]:0;
-  return {base,ex,total:base+ex};
-}
-function setMain(k,i){gm[k]=i;render();}
-function pickPrice(k,basis){sel.cat=k;sel.basis=basis;const c=CATS.find(c=>c.k===k);if(!c.extra)sel.extra=0;if(sel.extra>c.max-2)sel.extra=Math.max(0,c.max-2);render();}
-function cycExtra(k){const c=CATS.find(c=>c.k===k);if(!c.extra)return;sel.cat=k;sel.basis="d";sel.extra=(sel.extra+1)%(c.max-1);render();}
-function setPkg(p){sel.pkg=p;render();}
+function catImgs(c){return c.imgs.map((i,x)=>({c:`${c.n} — ${SHOTL[x]}`,i}))}
+function nightRate(){const p=PR[sel.cat][sel.pkg];const base=sel.basis==="s"?p.s:p.d;
+  const c=CATS.find(c=>c.k===sel.cat);const ex=sel.extra>0&&c.extra?sel.extra*c.extra[sel.pkg]:0;
+  return{base,ex,total:base+ex}}
+function setMain(k,i){gm[k]=i;render()}
+function pickPrice(k,basis){sel.cat=k;sel.basis=basis;const c=CATS.find(c=>c.k===k);
+  if(!c.extra)sel.extra=0;if(sel.extra>c.max-2)sel.extra=Math.max(0,c.max-2);render()}
+function cycExtra(k){const c=CATS.find(c=>c.k===k);if(!c.extra)return;
+  sel.cat=k;sel.basis="d";sel.extra=(sel.extra+1)%(c.max-1);render()}
+function setPkg(p){sel.pkg=p;render()}
 
 function render(){
   const diffOnly=document.getElementById('dtg').classList.contains('on');
-  let html=`<colgroup><col style="width:180px">${CATS.map(c=>`<col${c.k===sel.cat?' class="sel-col"':''}>`).join("")}</colgroup>`;
+  let html=`<colgroup><col style="width:170px">${CATS.map(c=>`<col${c.k===sel.cat?' class="sel-col"':''}>`).join("")}</colgroup>`;
   html+=`<tr><th></th>${CATS.map(c=>`<th class="cat${c.k===sel.cat?' on':''}" onclick="sel.cat='${c.k}';render()">
-    <span class="cl">CATEGORY ${c.k}${c.k===sel.cat?' · SELECTED':''}</span><h3>${c.n}</h3><span class="cd">${c.d}</span></th>`).join("")}</tr>`;
-
-  /* per-category 5-shot gallery */
-  html+=`<tr><td class="rowl">See the room<br><span style="text-transform:none;font:400 10px 'Instrument Sans';color:#9aa8a0">5 shots each — click the thumbnails</span></td>${
-    CATS.map(c=>`<td>
-      <div class="gmain"><img src="${IMG(c.imgs[gm[c.k]])}" onerror="this.remove()" alt=""><span>${SHOTL[gm[c.k]]}</span></div>
-      <div class="thumbs">${c.imgs.slice(1).map((im,i)=>`<div class="thumb${gm[c.k]===i+1?' on':''}" onclick="setMain('${c.k}',${i+1})"><img src="${IMG(im)}" onerror="this.remove()" alt=""></div>`).join("")}</div>
+    <span class="cl">Category ${c.k}${c.k===sel.cat?' · selected':''}</span><h3>${c.n}</h3><span class="cd">${c.d}</span></th>`).join("")}</tr>`;
+  html+=`<tr><td class="rowl">See the room<small>5 photos each — tap to enlarge</small></td>${
+    CATS.map((c,ci)=>`<td>
+      <div class="gmain" onclick="lbOpen(catImgs(CATS[${ci}]),${`gm['${c.k}']`})"><img src="${IMG(c.imgs[gm[c.k]])}" onerror="this.remove()" alt=""><span>${SHOTL[gm[c.k]]}</span></div>
+      <div class="thumbs">${c.imgs.slice(1).map((im,i)=>`<div class="thumb${gm[c.k]===i+1?' on':''}" onclick="setMain('${c.k}',${i+1})"><img src="${IMG(im,200)}" onerror="this.remove()" alt=""></div>`).join("")}</div>
     </td>`).join("")}</tr>`;
-
   for(const r of SPECS){
-    if(r.s){html+=`<tr class="sect"><td colspan="4">${r.s}</td></tr>`;continue;}
-    const [label,a,b,c]=r;const same=a===b&&b===c;
+    if(r.s){html+=`<tr class="sect"><td colspan="4">${r.s}</td></tr>`;continue}
+    const[label,a,b,c]=r;const same=a===b&&b===c;
     if(same&&diffOnly)continue;
     html+=`<tr class="${same?'same':''}"><td class="rowl">${label}</td>${[a,b,c].map(v=>
       `<td class="${!same?'diff':''}">${v}</td>`).join("")}</tr>`;
   }
-
-  /* occupancy & pricing */
-  html+=`<tr class="sect"><td colspan="4">Occupancy & your rates — per room / night
+  html+=`<tr class="sect"><td colspan="4">Occupancy &amp; your rates — per room / night
     <span class="ptabs">${["P1","P2","P3"].map(p=>`<span class="${p===sel.pkg?'on':''}" onclick="setPkg('${p}')">${p}</span>`).join("")}</span>
-    <span style="font-weight:400;letter-spacing:0;text-transform:none;color:#9aa8a0"> · P1 room only · P2 + breakfast · P3 half board</span></td></tr>`;
-
+    <span style="font-weight:400;letter-spacing:0;text-transform:none;color:#9aa8a0"> room only · + breakfast · half board</span></td></tr>`;
   const occRow=(label,basis)=>`<tr><td class="rowl">${label}</td>${CATS.map(c=>{
     const p=PR[c.k][sel.pkg];const v=basis==="s"?p.s:p.d;const neg=basis==="s"?p.negs:p.negd;
     const on=c.k===sel.cat&&sel.basis===basis;
     return `<td class="p-cell${on?' on':''}" onclick="pickPrice('${c.k}','${basis}')">
-      <b>${v.toLocaleString()}</b>${neg?' <i>● your rate</i>':''}<small>≈ ${(v*NIGHTS*ROOMS).toLocaleString()} trip</small></td>`;
+      <b>${v.toLocaleString()}</b>${neg?' <i>● your rate</i>':''}<small>≈ ${(v*NIGHTS*ROOMS).toLocaleString()} this trip</small></td>`;
   }).join("")}</tr>`;
-  html+=occRow("1 person","s");
-  html+=occRow("2 persons","d");
-
-  html+=`<tr><td class="rowl">Each extra person<br><span style="text-transform:none;font:400 10px 'Instrument Sans';color:#9aa8a0">click to add — needs 2-person base</span></td>${CATS.map(c=>{
+  html+=occRow("1 person","s")+occRow("2 persons","d");
+  html+=`<tr><td class="rowl">Each extra person<small>tap to add — needs 2-person base</small></td>${CATS.map(c=>{
     if(!c.extra)return `<td class="p-cell na">Not permitted</td>`;
     const on=c.k===sel.cat&&sel.extra>0;
     return `<td class="p-cell${on?' on':''}" onclick="cycExtra('${c.k}')">
-      <b>+ ${c.extra[sel.pkg].toLocaleString()}</b><small>${on?`${sel.extra} extra selected`:`up to ${c.max-2} extra`}</small></td>`;
+      <b>+ ${c.extra[sel.pkg].toLocaleString()}</b><small>${on?`${sel.extra} extra selected`:`up to ${c.max-2}`}</small></td>`;
   }).join("")}</tr>`;
-
-  html+=`<tr class="maxrow"><td class="rowl">Maximum occupancy</td>${CATS.map(c=>
-    `<td class="diff"><span class="cap">${c.max} MAX</span>${c.maxN}</td>`).join("")}</tr>`;
-
+  html+=`<tr><td class="rowl">Maximum occupancy</td>${CATS.map(c=>
+    `<td class="diff"><span class="cap">${c.max} max</span>${c.maxN}</td>`).join("")}</tr>`;
   document.getElementById('cmp').innerHTML=html;
 
   const cat=CATS.find(c=>c.k===sel.cat);
@@ -225,10 +321,10 @@ function render(){
   document.getElementById('barCat').textContent=`Category ${sel.cat} — ${cat.n}`;
   document.getElementById('barPkg').textContent=`· ${sel.pkg} · ${persons} person${persons>1?'s':''}/room`;
   document.getElementById('barBrk').textContent=
-    ex?`${base.toLocaleString()} base + ${sel.extra} × ${(ex/sel.extra).toLocaleString()} extra = ${total.toLocaleString()} /night`
-      :`${base.toLocaleString()} /night · ${sel.basis==="s"?"single":"double"} occupancy`;
+    ex?`${base.toLocaleString()} base + ${sel.extra} × ${(ex/sel.extra).toLocaleString()} extra = ${total.toLocaleString()} per night`
+      :`${base.toLocaleString()} per night · ${sel.basis==="s"?"single":"double"} occupancy`;
   document.getElementById('barAmt').textContent=`PKR ${total.toLocaleString()}`;
-  document.getElementById('barTot').textContent=`per room/night · ≈ ${(total*NIGHTS*ROOMS).toLocaleString()} for this trip`;
+  document.getElementById('barTot').textContent=`per room/night · ≈ ${(total*NIGHTS*ROOMS).toLocaleString()} this trip`;
 }
 render();
 </script>
