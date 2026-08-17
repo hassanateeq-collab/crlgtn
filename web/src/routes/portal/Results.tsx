@@ -259,11 +259,8 @@ export function Results() {
   if (error) return <Notice tone="error">{error}</Notice>
   if (!loaded || !file) return <p className="text-sm text-ink/50">Searching…</p>
 
-  const selectCls =
-    'rounded-md border border-hairline bg-white px-2 py-1.5 text-sm text-ink focus:border-pine focus:outline-none'
-
   return (
-    <div className="space-y-5 pb-28">
+    <div className="space-y-6 pb-28">
       <nav className="text-xs text-ink/50">
         <Link to="/files" className="hover:text-ink">Booking files</Link>
         {' / '}
@@ -271,13 +268,26 @@ export function Results() {
         {' / results'}
       </nav>
 
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="text-xl">Hotels for {file.name}</h1>
-        <span className="text-sm text-ink/60">
+      {/* Atlas header: title + the file's constraints as filter chips. */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <h1 className="mr-auto font-display text-2xl font-bold tracking-tight">
+          Hotels for {file.name}
+        </h1>
+        {file.dealbreakers.map((c) => (
+          <span
+            key={c}
+            className="rounded-full bg-deep px-4 py-2 text-xs font-medium text-paper"
+          >
+            {amenityLabels.get(c) ?? c} ✓
+          </span>
+        ))}
+        {file.corridor_id && (
+          <span className="rounded-full border border-hairline bg-white px-4 py-2 text-xs font-medium text-deep">
+            {corridorNames.get(file.corridor_id) ?? 'Corridor'}
+          </span>
+        )}
+        <span className="rounded-full border border-hairline bg-white px-4 py-2 text-xs font-medium text-ink/60">
           {matches.length} match{matches.length === 1 ? '' : 'es'}
-          {file.corridor_id && ` · ${corridorNames.get(file.corridor_id) ?? 'corridor'}`}
-          {(file.dealbreakers?.length ?? 0) > 0 &&
-            ` · must have: ${file.dealbreakers.map((c) => amenityLabels.get(c) ?? c).join(', ')}`}
         </span>
       </div>
 
@@ -289,143 +299,181 @@ export function Results() {
       )}
 
       {matches.length === 0 && (
-        <p className="rounded-lg border border-dashed border-hairline p-10 text-center text-sm text-ink/50">
+        <p className="rounded-2xl border border-dashed border-hairline p-12 text-center text-sm text-ink/50">
           No hotels match this corridor and deal-breaker combination. Loosen a
           deal-breaker or widen the corridor in the file.
         </p>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-8">
         {matches.map(({ vendor, listings: vls }) => {
           const pick = pickFor(vendor.id)!
+          const pickedListing = vls.find((l) => l.id === pick.listingId)
           const resolved = resolveRate(pick.listingId, pick.pkg)
           const selected = selection.find((s) => s.vendorId === vendor.id)
           const priority = selected ? selection.indexOf(selected) + 1 : null
           const amenityChips = [...(verifiedByVendor.get(vendor.id) ?? [])]
           const inclusions = inclusionsByVendor.get(vendor.id) ?? []
+          const cover = covers.get(vendor.id)
 
           return (
-            <div
+            <article
               key={vendor.id}
-              className={`grid gap-4 rounded-lg border bg-white p-4 sm:grid-cols-[10rem_1fr_auto] ${
-                selected ? 'border-pine ring-1 ring-pine' : 'border-hairline'
+              className={`overflow-hidden rounded-[20px] bg-white shadow-[0_1px_2px_rgba(20,36,31,.06),0_12px_32px_-12px_rgba(20,36,31,.18)] transition-shadow ${
+                selected ? 'ring-2 ring-pine' : ''
               }`}
             >
-              {covers.get(vendor.id) ? (
-                <img
-                  src={covers.get(vendor.id)}
-                  alt={vendor.name}
-                  className="aspect-[4/3] w-full rounded object-cover"
-                />
-              ) : (
-                <div className="hidden aspect-[4/3] items-center justify-center rounded bg-sage text-xs text-ink/40 sm:flex">
-                  No photo
-                </div>
-              )}
-
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-baseline gap-x-2">
+              {/* ---- photo hero with overlaid identity + floating rate ---- */}
+              <div className="relative aspect-[21/8] min-h-44 bg-gradient-to-br from-[#0d332b] via-pine to-[#48806f]">
+                {cover && (
+                  <img
+                    src={cover}
+                    alt={vendor.name}
+                    className="absolute inset-0 size-full object-cover"
+                  />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-[rgba(10,25,20,.75)] via-transparent to-transparent" />
+                {selected && (
+                  <span className="tabular absolute left-5 top-4 flex size-9 items-center justify-center rounded-full bg-brass font-display text-base font-bold text-white shadow-lg">
+                    {priority}
+                  </span>
+                )}
+                <div className="absolute bottom-5 left-6 right-40 text-white">
                   <Link
                     to={`/property/${vendor.id}`}
-                    className="text-base font-semibold text-deep hover:underline"
+                    className="font-display text-2xl font-bold tracking-tight hover:underline sm:text-3xl"
                   >
                     {vendor.name}
                   </Link>
-                  {vendor.stars_assigned && (
-                    <span className="text-sm text-brass">{'★'.repeat(vendor.stars_assigned)}</span>
-                  )}
-                  <span className="text-xs text-ink/50">
-                    {[vendor.property_subtype, corridorNames.get(vendor.corridor_id ?? '')]
-                      .filter(Boolean)
-                      .join(' · ')}
-                  </span>
-                  {vendor.price_bracket && (
-                    <span className="tabular rounded-full border border-hairline px-1.5 text-[10px] uppercase">
-                      {vendor.price_bracket}
-                    </span>
-                  )}
-                </div>
-
-                {vendor.description && (
-                  <p className="mt-1 line-clamp-2 max-w-prose text-sm text-ink/70">
-                    {vendor.description}
-                  </p>
-                )}
-
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {amenityChips.map((code) => (
-                    <span key={code} className="rounded-full bg-sage px-2 py-0.5 text-[11px] text-deep">
-                      {amenityLabels.get(code) ?? code} ✓
-                    </span>
-                  ))}
-                  {inclusions.slice(0, 2).map((x) => (
-                    <span
-                      key={x}
-                      className="rounded-full border border-hairline px-2 py-0.5 text-[11px] text-ink/60"
-                    >
-                      incl. {x}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-3 flex flex-wrap items-center gap-2">
-                  <select
-                    className={selectCls}
-                    value={pick.listingId}
-                    onChange={(e) =>
-                      setPicks((p) =>
-                        new Map(p).set(vendor.id, { listingId: e.target.value, pkg: pick.pkg }),
-                      )
-                    }
-                  >
-                    {vls.map((l) => (
-                      <option key={l.id} value={l.id}>
-                        {l.name}
-                        {l.bed_config ? ` · ${l.bed_config}` : ''}
-                      </option>
-                    ))}
-                  </select>
-                  <select
-                    className={selectCls}
-                    value={pick.pkg}
-                    onChange={(e) =>
-                      setPicks((p) =>
-                        new Map(p).set(vendor.id, { listingId: pick.listingId, pkg: e.target.value }),
-                      )
-                    }
-                  >
-                    {(['P1', 'P2', 'P3'] as const)
-                      .filter((p) => resolveRate(pick.listingId, p) !== null)
-                      .map((p) => (
-                        <option key={p} value={p}>
-                          {p} · {PACKAGE_LABELS[p]}
-                        </option>
-                      ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="flex flex-row items-center justify-between gap-3 sm:flex-col sm:items-end sm:justify-center">
-                {resolved && (
-                  <div className="text-right">
-                    <div className="tabular text-lg">PKR {pkrPlain(resolved.rate)}</div>
-                    <div className="text-[11px] text-ink/50">per night</div>
-                    {resolved.negotiated && (
-                      <span className="mt-0.5 inline-block rounded-full bg-sage px-2 py-0.5 text-[10px] font-medium text-deep">
-                        your corporate rate
+                  <div className="mt-1.5 text-[13px] opacity-95">
+                    {vendor.stars_assigned && (
+                      <span className="tracking-wider text-[#e8c789]">
+                        {'★'.repeat(vendor.stars_assigned)}
                       </span>
                     )}
+                    <span className="ml-2">
+                      {[vendor.property_subtype, corridorNames.get(vendor.corridor_id ?? ''),
+                        vendor.price_bracket?.toUpperCase()]
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </span>
+                    <Link
+                      to={`/property/${vendor.id}`}
+                      className="ml-2 underline underline-offset-2 hover:text-[#e8c789]"
+                    >
+                      view property
+                    </Link>
+                  </div>
+                </div>
+                {resolved && (
+                  <div className="absolute -bottom-7 right-6 rounded-2xl bg-ink px-5 py-3.5 text-right text-white shadow-[0_10px_24px_-8px_rgba(20,36,31,.5)]">
+                    {resolved.negotiated && (
+                      <div className="font-mono text-[9px] font-semibold uppercase tracking-[.16em] text-[#e8c789]">
+                        Your rate
+                      </div>
+                    )}
+                    <div className="font-display text-2xl font-bold leading-tight">
+                      PKR {pkrPlain(resolved.rate)}
+                    </div>
+                    <div className="text-[10.5px] opacity-75">
+                      per night · {PACKAGE_LABELS[pick.pkg].toLowerCase()}
+                    </div>
                   </div>
                 )}
-                <Button
-                  type="button"
-                  variant={selected ? 'ghost' : 'primary'}
-                  onClick={() => toggleSelect(vendor.id, vendor.name)}
-                >
-                  {selected ? `Selected · #${priority}` : 'Select'}
-                </Button>
               </div>
-            </div>
+
+              {/* ---- body: story left, room selector right ---- */}
+              <div className="flex flex-col gap-6 px-6 pb-6 pt-10 sm:flex-row sm:items-start">
+                <div className="min-w-0 flex-1">
+                  {vendor.description && (
+                    <p className="max-w-[56ch] text-sm leading-relaxed text-[#41524a]">
+                      {vendor.description}
+                    </p>
+                  )}
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {amenityChips.map((code) => (
+                      <span
+                        key={code}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-sage px-3.5 py-1.5 text-xs font-semibold text-deep"
+                      >
+                        ✓ {amenityLabels.get(code) ?? code}
+                      </span>
+                    ))}
+                  </div>
+                  {inclusions.length > 0 && (
+                    <p className="mt-3 text-xs text-ink/50">
+                      Included: {inclusions.join(' · ')}
+                    </p>
+                  )}
+                </div>
+
+                <div className="w-full shrink-0 rounded-2xl border border-hairline p-4 sm:w-80">
+                  {vls.length > 1 ? (
+                    <select
+                      className="w-full rounded-lg border border-hairline bg-white px-3 py-2 text-sm font-semibold text-ink focus:border-pine focus:outline-none"
+                      value={pick.listingId}
+                      onChange={(e) =>
+                        setPicks((p) =>
+                          new Map(p).set(vendor.id, { listingId: e.target.value, pkg: pick.pkg }),
+                        )
+                      }
+                    >
+                      {vls.map((l) => (
+                        <option key={l.id} value={l.id}>{l.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <div className="text-sm font-bold">{pickedListing?.name}</div>
+                  )}
+                  <div className="mb-3 mt-1.5 text-xs text-ink/50">
+                    {[pickedListing?.bed_config,
+                      pickedListing ? `sleeps ${pickedListing.max_occupancy}` : null]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </div>
+
+                  {/* Package segments with live prices. */}
+                  <div className="mb-3 flex rounded-xl bg-paper p-1">
+                    {(['P1', 'P2', 'P3'] as const).map((p) => {
+                      const r = resolveRate(pick.listingId, p)
+                      if (!r) return null
+                      const on = pick.pkg === p
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          title={PACKAGE_LABELS[p]}
+                          className={`flex-1 rounded-lg py-2 text-[11.5px] font-semibold transition ${
+                            on
+                              ? 'bg-white text-deep shadow-[0_1px_3px_rgba(20,36,31,.12)]'
+                              : 'text-ink/50 hover:text-ink'
+                          }`}
+                          onClick={() =>
+                            setPicks((m) =>
+                              new Map(m).set(vendor.id, { listingId: pick.listingId, pkg: p }),
+                            )
+                          }
+                        >
+                          {p} · {Math.round(r.rate / 1000)}k
+                        </button>
+                      )
+                    })}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant={selected ? 'ghost' : 'primary'}
+                    className="w-full !rounded-xl !py-3"
+                    onClick={() => toggleSelect(vendor.id, vendor.name)}
+                  >
+                    {selected ? `Selected — priority ${priority}` : 'Select this hotel'}
+                  </Button>
+                  <p className="mt-2 text-center text-[11px] text-ink/45">
+                    Offers back in 15 minutes — never booked without you
+                  </p>
+                </div>
+              </div>
+            </article>
           )
         })}
       </div>

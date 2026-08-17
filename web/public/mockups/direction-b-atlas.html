@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>B — Atlas</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:ital,wght@0,400..700&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14241F;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F6F8F6;--brass:#A97D2B;--hair:#D9E0DA}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.5 "Instrument Sans",sans-serif;padding:40px 48px}
+.tag{font:600 10px/1 "Spline Sans Mono",monospace;letter-spacing:.18em;color:var(--brass);text-transform:uppercase;margin-bottom:14px;display:block}
+.bar{display:flex;gap:10px;align-items:center;margin-bottom:26px;flex-wrap:wrap}
+h1{font:700 26px "Bricolage Grotesque";letter-spacing:-.01em;margin-right:auto}
+.chip{background:#fff;border:1px solid var(--hair);border-radius:999px;padding:9px 16px;font-size:12.5px;font-weight:500;color:var(--deep)}
+.chip.on{background:var(--deep);color:#fff;border-color:var(--deep)}
+.card{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 1px 2px rgba(20,36,31,.06),0 12px 32px -12px rgba(20,36,31,.18);max-width:880px}
+.hero{position:relative;aspect-ratio:21/8;background:linear-gradient(120deg,#0d332b,#1D5C4D 55%,#48806f)}
+.hero .shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(10,25,20,.72),transparent 55%)}
+.hero .t{position:absolute;left:26px;bottom:20px;color:#fff}
+.hero h2{font:700 30px/1 "Bricolage Grotesque";letter-spacing:-.01em}
+.hero .m{margin-top:7px;font-size:13px;opacity:.92}
+.hero .m b{color:#e8c789;letter-spacing:.1em}
+.price{position:absolute;right:22px;bottom:-26px;background:var(--ink);color:#fff;border-radius:16px;padding:14px 20px;box-shadow:0 10px 24px -8px rgba(20,36,31,.5);text-align:right}
+.price .s{font:600 9px/1 "Spline Sans Mono";letter-spacing:.16em;color:#e8c789;text-transform:uppercase}
+.price .a{font:700 24px/1.15 "Bricolage Grotesque"}
+.price .p{font-size:10.5px;opacity:.75}
+.gallery{position:absolute;top:14px;right:16px;display:flex;gap:6px}
+.gallery i{width:44px;height:32px;border-radius:8px;border:1.5px solid rgba(255,255,255,.85);background:linear-gradient(135deg,#a97d2b,#6b5a2e);display:block}
+.gallery i+i{background:linear-gradient(135deg,#274, #486)}
+.body{padding:40px 26px 22px;display:flex;gap:26px;align-items:flex-start}
+.left{flex:1}
+.desc{color:#41524a;font-size:14px;max-width:56ch}
+.badges{display:flex;gap:8px;margin:14px 0 4px;flex-wrap:wrap}
+.b{display:inline-flex;align-items:center;gap:6px;background:var(--sage);color:var(--deep);border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600}
+.b svg{width:12px;height:12px}
+.incl{font-size:12.5px;color:#6b7a72;margin-top:8px}
+.room{width:300px;border:1px solid var(--hair);border-radius:14px;padding:14px 16px}
+.room .rn{font-weight:700;font-size:14.5px}
+.room .rd{font-size:12px;color:#6b7a72;margin:3px 0 10px}
+.seg{display:flex;background:var(--paper);border-radius:10px;padding:3px;margin-bottom:12px}
+.seg span{flex:1;text-align:center;font-size:11.5px;font-weight:600;padding:7px 0;border-radius:8px;color:#6b7a72}
+.seg .on{background:#fff;color:var(--deep);box-shadow:0 1px 3px rgba(20,36,31,.12)}
+.cta{width:100%;background:var(--pine);border:0;color:#fff;border-radius:11px;font:700 14px "Instrument Sans";padding:13px 0;cursor:pointer}
+.cta:hover{background:var(--deep)}
+.note{text-align:center;font-size:11px;color:#8a978f;margin-top:8px}
+</style></head><body>
+<span class="tag">Direction B · “Atlas” — imagery-led, warm, consumer-OTA energy</span>
+<div class="bar">
+  <h1>Hotels for Audit team — March visit</h1>
+  <span class="chip on">Fast wifi ✓</span><span class="chip on">Backup power ✓</span><span class="chip">Pool</span><span class="chip">Clifton/DHA</span>
+</div>
+
+<div class="card">
+  <div class="hero">
+    <div class="shade"></div>
+    <div class="gallery"><i></i><i></i></div>
+    <div class="t">
+      <h2>Harbourline Grand</h2>
+      <div class="m"><b>★★★★★</b> · Hotel · Clifton/DHA · B5 · <u>12 photos</u></div>
+    </div>
+    <div class="price">
+      <div class="s">Your rate</div>
+      <div class="a">PKR 42,000</div>
+      <div class="p">per night · room + breakfast</div>
+    </div>
+  </div>
+  <div class="body">
+    <div class="left">
+      <p class="desc">Flagship five-star on the Clifton waterfront — sea-view rooms, full business centre, three restaurants. Every corporate stay includes executive-lounge access and airport transfers both ways.</p>
+      <div class="badges">
+        <span class="b">✓ Fast wifi</span><span class="b">✓ Pool</span><span class="b">✓ Meeting rooms</span><span class="b">✓ Backup power</span>
+      </div>
+      <div class="incl">Included: airport transfer both ways · executive lounge access</div>
+    </div>
+    <div class="room">
+      <div class="rn">Premier Sea View</div>
+      <div class="rd">1 king · 42 m² · sleeps 2 · full sea view</div>
+      <div class="seg"><span>P1 38k</span><span class="on">P2 42k</span><span>P3 48k</span></div>
+      <button class="cta">Select as priority 1</button>
+      <div class="note">Offers back in 15 minutes — never booked without you</div>
+    </div>
+  </div>
+</div>
+</body></html>

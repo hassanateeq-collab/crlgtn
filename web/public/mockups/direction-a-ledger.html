@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A — Ledger</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Instrument+Sans:ital,wght@0,400..700&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14241F;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F6F8F6;--brass:#A97D2B;--hair:#D9E0DA}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.55 "Instrument Sans",sans-serif;padding:48px 56px}
+.tag{font:600 10px/1 "Spline Sans Mono",monospace;letter-spacing:.18em;color:var(--brass);text-transform:uppercase}
+h1{font:300 44px/1.05 "Bricolage Grotesque";letter-spacing:-.02em;margin:10px 0 6px}
+h1 em{font-style:normal;font-weight:700}
+.sub{color:#5a6b62;font-size:14px;border-bottom:1px solid var(--hair);padding-bottom:28px;margin-bottom:0}
+.card{display:grid;grid-template-columns:280px 1fr 220px;border-bottom:1px solid var(--hair);padding:36px 0;gap:36px}
+.ph{aspect-ratio:4/3;background:linear-gradient(135deg,#12443A,#1D5C4D 60%,#3d7a68);position:relative}
+.ph:after{content:"HARBOURLINE — FACADE";position:absolute;bottom:10px;left:12px;font:600 9px/1 "Spline Sans Mono";letter-spacing:.15em;color:rgba(255,255,255,.75)}
+.idx{font:300 26px/1 "Bricolage Grotesque";color:#b9c6bf;margin-bottom:14px}
+h2{font:600 26px/1.1 "Bricolage Grotesque";letter-spacing:-.01em}
+.meta{margin:6px 0 16px;font-size:13px;color:#5a6b62}
+.meta b{color:var(--brass);font-weight:600;letter-spacing:.08em}
+.desc{max-width:52ch;color:#39493f;font-size:14.5px}
+.amen{margin-top:18px;display:flex;gap:0;flex-wrap:wrap}
+.amen span{font:500 11.5px/1 "Instrument Sans";padding:7px 14px;border:1px solid var(--hair);border-left:none;color:var(--deep)}
+.amen span:first-child{border-left:1px solid var(--hair)}
+.amen i{color:var(--brass);font-style:normal;margin-right:5px}
+.rate{text-align:right;display:flex;flex-direction:column;justify-content:space-between}
+.rl{font:600 10px/1 "Spline Sans Mono";letter-spacing:.18em;color:#5a6b62;text-transform:uppercase;margin-bottom:8px}
+.amount{font:300 34px/1 "Bricolage Grotesque"}
+.amount b{font-weight:700}
+.per{font-size:12px;color:#5a6b62;margin-top:4px}
+.deal{display:inline-block;margin-top:10px;font:600 10px/1 "Spline Sans Mono";letter-spacing:.14em;color:var(--brass);border-bottom:1px solid var(--brass);padding-bottom:3px;text-transform:uppercase}
+.pkg{font-size:12.5px;color:#39493f;margin-top:auto;padding-top:18px}
+.pkg u{text-decoration-color:var(--brass);text-underline-offset:4px;font-weight:600}
+.btn{margin-top:14px;background:var(--ink);color:#fff;border:0;font:600 13px "Instrument Sans";padding:13px 0;width:100%;letter-spacing:.04em;cursor:pointer}
+.btn:hover{background:var(--deep)}
+</style></head><body>
+<div class="tag">Direction A · “Ledger” — editorial, print-born, quiet luxury</div>
+<h1>Nine hotels hold <em>your rates</em> in Clifton.</h1>
+<p class="sub">Audit team — March visit · 18–22 Aug · 3 rooms, 4 guests · must have: fast wifi, backup power</p>
+
+<div class="card">
+  <div class="ph"></div>
+  <div>
+    <div class="idx">№1</div>
+    <h2>Harbourline Grand</h2>
+    <div class="meta"><b>★★★★★</b> &nbsp;·&nbsp; Hotel · Clifton/DHA &nbsp;·&nbsp; Bracket B5</div>
+    <p class="desc">Flagship five-star on the Clifton waterfront — sea-view rooms, a full business centre, three restaurants. Executive lounge access and both-way airport transfer included with every corporate stay.</p>
+    <div class="amen"><span><i>✓</i>Fast wifi</span><span><i>✓</i>Pool</span><span><i>✓</i>Meeting rooms</span><span><i>✓</i>Backup power</span></div>
+  </div>
+  <div class="rate">
+    <div>
+      <div class="rl">Per night · P2</div>
+      <div class="amount">PKR <b>42,000</b></div>
+      <div class="per">Premier Sea View · 1 king · breakfast</div>
+      <div class="deal">Your contracted rate</div>
+    </div>
+    <div class="pkg">Rooms &amp; packages: <u>P2 42,000</u> · P1 38,000 · P3 48,000</div>
+    <button class="btn">Select — priority 1</button>
+  </div>
+</div>
+</body></html>
