@@ -539,3 +539,21 @@ vehicle wording in voucher PDF (currently prints room-style labels for car
 bookings) · ef_onboard_vendor still validates P-codes only (ops can't onboard
 V rates via console yet; seeds/SQL meanwhile) · ops Money/Reservations don't
 yet list transfer bookings.
+
+**CREDIT DESIGN LOCKED (owner decisions 2026-08-18)** — prototype
+/mockups/credit-matrix.html; wiring = task #7, after front-end sign-off:
+- Corlington remains merchant of record. The matrix governs WHERE its credit
+  applies (default-split clause shares risk with each hotel).
+- Corporate tiers: A / B / C (three, deliberately). Tier = summary label;
+  the fine credit profile stays per-corporate.
+- Hotel tiers on the signed agreement: HT1 open (A+B+C) · HT2 standard (A+B)
+  · HT3 selective (A) · HT4 prepaid-only. Independent of stars and B1-B5.
+- Pair overrides (vendor × corporate, allow/deny) beat tier defaults;
+  exceptions never become new tiers. Prepaid ≠ hidden: hotel stays in
+  results with a prepay badge.
+- THE CASH-FLOW RULE: hotels settled within 30 days of month-end; corporate
+  ceilings BELOW it — A ≤ d20, B ≤ d15, C = on_checkout/d7, dated from
+  checkout. Worst case = 10-day buffer. Corlington never finances the float.
+  d30 corporate terms abolished (enum keeps d30 for legacy/test rows only;
+  ceiling validation will refuse it; d20 to be added to credit_terms enum
+  at wiring). New corporates start C, graduate on payment history.
