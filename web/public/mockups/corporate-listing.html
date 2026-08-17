@@ -130,17 +130,18 @@ body{background:var(--paper);color:var(--ink);font:14px/1.5 "Instrument Sans",sa
 const CORRIDORS=["Clifton/DHA","Shahrah-e-Faisal","Airport","Saddar","SITE"];
 const AMENS=["Fast wifi","Backup power","Meeting rooms","Indoor parking","Pool"];
 const G=["#12443A,#3d7a68","#1D5C4D,#A97D2B","#0d332b,#48806f","#14241F,#1D5C4D","#2c5e50,#7aa393","#0f3a30,#846320","#123f35,#5b8d7d","#16473b,#2f6b5b","#0d332b,#3d7a68","#1a5044,#c19a4f"];
+const IMG=(id)=>`https://images.unsplash.com/${id}?auto=format&fit=crop&w=640&q=60`;
 const H=[
- {n:"Harbourline Grand",s:5,c:"Clifton/DHA",b:"B5",d:"Waterfront flagship — business centre, three restaurants, executive lounge.",a:["Fast wifi","Backup power","Meeting rooms","Pool"],inc:"Airport transfer + lounge",p:{P1:38000,P2:42000,P3:48000},neg:null,ph:14},
- {n:"Corniche Suites",s:4,c:"Clifton/DHA",b:"B4",d:"Quiet business hotel near the seafront; rooftop pool deck, two meeting rooms.",a:["Fast wifi","Backup power","Indoor parking"],inc:"Airport pickup · late checkout",p:{P1:24000,P2:27000,P3:31000},neg:{P1:22000,P2:25000},ph:12},
- {n:"Metropole Regency",s:5,c:"Saddar",b:"B4",d:"Restored landmark on the museum quarter; grand meeting floor.",a:["Fast wifi","Meeting rooms","Indoor parking"],inc:"Breakfast lounge",p:{P1:33000,P2:36500,P3:41000},neg:null,ph:16},
- {n:"Marina Bay Suites",s:4,c:"Clifton/DHA",b:"B4",d:"Serviced suites with kitchenettes — good for week-long project teams.",a:["Fast wifi","Backup power","Indoor parking","Pool"],inc:"Laundry 24h",p:{P1:26000,P2:29000},neg:{P1:24500},ph:9},
- {n:"Faisal Court Executive",s:3,c:"Shahrah-e-Faisal",b:"B3",d:"Practical business hotel ten minutes from the airport side.",a:["Fast wifi","Backup power"],inc:"Breakfast-to-go",p:{P1:14000,P2:16000,P3:19000},neg:null,ph:8},
- {n:"Gulberg Executive",s:3,c:"Shahrah-e-Faisal",b:"B3",d:"Compact rooms, fast checkout, favoured by sales teams.",a:["Fast wifi","Backup power","Indoor parking"],inc:"Early check-in on request",p:{P1:13000,P2:15000},neg:{P1:12500},ph:7},
- {n:"Skyline Airport Hotel",s:3,c:"Airport",b:"B3",d:"Directly opposite Jinnah International arrivals — soundproofed rooms.",a:["Fast wifi","Backup power","Meeting rooms"],inc:"24h shuttle",p:{P1:15000,P2:17500},neg:null,ph:10},
- {n:"Airside Transit Lodge",s:2,c:"Airport",b:"B1",d:"No-frills overnight layovers, five minutes from the terminal.",a:["Backup power"],inc:"",p:{P1:8000,P2:9500},neg:null,ph:5},
- {n:"Cantt Residency",s:3,c:"Saddar",b:"B2",d:"Guesthouse comfort beside the Cantt station; secure courtyard parking.",a:["Fast wifi","Indoor parking"],inc:"Home-style dinner",p:{P1:12000,P2:13500},neg:null,ph:6},
- {n:"SITE Business Inn",s:3,c:"SITE",b:"B2",d:"The only vetted option inside the industrial area — site-visit friendly.",a:["Fast wifi","Backup power","Indoor parking"],inc:"Packed lunches",p:{P1:11000,P2:12500},neg:{P1:10500},ph:6},
+ {n:"Pearl Continental Karachi",s:5,c:"Saddar",b:"B5",d:"Club Road institution — full business floor, banquet capacity, airline crews' favourite.",a:["Fast wifi","Backup power","Meeting rooms","Pool","Indoor parking"],inc:"Airport transfer + lounge",p:{P1:38000,P2:42000,P3:48000},neg:{P1:35000,P2:39000},ph:18,img:IMG("photo-1566073771259-6a8506099945")},
+ {n:"Mövenpick Hotel Karachi",s:5,c:"Saddar",b:"B5",d:"Club Road tower with executive floors and the city's steadiest conference wing.",a:["Fast wifi","Backup power","Meeting rooms","Pool"],inc:"Breakfast + late checkout",p:{P1:36000,P2:40000,P3:45000},neg:null,ph:15,img:IMG("photo-1551882547-ff40c63fe5fa")},
+ {n:"Avari Towers",s:5,c:"Saddar",b:"B4",d:"Fatima Jinnah Road landmark; quiet upper floors face the greens.",a:["Fast wifi","Backup power","Meeting rooms","Indoor parking"],inc:"Airport pickup",p:{P1:32000,P2:35500,P3:40000},neg:{P1:30000},ph:14,img:IMG("photo-1596394516093-501ba68a0ba6")},
+ {n:"Carlton Hotel",s:4,c:"Clifton/DHA",b:"B4",d:"DHA seafront property with lawns — the Defence side's business default.",a:["Fast wifi","Backup power","Indoor parking","Pool"],inc:"Laundry 24h",p:{P1:26000,P2:29000},neg:{P1:24500},ph:11,img:IMG("photo-1520250497591-112f2f40a3f4")},
+ {n:"Beach Luxury Hotel",s:3,c:"Clifton/DHA",b:"B3",d:"Old harbour charm on the boat basin; famous crab lunches for client dinners.",a:["Fast wifi","Backup power","Meeting rooms"],inc:"Harbour-side breakfast",p:{P1:18000,P2:20500},neg:null,ph:9,img:IMG("photo-1582719508461-905c673771fd")},
+ {n:"Regent Plaza",s:4,c:"Shahrah-e-Faisal",b:"B3",d:"Mid-Faisal tower, quick to both airport and Saddar; large secure parking.",a:["Fast wifi","Backup power","Indoor parking","Meeting rooms"],inc:"Early check-in on request",p:{P1:19000,P2:21500},neg:null,ph:10,img:IMG("photo-1571003123894-1f0594d2b5d9")},
+ {n:"Hotel Mehran",s:3,c:"Shahrah-e-Faisal",b:"B3",d:"Shahrah-e-Faisal stalwart — practical rooms, favoured by sales teams.",a:["Fast wifi","Backup power"],inc:"Breakfast-to-go",p:{P1:14000,P2:16000},neg:{P1:13000},ph:8,img:IMG("photo-1611892440504-42a792e24d32")},
+ {n:"Hotel Faran",s:3,c:"Shahrah-e-Faisal",b:"B2",d:"Nursery-stop classic; compact, clean, fast checkout.",a:["Fast wifi","Indoor parking"],inc:"",p:{P1:12000,P2:13500},neg:null,ph:6,img:IMG("photo-1590490360182-c33d57733427")},
+ {n:"Ramada Plaza Airport",s:4,c:"Airport",b:"B3",d:"Two minutes from Jinnah International — soundproofed, 24h dining.",a:["Fast wifi","Backup power","Meeting rooms","Pool"],inc:"24h shuttle",p:{P1:21000,P2:23500},neg:{P1:19500},ph:12,img:IMG("photo-1445019980597-93fa8acb246c")},
+ {n:"Hotel Airport Inn",s:2,c:"Airport",b:"B1",d:"No-frills overnight layovers, five minutes from the terminal.",a:["Backup power"],inc:"",p:{P1:8000,P2:9500},neg:null,ph:5,img:IMG("photo-1578683010236-d716f9a3f461")},
 ];
 const NIGHTS=3, ROOMS=3;
 let sel=[], pkgSel={};
@@ -179,7 +180,7 @@ function render(){
     const {pk,rate,isNeg}=price(h);
     const si=sel.indexOf(h.n);
     return `<article class="card${si>-1?' sel':''}" style="--g:linear-gradient(135deg,${G[H.indexOf(h)]})">
-      <div class="ph"><span class="pr">${si+1||''}</span><span class="cnt">${h.ph} PHOTOS</span></div>
+      <div class="ph"><img src="${h.img}" alt="" loading="lazy" onerror="this.remove()" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"><span class="pr" style="z-index:2">${si+1||''}</span><span class="cnt" style="z-index:2">${h.ph} PHOTOS</span></div>
       <div class="mid">
         <div class="nm"><h2>${h.n}</h2><span class="st">${'★'.repeat(h.s)}</span></div>
         <div class="meta">${h.c} · <b>${h.b}</b>${h.inc?` · incl. ${h.inc}`:''}</div>
