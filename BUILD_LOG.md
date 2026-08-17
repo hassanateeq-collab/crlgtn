@@ -540,6 +540,31 @@ bookings) · ef_onboard_vendor still validates P-codes only (ops can't onboard
 V rates via console yet; seeds/SQL meanwhile) · ops Money/Reservations don't
 yet list transfer bookings.
 
+**PROCESS & PRODUCT DECISIONS (owner, 2026-08-18)** — the working agreement:
+- **Front-end first, wire in batches.** Every page is prototyped on mock data
+  (clickable HTML under web/public/mockups/, also served on production at
+  crlgtn.vercel.app/mockups/…), owner approves or redlines, then that batch is
+  wired to the EXISTING backend (M0–M8 engine stays; nothing rebuilt).
+- **Page inventory: 13 pages.** Corporate (8): sign-in · files home · new file
+  · hotel listing ✅approved · car listing · property detail · file view/board
+  · transfers+invoices. Vendor (1): magic-link respond. Ops (4): dashboard ·
+  vendor onboarding · corporates/credit · money. Build order = the booker's
+  journey first, vendor page next, ops last.
+- **Listing card shows the FULL P1–P3 rate ladder** (owner decision after
+  for/against argument): every package with per-night AND trip total on every
+  card — the contracted-transparency OTAs can't offer — while one selected row
+  drives a single big anchor price to keep 10-hotel scanning fast. Brass dot
+  marks negotiated rows.
+- **Prototype realism:** real Karachi hotel names across true corridors
+  (PC/Mövenpick/Avari=Saddar, Carlton/Beach Luxury=Clifton-DHA,
+  Regent/Mehran/Faran=SEF, Ramada/Airport Inn=Airport, SITE honestly empty);
+  photos are licensed stock SAMPLES — real photography comes from the §12
+  shot list at onboarding; these names must not appear client-facing before
+  those hotels sign.
+- Prototypes so far: corporate-listing.html (approved, incl. ladder + Karachi
+  set) · credit-matrix.html (approved incl. cash-flow rule) · direction
+  mockups a/b/c (Atlas "B" chosen as product-wide language).
+
 **CREDIT DESIGN LOCKED (owner decisions 2026-08-18)** — prototype
 /mockups/credit-matrix.html; wiring = task #7, after front-end sign-off:
 - Corlington remains merchant of record. The matrix governs WHERE its credit
