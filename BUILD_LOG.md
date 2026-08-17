@@ -655,3 +655,16 @@ yet list transfer bookings.
   "Move-out" (no "earliest exit"), hint keeps serviced/verified only, monthly
   -rates mention dropped. The ≈months figure still appears in the spine, but
   only when the chosen dates are themselves 30+ nights.
+
+## 2026-08-18 — Area picker gets a city draft map (owner decision)
+
+- The Area section on the new-file form now carries a **stylized draft map of
+  the city** (hand-drawn SVG, no external tiles/deps): Arabian Sea, the five
+  key areas as tappable zones — SITE, Saddar, Shahrah-e-Faisal corridor,
+  Airport, Clifton/DHA along the coast. Selecting a chip shades that zone
+  (pine, white label) and fades the rest; "Anywhere" soft-shades all; tapping
+  a zone selects the chip — chips and map always in sync.
+- Principle recorded: **every property is classified into exactly one of these
+  areas**, and every city Corlington opens gets its own such map (map data
+  per-city, zones = the corridors table already in the schema). Applies to
+  hotels and apartments; rent-a-car stays area-free by the earlier decision.

@@ -68,6 +68,18 @@ input:focus{outline:none;border-color:var(--pine)}
 .step span{font:650 14px "Bricolage Grotesque";min-width:74px;text-align:center}
 .rm{margin-left:auto;color:#b0bcb5;cursor:pointer;font-size:15px}
 .addroom{font:600 13px "Instrument Sans";color:var(--pine);cursor:pointer;margin-top:8px;display:inline-block}
+/* area map */
+.mapwrap{margin-top:12px;border:1.5px solid var(--hair);border-radius:14px;overflow:hidden;background:#F2F6F1;cursor:default}
+.mapwrap svg{display:block;width:100%;height:auto}
+.mapcap{font-size:11.5px;color:var(--soft);padding:8px 13px;border-top:1px solid var(--hair);background:#fff}
+.mapcap b{color:var(--ink);font-weight:650}
+g.z ellipse{fill:#E6EEE8;stroke:#CBD8CF;stroke-width:1.3;cursor:pointer;transition:fill .18s,opacity .18s}
+g.z text{font:600 11px "Instrument Sans";fill:#4a5c53;pointer-events:none}
+g.z:hover ellipse{stroke:var(--brass)}
+g.z.soft ellipse{fill:#DCE9E0}
+g.z.on ellipse{fill:var(--pine);stroke:var(--deep)}
+g.z.on text{fill:#fff}
+g.z.dim{opacity:.42}
 .tgl{display:flex;align-items:flex-start;gap:12px;background:var(--paper);border-radius:14px;padding:14px 16px;cursor:pointer}
 .tgl .sw{flex:none;width:38px;height:22px;border-radius:99px;background:#ccd8d1;position:relative;transition:.15s;margin-top:2px}
 .tgl .sw:after{content:"";position:absolute;top:2.5px;left:2.5px;width:17px;height:17px;border-radius:50%;background:#fff;transition:.15s}
@@ -192,7 +204,35 @@ input:focus{outline:none;border-color:var(--pine)}
           <label class="f"><b id="lOut">Check-out</b><input type="date" id="fOut" value="2026-09-17" onchange="sp()"></label>
         </div>
         <label class="f" id="corBlock"><b>Area — optional, narrows the search</b>
-          <div class="chips" id="fCor"></div></label>
+          <div class="chips" id="fCor"></div>
+          <div class="mapwrap">
+            <svg id="kmap" viewBox="0 0 560 330" role="img" aria-label="Karachi area map">
+              <rect width="560" height="330" fill="#F2F6F1"/>
+              <path d="M0,250 Q120,238 220,258 Q330,280 440,272 Q500,268 560,282 L560,330 L0,330 Z" fill="#D8E6EA"/>
+              <text x="70" y="314" font-style="italic" font-size="11" letter-spacing="3" fill="#8FADB6" font-family="Instrument Sans">ARABIAN SEA</text>
+              <path d="M140,122 L192,172" stroke="#CBD8CF" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+              <path d="M207,222 L258,240" stroke="#CBD8CF" stroke-width="1.5" stroke-dasharray="4 4" fill="none"/>
+              <path d="M212,194 L468,114" stroke="#C2B490" stroke-width="2" stroke-dasharray="6 5" fill="none" opacity=".65"/>
+              <g class="z" data-z="SITE" onclick="zoneTap('SITE')">
+                <ellipse cx="120" cy="95" rx="70" ry="40" transform="rotate(-8 120 95)"/>
+                <text x="120" y="99" text-anchor="middle">SITE</text></g>
+              <g class="z" data-z="Saddar" onclick="zoneTap('Saddar')">
+                <ellipse cx="205" cy="195" rx="46" ry="28"/>
+                <text x="205" y="199" text-anchor="middle">Saddar</text></g>
+              <g class="z" data-z="Shahrah-e-Faisal" onclick="zoneTap('Shahrah-e-Faisal')">
+                <ellipse cx="330" cy="155" rx="112" ry="23" transform="rotate(-12 330 155)"/>
+                <text x="330" y="160" text-anchor="middle">Shahrah-e-Faisal</text></g>
+              <g class="z" data-z="Airport" onclick="zoneTap('Airport')">
+                <ellipse cx="478" cy="105" rx="50" ry="33"/>
+                <text x="478" y="109" text-anchor="middle">✈ Airport</text></g>
+              <g class="z" data-z="Clifton/DHA" onclick="zoneTap('Clifton/DHA')">
+                <ellipse cx="315" cy="240" rx="108" ry="26" transform="rotate(-3 315 240)"/>
+                <text x="315" y="244" text-anchor="middle">Clifton / DHA</text></g>
+              <text x="533" y="32" font-size="11" font-weight="600" fill="#8a978f" font-family="Instrument Sans">N</text>
+              <path d="M537,48 l0,-12 m-4,4 l4,-4 4,4" stroke="#8a978f" stroke-width="1.5" fill="none"/>
+            </svg>
+            <div class="mapcap"><b>Karachi</b> — every property is filed under one of these areas. Tap a zone or a chip; each new city gets its own map.</div>
+          </div></label>
         <label class="f" id="catBlock" style="display:none"><b id="catLbl">Car category</b>
           <div class="chips" id="fCat"></div>
           <small id="catHint" style="display:block;color:var(--soft);font-size:12px;margin-top:8px"></small></label>
@@ -246,7 +286,12 @@ const U=()=>mode==='car'?{c:'Vehicle',p:'passenger',cap:12}:mode==='apt'?{c:'Apa
 document.getElementById('fCor').innerHTML=CORS.map(c=>`<span class="${c===cor?'on':''}" onclick="pickCor(this,'${c}')">${c}</span>`).join("");
 function renderCats(){if(mode==='hotel')return;
   document.getElementById('fCat').innerHTML=CATS[mode].map(c=>`<span class="${c===cats[mode]?'on':''}" onclick="pickCat(this,'${c}')">${c}</span>`).join("")}
-function pickCor(el,c){cor=c;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');sp()}
+function applyMap(){document.querySelectorAll('#kmap g.z').forEach(g=>{const z=g.dataset.z;
+  g.classList.toggle('on',z===cor);
+  g.classList.toggle('soft',cor==='Anywhere');
+  g.classList.toggle('dim',cor!=='Anywhere'&&z!==cor)})}
+function zoneTap(z){const chip=[...document.querySelectorAll('#fCor span')].find(s=>s.textContent===z);if(chip)chip.click()}
+function pickCor(el,c){cor=c;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');applyMap();sp()}
 function pickCat(el,c){cats[mode]=c;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');sp()}
 function svc(btn,m){mode=m;[...btn.parentNode.children].forEach(x=>x.classList.remove('on'));btn.classList.add('on');
   document.getElementById('tTrip').textContent={hotel:'Trip',car:'Rental',apt:'Stay'}[m];
@@ -284,6 +329,6 @@ function sp(){
   const aa=document.getElementById('aa').classList.contains('on');
   document.getElementById('spWin').textContent=(mode==='apt'?'24 hours — hosts confirm slower than front desks':urgent?'1 hour — check-in within 48h':'3 hours standard')+(aa?' · auto-accept ON':'');
 }
-drawRooms();sp();
+drawRooms();applyMap();sp();
 </script>
 </body></html>
