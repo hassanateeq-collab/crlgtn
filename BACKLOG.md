@@ -50,3 +50,18 @@ name + designation creates an accountability record.
 ## Done / absorbed
 
 *(empty — entries move here when built, with the commit/migration that absorbed them)*
+
+## F-002 · Enforce the counter ceiling in ef_vendor_respond
+
+**Decided:** 2026-08-18 (owner) · **Status:** parked · **Build when:** wiring the
+vendor respond page (vendor batch) — MUST land before any real vendor pilot.
+
+The UI rule (see BUILD_LOG 2026-08-18) needs its server-side twin, because the
+magic-link endpoint can be called directly. `ef_vendor_respond` must validate
+counters: (a) each countered nightly rate ≤ the contracted card rate for the
+offered category/package (from listing_rates), reject above-card with a clear
+error; (b) an alternate category is only valid if it exists on that vendor's
+contracted catalog, and it arrives priced at ≤ its own card rate; (c) audit-log
+the card rate alongside the countered rate so discounts are measurable.
+Currently the function accepts arbitrary counter amounts — do not pilot vendors
+before this lands.

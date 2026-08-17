@@ -617,3 +617,18 @@ yet list transfer bookings.
   clicks and types their name + designation to countersign. Purpose: leaked
   booker credentials alone cannot commit the company (fraud guard). Built as a
   per-corporate toggle when the booking flow is wired; details in BACKLOG.md.
+
+## 2026-08-18 — Vendor counter rule: card is the ceiling (owner decision)
+
+- **Vendors can never counter with a HIGHER price.** The contracted rate card
+  is a hard ceiling; counters may only (a) decrease a rate below the card, or
+  (b) offer an ALTERNATE room category — which carries that category's own
+  contracted card rate (a better room may cost more, but it is the pre-agreed
+  price for a different product, clearly labeled — never an invented number).
+  Rationale: protects the product promise ("the rate your company already
+  negotiated") and, with first-to-accept-wins, price competition can only
+  favor the client. Prototype sign-in.html vendor view enforces it: category
+  chips from the card, decrease-only inputs that snap back to the ceiling,
+  struck-through card rate when discounted.
+- Server-side enforcement queued as **F-002 in BACKLOG.md** (ef_vendor_respond
+  currently accepts arbitrary counter rates — must validate at wiring).

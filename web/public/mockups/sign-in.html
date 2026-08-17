@@ -78,6 +78,15 @@ h3.sect{font:650 15px "Bricolage Grotesque";padding:18px 22px 0}
 .rate input{width:110px;border:1.5px solid var(--hair);border-radius:10px;padding:9px 11px;font:650 14px "Bricolage Grotesque";color:var(--deep);text-align:right;background:#fff}
 .rate input:disabled{background:var(--paper);border-color:transparent}
 .rate input:focus{outline:none;border-color:var(--brass)}
+.rate s{font:600 11.5px "Instrument Sans";color:#b0bcb5;text-decoration:line-through}
+.altblock{display:none;margin:2px 22px 10px;background:#FBF7EE;border:1px solid #EBDFC6;border-radius:13px;padding:13px 15px;font-size:12.5px;color:var(--ink)}
+.altblock b{font-weight:650}
+.altblock .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:9px}
+.altblock .chips span{border:1.5px solid var(--hair);background:#fff;border-radius:99px;padding:7px 13px;font:600 12.5px "Instrument Sans";color:var(--soft);cursor:pointer;user-select:none}
+.altblock .chips span.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.altblock .chips span small{font-weight:500;opacity:.75}
+.ceil{display:none;margin:6px 22px 12px;font-size:11.5px;color:var(--brass)}
+.ceil b{font-weight:650}
 .tot{display:flex;align-items:baseline;gap:8px;padding:15px 22px;background:var(--paper)}
 .tot b{font:650 13px "Instrument Sans"}
 .tot .v{margin-left:auto;font:650 19px "Bricolage Grotesque";color:var(--deep)}
@@ -171,22 +180,27 @@ h3.sect{font:650 15px "Bricolage Grotesque";padding:18px 22px 0}
       <b>first hotel to accept wins the booking.</b></div>
     </div>
 
-    <h3 class="sect">Your rates for this stay — per room, per night</h3>
+    <h3 class="sect">Your contracted rates for this stay — per room, per night</h3>
+    <div class="altblock" id="altBlock">
+      <b>Standard sold out? Swap the category</b> — each comes at its own contracted rate from your agreement.
+      <div class="chips" id="altChips"></div>
+    </div>
     <div class="pkrow">
       <span class="pk">P1</span>
-      <span class="nm"><b>Room only</b><small>Standard category · 3 rooms</small></span>
-      <span class="rate"><small>PKR</small><input type="text" value="18,500" id="r1" disabled oninput="tot()"></span>
+      <span class="nm"><b>Room only</b><small id="cat1">Standard category · 3 rooms</small></span>
+      <span class="rate"><small>PKR</small><input type="text" value="18,500" id="r1" disabled oninput="clamp('r1')"><s id="s1"></s></span>
     </div>
     <div class="pkrow">
       <span class="pk">P2</span>
-      <span class="nm"><b>Room + breakfast</b><small>Standard category · 3 rooms</small></span>
-      <span class="rate"><small>PKR</small><input type="text" value="21,000" id="r2" disabled oninput="tot()"></span>
+      <span class="nm"><b>Room + breakfast</b><small id="cat2">Standard category · 3 rooms</small></span>
+      <span class="rate"><small>PKR</small><input type="text" value="21,000" id="r2" disabled oninput="clamp('r2')"><s id="s2"></s></span>
     </div>
+    <div class="ceil" id="ceilNote">Your card rate is the <b>ceiling</b> — go lower to win the race, never higher.</div>
     <div class="tot"><b>If they book P2, whole stay</b><small>3 rooms × 3 nights</small><span class="v" id="vTot">PKR 189,000</span></div>
 
     <div class="acts">
       <a class="btn" onclick="done('accept')">Accept — hold the rooms</a>
-      <a class="btn ghost" id="cbtn" onclick="counter()">Counter with different rates</a>
+      <a class="btn ghost" id="cbtn" onclick="counter()">Counter — alternate rooms or a better rate</a>
     </div>
     <div class="declrow"><span class="decl" onclick="document.querySelector('.dselect').style.display='block'">Can't take this one — decline</span></div>
     <div class="dselect">
@@ -228,16 +242,40 @@ function hop(el){if(el.value&&el.nextElementSibling)el.nextElementSibling.focus(
 let vt=2487;setInterval(()=>{vt=Math.max(0,vt-1);
  const m=Math.floor(vt/60),s=String(vt%60).padStart(2,'0');
  const el=document.getElementById('vcd');if(el)el.textContent=`0:${String(m).padStart(2,'0')}:${s}`},1000);
-/* vendor actions */
+/* vendor actions — contracted rate card: prices can only go DOWN from it */
+const CARD={
+ std:{name:"Standard",p1:18500,p2:21000},
+ exe:{name:"Executive twin",p1:24500,p2:27500},
+ dlx:{name:"Deluxe king",p1:26500,p2:29500}};
+let catKey='std';
 function num(id){return parseInt(document.getElementById(id).value.replace(/[^0-9]/g,''))||0}
-function tot(){document.getElementById('vTot').textContent='PKR '+(num('r2')*3*3).toLocaleString('en-PK')}
+function fmt(n){return n.toLocaleString('en-PK')}
+function tot(){document.getElementById('vTot').textContent='PKR '+fmt(num('r2')*3*3)}
+function clamp(id){const ceil=CARD[catKey][id==='r1'?'p1':'p2'],el=document.getElementById(id);
+ if(num(id)>ceil){el.value=fmt(ceil);
+  const n=document.getElementById('ceilNote');n.style.color='#8f3b2e';
+  n.innerHTML='Contracted rate is the <b>ceiling</b> — counters can only go below it.';
+  setTimeout(()=>{n.style.color='';n.innerHTML='Your card rate is the <b>ceiling</b> — go lower to win the race, never higher.'},1800)}
+ const s=document.getElementById(id==='r1'?'s1':'s2');
+ s.textContent=num(id)<ceil?fmt(ceil):'';
+ tot()}
+function pickAlt(el,k){catKey=k;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');
+ document.getElementById('r1').value=fmt(CARD[k].p1);document.getElementById('r2').value=fmt(CARD[k].p2);
+ document.getElementById('s1').textContent='';document.getElementById('s2').textContent='';
+ document.getElementById('cat1').textContent=CARD[k].name+' · 3 rooms · card rate';
+ document.getElementById('cat2').textContent=CARD[k].name+' · 3 rooms · card rate';
+ tot()}
 function counter(){['r1','r2'].forEach(i=>document.getElementById(i).disabled=false);
+ document.getElementById('altBlock').style.display='block';
+ document.getElementById('ceilNote').style.display='block';
+ document.getElementById('altChips').innerHTML=Object.entries(CARD).map(([k,c])=>
+  `<span class="${k===catKey?'on':''}" onclick="pickAlt(this,'${k}')">${c.name} <small>· card ${fmt(c.p2)}</small></span>`).join('');
  document.getElementById('r1').focus();
- document.getElementById('cbtn').textContent='Send countered rates';
+ document.getElementById('cbtn').textContent='Send counter-offer';
  document.getElementById('cbtn').onclick=()=>done('counter')}
 function done(kind){document.getElementById('vAsk').style.display='none';
  const D={accept:['✓','Offer sent — rooms on hold','Your rates are in front of the client now. If they confirm within the window, the voucher arrives on this link and by email to the front office.','OFFER 0F-77A2 · HOLD UNTIL 14:32 PKT'],
-  counter:['↗','Counter sent','Your adjusted rates are with the client alongside other hotels’ offers. If they pick yours, the rooms go on hold and the voucher follows here.','COUNTER 0F-77A2 · WINDOW UNCHANGED'],
+  counter:['↗','Counter sent','Your alternate offer is with the client alongside other hotels’ offers — at or below your contracted card, never above. If they pick yours, the rooms go on hold and the voucher follows here.','COUNTER 0F-77A2 · WINDOW UNCHANGED'],
   decline:['—','Declined — thanks for answering fast','A quick no keeps your response record clean. The request moves on; the next one will be along soon.','CF-2613-KHI · CLOSED FOR HOTEL MEHRAN']}[kind];
  document.getElementById('dIcon').textContent=D[0];document.getElementById('dTitle').textContent=D[1];
  document.getElementById('dText').textContent=D[2];document.getElementById('dRef').textContent=D[3];
