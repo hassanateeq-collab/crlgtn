@@ -176,6 +176,7 @@ input:focus{outline:none;border-color:var(--pine)}
 
   <div class="seg">
     <button class="on" onclick="svc(this,'hotel')">Hotels<small>request up to 3, offers in 15 min</small></button>
+    <button onclick="svc(this,'apt')">Apartments<small>monthly & long stays</small></button>
     <button onclick="svc(this,'car')">Rent-a-car<small>same request flow, per-day rates</small></button>
     <button onclick="alert('Transfers book instantly — this jumps to the Transfers page')">Airport transfer<small>fixed price, books instantly</small></button>
   </div>
@@ -192,9 +193,9 @@ input:focus{outline:none;border-color:var(--pine)}
         </div>
         <label class="f" id="corBlock"><b>Area — optional, narrows the search</b>
           <div class="chips" id="fCor"></div></label>
-        <label class="f" id="catBlock" style="display:none"><b>Car category</b>
+        <label class="f" id="catBlock" style="display:none"><b id="catLbl">Car category</b>
           <div class="chips" id="fCat"></div>
-          <small style="display:block;color:var(--soft);font-size:12px;margin-top:8px">Sedan — Corolla / Civic class · SUV — Fortuner / Prado class · Premium — Mercedes / Audi class</small></label>
+          <small id="catHint" style="display:block;color:var(--soft);font-size:12px;margin-top:8px"></small></label>
       </div>
 
       <div class="card">
@@ -237,28 +238,35 @@ let t=6432;setInterval(()=>{t--;const h=Math.floor(t/3600),m=String(Math.floor(t
 
 /* new-file state */
 const CORS=["Anywhere","Clifton/DHA","Shahrah-e-Faisal","Airport","Saddar","SITE"];
-const CATS=["Sedan","SUV","Premium"];
-let mode='hotel',cor="Anywhere",cat="Sedan",roomsN=[{g:2},{g:1}];
+const CATS={car:["Sedan","SUV","Premium"],apt:["Studio","1-Bed","2-Bed","Serviced"]};
+const HINTS={car:"Sedan — Corolla / Civic class · SUV — Fortuner / Prado class · Premium — Mercedes / Audi class",
+ apt:"Serviced — housekeeping & utilities included · every apartment verified · stays of a month or more get monthly rates"};
+let mode='hotel',cor="Anywhere",cats={car:"Sedan",apt:"1-Bed"},roomsN=[{g:2},{g:1}];
+const U=()=>mode==='car'?{c:'Vehicle',p:'passenger',cap:12}:mode==='apt'?{c:'Apartment',p:'occupant',cap:8}:{c:'Room',p:'guest',cap:6};
 document.getElementById('fCor').innerHTML=CORS.map(c=>`<span class="${c===cor?'on':''}" onclick="pickCor(this,'${c}')">${c}</span>`).join("");
-document.getElementById('fCat').innerHTML=CATS.map(c=>`<span class="${c===cat?'on':''}" onclick="pickCat(this,'${c}')">${c}</span>`).join("");
+function renderCats(){if(mode==='hotel')return;
+  document.getElementById('fCat').innerHTML=CATS[mode].map(c=>`<span class="${c===cats[mode]?'on':''}" onclick="pickCat(this,'${c}')">${c}</span>`).join("")}
 function pickCor(el,c){cor=c;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');sp()}
-function pickCat(el,c){cat=c;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');sp()}
+function pickCat(el,c){cats[mode]=c;[...el.parentNode.children].forEach(x=>x.classList.remove('on'));el.classList.add('on');sp()}
 function svc(btn,m){mode=m;[...btn.parentNode.children].forEach(x=>x.classList.remove('on'));btn.classList.add('on');
-  document.getElementById('tTrip').textContent=m==='car'?'Rental':'Trip';
-  document.getElementById('lIn').textContent=m==='car'?'From (first day)':'Check-in';
-  document.getElementById('lOut').textContent=m==='car'?'Until (return day)':'Check-out';
-  document.getElementById('tRooms').textContent=m==='car'?'Vehicles & passengers':'Rooms & guests';
+  document.getElementById('tTrip').textContent={hotel:'Trip',car:'Rental',apt:'Stay'}[m];
+  document.getElementById('lIn').textContent={hotel:'Check-in',car:'From (first day)',apt:'Move-in'}[m];
+  document.getElementById('lOut').textContent={hotel:'Check-out',car:'Until (return day)',apt:'Move-out — or earliest exit'}[m];
+  document.getElementById('tRooms').textContent={hotel:'Rooms & guests',car:'Vehicles & passengers',apt:'Apartments & occupants'}[m];
   document.getElementById('corBlock').style.display=m==='car'?'none':'block';
-  document.getElementById('catBlock').style.display=m==='car'?'block':'none';
-  document.getElementById('spCatL').style.display=m==='car'?'block':'none';
-  document.getElementById('spCat').style.display=m==='car'?'block':'none';
-  document.getElementById('goBtn').textContent=m==='car'?'Save & find cars':'Save & find hotels';
+  document.getElementById('catBlock').style.display=m==='hotel'?'none':'block';
+  if(m!=='hotel'){document.getElementById('catLbl').textContent=m==='car'?'Car category':'Apartment type';
+    document.getElementById('catHint').textContent=HINTS[m];renderCats()}
+  document.getElementById('spCatL').style.display=m==='hotel'?'none':'block';
+  document.getElementById('spCat').style.display=m==='hotel'?'none':'block';
+  document.getElementById('spCatL').textContent=m==='apt'?'Type':'Category';
+  document.getElementById('goBtn').textContent={hotel:'Save & find hotels',car:'Save & find cars',apt:'Save & find apartments'}[m];
   drawRooms();sp()}
 function drawRooms(){document.getElementById('rooms').innerHTML=roomsN.map((r,i)=>`
-  <div class="roomrow"><b>${mode==='car'?'Vehicle':'Room'} ${i+1}</b>
-    <div class="step"><button onclick="chg(${i},-1)">−</button><span>${r.g} ${mode==='car'?'passenger':'guest'}${r.g>1?'s':''}</span><button onclick="chg(${i},1)">+</button></div>
+  <div class="roomrow"><b>${U().c} ${i+1}</b>
+    <div class="step"><button onclick="chg(${i},-1)">−</button><span>${r.g} ${U().p}${r.g>1?'s':''}</span><button onclick="chg(${i},1)">+</button></div>
     ${roomsN.length>1?`<span class="rm" onclick="delRoom(${i})">✕</span>`:''}</div>`).join("")}
-function chg(i,d){roomsN[i].g=Math.min(mode==='car'?12:6,Math.max(1,roomsN[i].g+d));drawRooms();sp()}
+function chg(i,d){roomsN[i].g=Math.min(U().cap,Math.max(1,roomsN[i].g+d));drawRooms();sp()}
 function addRoom(){if(roomsN.length<9){roomsN.push({g:1});drawRooms();sp()}}
 function delRoom(i){roomsN.splice(i,1);drawRooms();sp()}
 function nights(){const a=new Date(document.getElementById('fIn').value),b=new Date(document.getElementById('fOut').value);
@@ -266,14 +274,15 @@ function nights(){const a=new Date(document.getElementById('fIn').value),b=new D
 function sp(){
   document.getElementById('spName').textContent=document.getElementById('fName').value||'Untitled file';
   const n=nights();
-  document.getElementById('spStay').textContent=n?`${document.getElementById('fIn').value} → ${document.getElementById('fOut').value} · ${n} ${mode==='car'?'day':'night'}${n>1?'s':''}${mode!=='car'&&cor!=="Anywhere"?' · '+cor:''}`:'—';
-  document.getElementById('spRl').textContent=mode==='car'?'Vehicles':'Rooms';
-  const g=roomsN.reduce((s,r)=>s+r.g,0);
-  document.getElementById('spRooms').textContent=`${roomsN.length} ${mode==='car'?'vehicle':'room'}${roomsN.length>1?'s':''} · ${g} ${mode==='car'?'passenger':'guest'}${g>1?'s':''}`;
-  document.getElementById('spCat').textContent=cat;
+  const months=mode==='apt'&&n>=30?` · ≈ ${Math.round(n/30)} month${n>=45?'s':''}`:'';
+  document.getElementById('spStay').textContent=n?`${document.getElementById('fIn').value} → ${document.getElementById('fOut').value} · ${n} ${mode==='car'?'day':'night'}${n>1?'s':''}${months}${mode!=='car'&&cor!=="Anywhere"?' · '+cor:''}`:'—';
+  document.getElementById('spRl').textContent={hotel:'Rooms',car:'Vehicles',apt:'Apartments'}[mode];
+  const g=roomsN.reduce((s,r)=>s+r.g,0),u=U();
+  document.getElementById('spRooms').textContent=`${roomsN.length} ${u.c.toLowerCase()}${roomsN.length>1?'s':''} · ${g} ${u.p}${g>1?'s':''}`;
+  if(mode!=='hotel')document.getElementById('spCat').textContent=cats[mode];
   const urgent=(new Date(document.getElementById('fIn').value)-Date.now())<48*36e5;
   const aa=document.getElementById('aa').classList.contains('on');
-  document.getElementById('spWin').textContent=(urgent?'1 hour — check-in within 48h':'3 hours standard')+(aa?' · auto-accept ON':'');
+  document.getElementById('spWin').textContent=(mode==='apt'?'24 hours — hosts confirm slower than front desks':urgent?'1 hour — check-in within 48h':'3 hours standard')+(aa?' · auto-accept ON':'');
 }
 drawRooms();sp();
 </script>

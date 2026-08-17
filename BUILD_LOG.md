@@ -632,3 +632,15 @@ yet list transfer bookings.
   struck-through card rate when discounted.
 - Server-side enforcement queued as **F-002 in BACKLOG.md** (ef_vendor_respond
   currently accepts arbitrary counter rates — must validate at wiring).
+
+## 2026-08-18 — Fourth service: apartments & long stays (owner decision)
+
+- Corlington will also offer **apartments (Airbnb-style / serviced) for longer
+  commitments** — a fourth service line beside hotels, rent-a-car, transfers.
+  Bookers see it as its own segment on the new-file screen (prototype updated
+  same day): Move-in / Move-out labels, area chips apply (apartments ARE
+  area-bound), type chips Studio / 1-Bed / 2-Bed / Serviced, spine shows
+  ≈months for 30+ nights, decision window 24 hours (hosts confirm slower than
+  front desks — prototype assumption, owner to confirm). RFQ flow like hotels.
+- Backend/schema/rates design parked as **F-003 in BACKLOG.md** (monthly rate
+  units, deposits, exit terms, host onboarding, voucher wording).

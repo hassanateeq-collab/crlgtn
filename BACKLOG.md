@@ -60,6 +60,30 @@ the card rate alongside the countered rate so discounts are measurable.
 Currently the function accepts arbitrary counter amounts — do not pilot vendors
 before this lands.
 
+## F-003 · Apartments & long-stay vertical (Airbnb-style / serviced)
+
+**Decided:** 2026-08-18 (owner) · **Status:** parked (front-end segment already
+live in portal-home prototype) · **Build when:** wiring the verticals batch —
+after hotels/cars wire cleanly; schema questions below need owner answers first.
+
+Fourth service: apartments for guests needing long commitments — monthly and
+multi-month stays. Booker-facing entry exists (segment on the new booking file:
+Move-in/Move-out, area chips, type Studio/1-Bed/2-Bed/Serviced, ≈months in
+spine, 24-hour window assumption). To design at build time:
+- `service` enum gains 'apartment'; A-packages? (e.g. A1 bare / A2 serviced /
+  A3 serviced+utilities) mirroring P/V codes — package regex already widened
+  once, widen to `^[PVA][1-9]$`.
+- **Rate units:** nightly under 30 nights, monthly at/over? Pro-rating rule for
+  6-week stays; deposits & notice period for early exit ("move-out — or
+  earliest exit" wording already hints commitment vs exit).
+- Vendor side: hosts/operators are NOT front desks — same magic-link respond
+  page but 24-hour reply window (vs 15-min hotel promise); counter ceiling
+  rule (F-002) applies identically via their contracted card.
+- Credit matrix: do apartment operators join hotel tiers HT1–HT4 or default to
+  prepaid/deposit? Long stays are big tickets — likely deposit-led (owner).
+- Vouchers, invoices (monthly recurring?), settlement cadence for multi-month
+  stays — one invoice per month per the cash-flow rule, never front the float.
+
 ---
 
 ## Done / absorbed
