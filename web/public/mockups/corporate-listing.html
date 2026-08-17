@@ -51,9 +51,16 @@ body{background:var(--paper);color:var(--ink);font:14px/1.5 "Instrument Sans",sa
 .pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .pill{background:var(--sage);color:var(--deep);border-radius:99px;padding:3.5px 9px;font-size:10.5px;font-weight:600}
 .pill.inc{background:transparent;border:1px dashed var(--hair);color:#7a8a81;font-weight:500}
-.pkgs{display:flex;gap:5px;margin-top:9px}
-.pk{border:1px solid var(--hair);border-radius:8px;padding:4px 9px;font:600 10.5px "Spline Sans Mono";color:#5a6b62;cursor:pointer}
-.pk.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.ladder{margin-top:9px;border:1px solid var(--hair);border-radius:10px;overflow:hidden}
+.lrow{display:grid;grid-template-columns:34px 1fr auto auto;gap:10px;align-items:baseline;padding:6px 11px;cursor:pointer;border-top:1px solid #f0f3f0;font-size:11.5px;color:#5a6b62}
+.lrow:first-child{border-top:0}
+.lrow:hover{background:var(--paper)}
+.lrow.on{background:var(--sage);color:var(--deep)}
+.lrow .lp{font:700 10px "Spline Sans Mono";letter-spacing:.05em}
+.lrow .lr{font:700 12px "Spline Sans Mono";color:var(--ink)}
+.lrow.on .lr{color:var(--deep)}
+.lrow .lr i{font-style:normal;color:var(--brass);font-size:9px;vertical-align:top}
+.lrow .lt{font:500 10px "Spline Sans Mono";color:#9aa8a0;min-width:86px;text-align:right}
 .right{border-left:1px solid #f0f3f0;padding:14px 16px;display:flex;flex-direction:column;text-align:right}
 .yr{font:700 8.5px "Spline Sans Mono";letter-spacing:.14em;color:var(--brass);text-transform:uppercase}
 .amt{font:700 21px "Bricolage Grotesque";letter-spacing:-.02em}
@@ -186,7 +193,15 @@ function render(){
         <div class="meta">${h.c} · <b>${h.b}</b>${h.inc?` · incl. ${h.inc}`:''}</div>
         <div class="desc">${h.d}</div>
         <div class="pills">${h.a.map(a=>`<span class="pill">✓ ${a}</span>`).join('')}</div>
-        <div class="pkgs">${Object.keys(h.p).map(p=>`<span class="pk${p===pk?' on':''}" onclick="pkgSel['${h.n}']='${p}';render()">${p} · ${(h.neg&&h.neg[p]?h.neg[p]:h.p[p])/1000}k</span>`).join('')}</div>
+        <div class="ladder">${Object.keys(h.p).map(p=>{
+          const r=(h.neg&&h.neg[p])??h.p[p];const isN=!!(h.neg&&h.neg[p]);
+          const PN={P1:'Room only',P2:'+ Breakfast',P3:'Half board'}[p];
+          return `<div class="lrow${p===pk?' on':''}" onclick="pkgSel['${h.n}']='${p}';render()">
+            <span class="lp">${p}</span><span>${PN}</span>
+            <span class="lr">${r.toLocaleString()}${isN?' <i>●</i>':''}</span>
+            <span class="lt">≈ ${(r*NIGHTS*ROOMS).toLocaleString()} trip</span>
+          </div>`;
+        }).join('')}</div>
       </div>
       <div class="right">
         ${isNeg?'<span class="yr">Your rate</span>':'<span class="yr" style="color:#9aa8a0">Card rate</span>'}
