@@ -45,12 +45,6 @@ name + designation creates an accountability record.
   is on; SLA/expiry sweep needs a matching timeout rule (what happens if no
   one countersigns — owner to decide at build time).
 
----
-
-## Done / absorbed
-
-*(empty — entries move here when built, with the commit/migration that absorbed them)*
-
 ## F-002 · Enforce the counter ceiling in ef_vendor_respond
 
 **Decided:** 2026-08-18 (owner) · **Status:** parked · **Build when:** wiring the
@@ -65,3 +59,9 @@ contracted catalog, and it arrives priced at ≤ its own card rate; (c) audit-lo
 the card rate alongside the countered rate so discounts are measurable.
 Currently the function accepts arbitrary counter amounts — do not pilot vendors
 before this lands.
+
+---
+
+## Done / absorbed
+
+*(empty — entries move here when built, with the commit/migration that absorbed them)*
