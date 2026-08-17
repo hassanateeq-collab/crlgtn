@@ -175,10 +175,10 @@ input:focus{outline:none;border-color:var(--pine)}
   </div>
 
   <div class="seg">
-    <button class="on" onclick="svc(this,'hotel')">Hotels<small>request up to 3, offers in 15 min</small></button>
-    <button onclick="svc(this,'apt')">Apartments<small>monthly & long stays</small></button>
-    <button onclick="svc(this,'car')">Rent-a-car<small>same request flow, per-day rates</small></button>
-    <button onclick="alert('Transfers book instantly — this jumps to the Transfers page')">Airport transfer<small>fixed price, books instantly</small></button>
+    <button class="on" onclick="svc(this,'hotel')">Hotels</button>
+    <button onclick="svc(this,'apt')">Apartments</button>
+    <button onclick="svc(this,'car')">Rent-a-car</button>
+    <button onclick="alert('Transfers book instantly — this jumps to the Transfers page')">Airport transfer</button>
   </div>
 
   <div class="grid">
@@ -240,7 +240,7 @@ let t=6432;setInterval(()=>{t--;const h=Math.floor(t/3600),m=String(Math.floor(t
 const CORS=["Anywhere","Clifton/DHA","Shahrah-e-Faisal","Airport","Saddar","SITE"];
 const CATS={car:["Sedan","SUV","Premium"],apt:["Studio","1-Bed","2-Bed","Serviced"]};
 const HINTS={car:"Sedan — Corolla / Civic class · SUV — Fortuner / Prado class · Premium — Mercedes / Audi class",
- apt:"Serviced — housekeeping & utilities included · every apartment verified · stays of a month or more get monthly rates"};
+ apt:"Serviced — housekeeping & utilities included · every apartment verified"};
 let mode='hotel',cor="Anywhere",cats={car:"Sedan",apt:"1-Bed"},roomsN=[{g:2},{g:1}];
 const U=()=>mode==='car'?{c:'Vehicle',p:'passenger',cap:12}:mode==='apt'?{c:'Apartment',p:'occupant',cap:8}:{c:'Room',p:'guest',cap:6};
 document.getElementById('fCor').innerHTML=CORS.map(c=>`<span class="${c===cor?'on':''}" onclick="pickCor(this,'${c}')">${c}</span>`).join("");
@@ -251,7 +251,7 @@ function pickCat(el,c){cats[mode]=c;[...el.parentNode.children].forEach(x=>x.cla
 function svc(btn,m){mode=m;[...btn.parentNode.children].forEach(x=>x.classList.remove('on'));btn.classList.add('on');
   document.getElementById('tTrip').textContent={hotel:'Trip',car:'Rental',apt:'Stay'}[m];
   document.getElementById('lIn').textContent={hotel:'Check-in',car:'From (first day)',apt:'Move-in'}[m];
-  document.getElementById('lOut').textContent={hotel:'Check-out',car:'Until (return day)',apt:'Move-out — or earliest exit'}[m];
+  document.getElementById('lOut').textContent={hotel:'Check-out',car:'Until (return day)',apt:'Move-out'}[m];
   document.getElementById('tRooms').textContent={hotel:'Rooms & guests',car:'Vehicles & passengers',apt:'Apartments & occupants'}[m];
   document.getElementById('corBlock').style.display=m==='car'?'none':'block';
   document.getElementById('catBlock').style.display=m==='hotel'?'none':'block';

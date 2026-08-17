@@ -644,3 +644,14 @@ yet list transfer bookings.
   front desks — prototype assumption, owner to confirm). RFQ flow like hotels.
 - Backend/schema/rates design parked as **F-003 in BACKLOG.md** (monthly rate
   units, deposits, exit terms, host onboarding, voucher wording).
+
+## 2026-08-18 — Redline: service segments carry no subtitles
+
+- Owner: the new-file service buttons must not expose process mechanics or
+  positioning — no "request up to 3 / offers in 15 min", no "monthly & long
+  stays" (apartments serve 5–7 day bookings too), no "same request flow".
+  Segments are now four plain labels: Hotels · Apartments · Rent-a-car ·
+  Airport transfer. Apartment copy softened everywhere on the form:
+  "Move-out" (no "earliest exit"), hint keeps serviced/verified only, monthly
+  -rates mention dropped. The ≈months figure still appears in the spine, but
+  only when the chosen dates are themselves 30+ nights.
