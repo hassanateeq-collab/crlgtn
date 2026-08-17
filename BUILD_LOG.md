@@ -582,3 +582,24 @@ yet list transfer bookings.
   d30 corporate terms abolished (enum keeps d30 for legacy/test rows only;
   ceiling validation will refuse it; d20 to be added to credit_terms enum
   at wiring). New corporates start C, graduate on payment history.
+
+## 2026-08-18 — Portal home + new booking file prototype (redesign task #2)
+
+- Prototype `web/public/mockups/portal-home.html` shipped: portal HOME
+  (greeting, 3 stat tiles, needs-your-decision row with live countdown,
+  drafts, upcoming trips unified across hotel/rent-a-car/transfer with
+  service tags + voucher links, past & closed with re-send) + NEW BOOKING
+  FILE (3-service segmented entry — transfers jump out to instant flow;
+  trip fields with car-aware labels; guest/passenger steppers; auto-accept
+  toggle with plain-language warning; sticky dark spine live-summarizing
+  the draft incl. 1-hour-urgent window rule; "Save & find …" continues to
+  the approved listing prototype).
+- **Owner redlines (2026-08-18): must-have amenity filters REMOVED from the
+  new-file form for now** (chips existed on the earlier draft; amenity
+  filtering stays available on the listing page sidebar, which is already
+  approved). **Rent-a-car is NOT area-bound:** car mode hides the corridor
+  chips and instead asks for a car CATEGORY — Sedan / SUV / Premium (class
+  examples: Corolla-Civic / Fortuner-Prado / Mercedes-Audi). Spine shows
+  the category; CTA flips to "Save & find cars". Wiring note for later:
+  booking_files needs a car_category field (or reuse must_haves JSON) and
+  car listings/V-packages should carry a category tag.
