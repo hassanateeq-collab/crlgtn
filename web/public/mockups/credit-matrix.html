@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype — Credit matrix (ops)</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14241F;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F6F8F6;--brass:#A97D2B;--hair:#D9E0DA;--red:#8f3b2e}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:14px/1.5 "Instrument Sans",sans-serif;padding:28px 36px 80px;max-width:1180px;margin:0 auto}
+.tag{font:600 10px "Spline Sans Mono";letter-spacing:.16em;color:var(--brass);text-transform:uppercase}
+h1{font:700 26px "Bricolage Grotesque";letter-spacing:-.01em;margin:6px 0 4px}
+.sub{color:#5a6b62;font-size:13px;max-width:78ch;margin-bottom:24px}
+.box{background:#fff;border-radius:16px;box-shadow:0 1px 2px rgba(20,36,31,.06),0 10px 28px -16px rgba(20,36,31,.16);padding:20px 22px;margin-bottom:18px}
+.box h2{font:700 15px "Bricolage Grotesque";margin-bottom:4px}
+.box .h{font-size:12px;color:#7a8a81;margin-bottom:14px}
+/* tier legend */
+.tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.tier{border:1px solid var(--hair);border-radius:12px;padding:12px 14px}
+.tier b{font:700 11px "Spline Sans Mono";color:var(--deep)}
+.tier p{font-size:11.5px;color:#5a6b62;margin-top:4px}
+/* matrix table */
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #eef2ef;padding:9px 12px;text-align:center;font-size:12.5px}
+th{background:var(--paper);font:600 10.5px "Spline Sans Mono";letter-spacing:.08em;color:#5a6b62;text-transform:uppercase}
+td.h{background:#fff;text-align:left;font-weight:600}
+td .ht{font:600 10px "Spline Sans Mono";color:#7a8a81;display:block}
+.ok{color:var(--deep);font-weight:700}
+.no{color:var(--red);font-weight:700}
+.cell{cursor:pointer;user-select:none;position:relative}
+.cell:hover{background:var(--paper)}
+.cell.ov-allow{background:var(--sage)}
+.cell.ov-deny{background:#f7e9e6}
+.cell small{display:block;font:600 8.5px "Spline Sans Mono";letter-spacing:.08em;color:var(--brass);text-transform:uppercase}
+select{border:1px solid var(--hair);border-radius:8px;padding:5px 8px;font:600 11px "Spline Sans Mono";color:var(--deep);background:#fff}
+.legend{display:flex;gap:16px;font-size:11.5px;color:#5a6b62;margin-top:10px;flex-wrap:wrap}
+.legend i{font-style:normal;font-weight:700}
+.scenario{background:var(--sage);border-radius:12px;padding:13px 16px;font-size:12.5px;color:var(--deep);margin-top:14px}
+.scenario b{font-family:"Spline Sans Mono";font-size:11.5px}
+/* booker preview */
+.prev{display:flex;gap:12px;flex-wrap:wrap}
+.pcard{flex:1;min-width:250px;border:1px solid var(--hair);border-radius:14px;padding:13px 15px}
+.pcard .nm{font:700 14px "Bricolage Grotesque"}
+.pcard .badge{display:inline-block;margin-top:7px;border-radius:99px;padding:4px 11px;font:600 10.5px "Instrument Sans"}
+.badge.credit{background:var(--sage);color:var(--deep)}
+.badge.prepay{background:#f3ede2;color:var(--brass)}
+.pcard p{font-size:11px;color:#7a8a81;margin-top:6px}
+</style></head><body>
+
+<div class="tag">Prototype · Ops console · Front-end only</div>
+<h1>Credit matrix — who books on credit, where</h1>
+<p class="sub">Corlington stays merchant of record: corporates always owe Corlington, hotels are always settled monthly.
+This matrix governs <b>where Corlington extends its credit</b>, because the default-split clause in each hotel agreement
+shares that risk with the property. Where credit doesn't apply, booking still works — prepaid or from the standing deposit.</p>
+
+<div class="box">
+  <h2>Hotel credit tiers <span style="font-weight:400;color:#7a8a81">(set by the signed agreement)</span></h2>
+  <div class="h">The tier is agreed at onboarding and recorded on the hotel's agreement.</div>
+  <div class="tiers">
+    <div class="tier"><b>HT1 · OPEN</b><p>Credit for every approved corporate (A, B and C).</p></div>
+    <div class="tier"><b>HT2 · STANDARD</b><p>Credit for corporate tiers A and B. Tier C prepays.</p></div>
+    <div class="tier"><b>HT3 · SELECTIVE</b><p>Credit for tier A only. B and C prepay.</p></div>
+    <div class="tier"><b>HT4 · PREPAID</b><p>No shared credit risk — all corporates prepay or draw deposit.</p></div>
+  </div>
+</div>
+
+<div class="box">
+  <h2>Effective policy — hotels × corporates</h2>
+  <div class="h">Defaults come from hotel tier × corporate tier. <b>Click any cell</b> to override the pair:
+  once = force credit ✓, twice = force prepaid ✕, three times = back to tier default.</div>
+  <table id="mx"></table>
+  <div class="legend">
+    <span><i class="ok">✓ credit</i> — invoice on the corporate's terms</span>
+    <span><i class="no">⊘ prepaid</i> — bank transfer or deposit drawdown before confirmation</span>
+    <span style="color:var(--brass)">OVERRIDE — pair-level exception beats the tier</span>
+  </div>
+  <div class="scenario" id="story"></div>
+</div>
+
+<div class="box">
+  <h2>What the booker sees <span style="font-weight:400;color:#7a8a81">(consequence on the listing page)</span></h2>
+  <div class="h">The matrix never blocks a hotel from results — it changes the payment badge on the card.</div>
+  <div class="prev" id="prev"></div>
+</div>
+
+<script>
+const HOTELS=[
+ {n:"Pearl Continental",t:"HT1"},
+ {n:"Avari Towers",t:"HT2"},
+ {n:"Carlton Hotel",t:"HT2"},
+ {n:"Hotel Mehran",t:"HT3"},
+ {n:"Ramada Plaza Airport",t:"HT3"},
+ {n:"Hotel Airport Inn",t:"HT4"},
+];
+const CORPS=[
+ {n:"Northbridge Textiles",t:"A"},
+ {n:"Meridian Logistics",t:"B"},
+ {n:"Sunrise Foods",t:"B"},
+ {n:"Karachi Freight Co",t:"C"},
+];
+const RULE={HT1:["A","B","C"],HT2:["A","B"],HT3:["A"],HT4:[]};
+/* Pre-seeded to the owner's example: Hotel Mehran (B in the story) refuses
+   Northbridge (company A) despite tier allowing it; Carlton (hotel C) extends
+   credit to Meridian (company B) by override though its tier wouldn't. */
+const ov={"Hotel Mehran|Northbridge Textiles":"deny","Carlton Hotel|Meridian Logistics":"allow"};
+
+function defAllows(h,c){return RULE[h.t].includes(c.t);}
+function eff(h,c){const k=h.n+"|"+c.n;if(ov[k]==="allow")return true;if(ov[k]==="deny")return false;return defAllows(h,c);}
+
+function render(){
+  let html="<tr><th style='text-align:left'>Hotel · tier</th>"+CORPS.map(c=>`<th>${c.n}<br><span style="color:var(--brass)">TIER ${c.t}</span></th>`).join("")+"</tr>";
+  for(const h of HOTELS){
+    html+=`<tr><td class="h">${h.n}<span class="ht"><select onchange="setTier('${h.n}',this.value)">${["HT1","HT2","HT3","HT4"].map(t=>`<option ${t===h.t?"selected":""}>${t}</option>`).join("")}</select></span></td>`;
+    for(const c of CORPS){
+      const k=h.n+"|"+c.n, o=ov[k], allowed=eff(h,c);
+      html+=`<td class="cell ${o?("ov-"+o):""}" onclick="cyc('${k}')">
+        <span class="${allowed?'ok':'no'}">${allowed?'✓ credit':'⊘ prepaid'}</span>
+        ${o?'<small>override</small>':''}</td>`;
+    }
+    html+="</tr>";
+  }
+  document.getElementById('mx').innerHTML=html;
+
+  const meh=HOTELS.find(h=>h.n==="Hotel Mehran"),car=HOTELS.find(h=>h.n==="Carlton Hotel");
+  const nb=CORPS[0],mer=CORPS[1];
+  document.getElementById('story').innerHTML=
+   `<b>Your example, resolved:</b> ${meh.n} (${meh.t}) would credit ${nb.n} by tier — the ✕ override refuses this pair, so Northbridge <b>prepays there</b> while Avari still credits them. Meanwhile ${car.n} (${car.t}) wouldn't credit tier-B ${mer.n} — its ✓ override grants credit <b>to that company only</b>.`;
+
+  document.getElementById('prev').innerHTML=[
+    {h:HOTELS[1],c:nb},{h:meh,c:nb},{h:car,c:mer}
+  ].map(({h,c})=>{
+    const a=eff(h,c);
+    return `<div class="pcard"><div class="nm">${h.n}</div>
+      <span class="badge ${a?'credit':'prepay'}">${a?'✓ On credit — invoiced on your terms':'Prepay / deposit before confirmation'}</span>
+      <p>as seen by ${c.n} (tier ${c.t})</p></div>`;
+  }).join("");
+}
+function cyc(k){ov[k]=ov[k]==="allow"?"deny":ov[k]==="deny"?undefined:"allow";if(!ov[k])delete ov[k];render();}
+function setTier(n,t){HOTELS.find(h=>h.n===n).t=t;render();}
+render();
+</script>
+</body></html>
