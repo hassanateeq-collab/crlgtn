@@ -682,3 +682,10 @@ yet list transfer bookings.
   interactions (chip↔zone sync, pine shading, dim others). Attribution
   "Boundary data © OpenStreetMap contributors" in the caption (ODbL).
 - Same recipe for every future city: fetch boundary once, simplify, embed.
+
+## 2026-08-18 — Redline: area map dropped for now
+
+- Owner: the map isn't looking nice — removed from the booking form; corridor
+  chips remain the area picker. The real-boundary recipe (OSM fetch → simplify
+  → embed) stays documented above for a future revisit (e.g. a designed map
+  with the urban core magnified, or licensed tiles).
