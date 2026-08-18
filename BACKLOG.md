@@ -84,6 +84,34 @@ spine, 24-hour window assumption). To design at build time:
 - Vouchers, invoices (monthly recurring?), settlement cadence for multi-month
   stays — one invoice per month per the cash-flow rule, never front the float.
 
+## F-004 · Vendor anonymity until confirmation (anti-bypass)
+
+**Proposed:** 2026-08-18 (Claude, from owner's disintermediation question) ·
+**Status:** proposed — needs owner confirmation · **Build when:** wiring the
+vendor respond page + voucher PDFs (vendor batch).
+
+Vendors must never learn the corporate's identity before a confirmed booking:
+RFQ/magic-link shows only "Corporate client via Corlington · tier X" (the
+prototype already words it this way — make it a hard rule server-side, the
+corporate name must not travel in any vendor-facing payload). On confirmation
+the voucher carries guest names for check-in but NEVER booker/procurement
+contacts — Corlington's own WhatsApp/phone is the only contact on every
+vendor-facing artifact. Blocks the easy path to direct outreach.
+
+## F-005 · Leakage analytics — pair-velocity alerts (anti-bypass)
+
+**Proposed:** 2026-08-18 (Claude, from owner's disintermediation question) ·
+**Status:** proposed — needs owner confirmation · **Build when:** ops console
+wiring, after core money/board views.
+
+Detect probable bypass from booking patterns: for each corporate × vendor pair,
+alert ops when booking velocity drops sharply while the corporate's overall
+volume holds (e.g. 5 bookings at Hotel X in 2 months, then zero for 6 weeks,
+other corridors unchanged). Simple SQL over bookings; surfaces on the ops
+dashboard as a "relationship check" flag for the account manager. Pairs with
+the non-circumvention + rate-parity clauses in the hotel agreement (commercial
+track, not code).
+
 ---
 
 ## Done / absorbed
