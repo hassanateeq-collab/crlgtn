@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype — Booking file · offers board</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@500..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2b26;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F7F9F7;--brass:#A97D2B;--hair:#E3E9E4;--soft:#66756d;--red:#8f3b2e}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 "Instrument Sans",sans-serif}
+.top{background:#fff;border-bottom:1px solid var(--hair);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:9px;font:650 18px "Bricolage Grotesque"}
+.brand i{width:7px;height:7px;border-radius:50%;background:var(--brass)}
+.brand small{font:400 12px "Instrument Sans";color:var(--soft)}
+.nav{display:flex;gap:4px;margin-left:14px}
+.nav a{padding:8px 14px;border-radius:10px;font:600 13.5px "Instrument Sans";color:var(--soft);cursor:pointer}
+.nav a.on{background:var(--sage);color:var(--deep)}
+.who{margin-left:auto;font-size:12.5px;color:var(--soft)}
+.shell{max-width:1120px;margin:0 auto;padding:26px 24px 90px}
+.tagline{font:600 11px "Instrument Sans";letter-spacing:.1em;color:var(--brass);text-transform:uppercase;margin-bottom:10px}
+h1{font:650 26px "Bricolage Grotesque";letter-spacing:-.015em}
+.ref{font:600 12px "Spline Sans Mono";color:var(--deep);background:var(--sage);border-radius:8px;padding:4px 9px;vertical-align:middle}
+.sub{color:var(--soft);font-size:14px;margin:4px 0 18px}
+/* stepper */
+.steps{display:flex;gap:0;background:#fff;border-radius:16px;padding:6px;box-shadow:0 1px 3px rgba(20,36,31,.05);margin-bottom:20px}
+.st{flex:1;text-align:center;padding:10px 6px;border-radius:12px;font:600 13px "Instrument Sans";color:var(--soft)}
+.st small{display:block;font-weight:400;font-size:11.5px}
+.st.done{color:var(--deep)}
+.st.now{background:var(--deep);color:#fff}
+.st.now small{color:#cfe0d8}
+.lay{display:grid;grid-template-columns:1fr 310px;gap:22px;align-items:start}
+/* window banner */
+.win{background:#FBF3E2;border:1px solid #EBDFC6;border-radius:16px;padding:14px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.win .cd{font:650 24px "Spline Sans Mono";color:var(--brass)}
+.win p{font-size:13.5px;color:var(--ink)}
+.win p b{font-weight:650}
+/* offer cards */
+.off{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(20,36,31,.05),0 14px 36px -22px rgba(20,36,31,.16);padding:18px 20px;margin-bottom:14px;display:grid;grid-template-columns:1fr auto;gap:12px 18px}
+.off.best{box-shadow:0 0 0 2px var(--pine),0 14px 36px -22px rgba(20,36,31,.16)}
+.off .h{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.off .nm{font:650 17px "Bricolage Grotesque"}
+.chip{border-radius:99px;padding:4px 11px;font:600 11.5px "Instrument Sans"}
+.c-ok{background:var(--sage);color:var(--deep)}
+.c-ctr{background:#FBF3E2;color:var(--brass)}
+.c-wait{background:#eef0ee;color:#8a978f}
+.c-best{background:var(--deep);color:#fff}
+.off .meta{font-size:13px;color:var(--soft);margin-top:3px}
+.off .rows{margin-top:10px;display:grid;gap:6px}
+.row{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.row .pk{width:30px;height:30px;border-radius:9px;background:var(--sage);font:650 12px "Spline Sans Mono";color:var(--deep);display:grid;place-items:center;flex:none}
+.row s{color:#b0bcb5;font-size:12px}
+.row .r{margin-left:auto;font:650 14.5px "Bricolage Grotesque";color:var(--deep);white-space:nowrap}
+.row .r small{display:block;font:400 11.5px "Instrument Sans";color:var(--soft);text-align:right}
+.row .alt{font-size:12px;color:var(--brass);font-weight:600}
+.off .act{display:flex;flex-direction:column;gap:8px;align-items:stretch;min-width:180px;justify-content:center}
+.btn{background:var(--pine);color:#fff;border:0;border-radius:12px;font:650 13.5px "Instrument Sans";padding:12px 16px;cursor:pointer;text-align:center}
+.btn:hover{background:var(--deep)}
+.btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 1.5px var(--hair)}
+.btn:disabled{background:#dfe5e0;color:#8a978f;cursor:not-allowed}
+.tot{font:650 20px "Bricolage Grotesque";color:var(--deep);text-align:right}
+.tot small{display:block;font:400 12px "Instrument Sans";color:var(--soft)}
+.note{font-size:12px;color:var(--soft);margin-top:4px}
+/* spine */
+.spine{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(20,36,31,.05),0 14px 36px -22px rgba(20,36,31,.16);position:sticky;top:84px;overflow:hidden}
+.spine .hd{background:var(--deep);color:#fff;padding:16px 20px}
+.spine .hd .r{font:600 12px "Spline Sans Mono";color:#e8c789}
+.spine .hd h3{font:650 16px "Bricolage Grotesque";margin-top:3px}
+.spine dl{padding:14px 20px}
+.spine dt{font:600 11.5px "Instrument Sans";letter-spacing:.04em;color:var(--soft);text-transform:uppercase;margin-top:11px}
+.spine dt:first-child{margin-top:0}
+.spine dd{font:500 14px "Instrument Sans";margin-top:2px}
+.tl{padding:4px 20px 18px}
+.tl h4{font:650 12px "Instrument Sans";letter-spacing:.04em;color:var(--soft);text-transform:uppercase;margin-bottom:8px}
+.ev{display:flex;gap:10px;font-size:12.5px;padding:6px 0;border-top:1px solid var(--paper)}
+.ev time{font:600 11px "Spline Sans Mono";color:var(--soft);white-space:nowrap;margin-top:2px}
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(20,36,31,.45);display:none;place-items:center;z-index:40;padding:20px}
+.ov.on{display:grid}
+.md{background:#fff;border-radius:22px;max-width:520px;width:100%;padding:26px 28px;box-shadow:0 30px 60px -20px rgba(0,0,0,.4)}
+.md h2{font:650 21px "Bricolage Grotesque"}
+.md p{font-size:13.5px;color:var(--soft);margin-top:6px}
+.md .sumbox{background:var(--paper);border-radius:14px;padding:13px 16px;margin:16px 0;font-size:13.5px}
+.md .sumbox b{font:650 18px "Bricolage Grotesque";color:var(--deep);display:block}
+.md .cs{background:var(--sage);border-radius:14px;padding:12px 15px;font-size:12.5px;color:var(--deep);margin-bottom:16px}
+.md .cs b{font-weight:650}
+.md .acts{display:flex;gap:10px;justify-content:flex-end}
+/* booked state */
+.booked{display:none;background:#fff;border-radius:20px;padding:30px;text-align:center;box-shadow:0 1px 3px rgba(20,36,31,.05)}
+.booked .big{width:60px;height:60px;border-radius:50%;background:var(--sage);display:grid;place-items:center;font-size:26px;color:var(--deep);margin:0 auto 12px}
+.booked h2{font:650 22px "Bricolage Grotesque"}
+.booked p{color:var(--soft);font-size:13.5px;margin-top:6px;max-width:50ch;margin-inline:auto}
+.booked .acts{display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+@media(max-width:900px){.lay{grid-template-columns:1fr}.spine{position:static}.off{grid-template-columns:1fr}.steps{flex-wrap:wrap}.st{flex:1 1 45%}}
+</style></head><body>
+<div class="top">
+  <span class="brand"><i></i>Corlington <small>Northbridge Textiles</small></span>
+  <nav class="nav"><a class="on">Booking files</a><a>Transfers</a><a>Invoices</a></nav>
+  <span class="who">Bilal Shaikh · booker</span>
+</div>
+<div class="shell">
+  <div class="tagline">Prototype · Booking file — offers board · Front-end only</div>
+  <h1>Audit team — September <span class="ref">CF-2613-KHI</span></h1>
+  <div class="sub">14–17 Sept · 3 nights · 3 rooms · 4 guests · Shahrah-e-Faisal · sent to 3 hotels</div>
+
+  <div class="steps">
+    <div class="st done">✓ Sent<small>09:31 today</small></div>
+    <div class="st done">✓ Offers in<small>2 of 3 answered</small></div>
+    <div class="st now">Your decision<small>window open</small></div>
+    <div class="st">Booked<small>voucher issued</small></div>
+  </div>
+
+  <div class="lay">
+    <div id="board">
+      <div class="win"><span class="cd" id="cd">1:47:12</span>
+        <p><b>Decision window.</b> Rooms on hold at 2 hotels until it closes. Book one and the others release automatically — no call needed.</p></div>
+
+      <div class="off best">
+        <div>
+          <div class="h"><span class="nm">Avari Towers</span><span class="chip c-ok">Accepted at your rate</span><span class="chip c-best">Best fit</span></div>
+          <div class="meta">Saddar · 5★ · HT2 · on credit, invoiced on your d20 terms · answered in 11 min</div>
+          <div class="rows">
+            <div class="row"><span class="pk">P2</span>Standard twin × 2 · room + breakfast<span class="r">PKR 21,000<small>per room · night</small></span></div>
+            <div class="row"><span class="pk">P2</span>Standard single × 1 · room + breakfast<span class="r">PKR 18,500<small>per room · night</small></span></div>
+          </div>
+          <div class="note">Airport transfer included · late checkout 2 pm · 5-page printing · evening tea — per Avari's corporate courtesies</div>
+        </div>
+        <div class="act"><div class="tot">PKR 181,500<small>whole stay · 3 rooms × 3 nights</small></div>
+          <button class="btn" onclick="openModal('Avari Towers','PKR 181,500')">Book Avari</button><button class="btn ghost" onclick="alert('→ opens the approved property inner page')">See property</button></div>
+      </div>
+
+      <div class="off">
+        <div>
+          <div class="h"><span class="nm">Hotel Mehran</span><span class="chip c-ctr">Countered — alternate rooms</span></div>
+          <div class="meta">Shahrah-e-Faisal · 4★ · HT3 · <b>prepay / deposit</b> for your company at this hotel · answered in 24 min</div>
+          <div class="rows">
+            <div class="row"><span class="pk">P2</span>Executive twin × 2 <span class="alt">· swapped from Standard (sold out)</span><span class="r">PKR 25,000 <s>27,500</s><small>card rate, discounted</small></span></div>
+            <div class="row"><span class="pk">P2</span>Executive single × 1<span class="r">PKR 22,000<small>per room · night</small></span></div>
+          </div>
+          <div class="note">Better rooms than asked, at their contracted Executive card minus a discount · no transfer included</div>
+        </div>
+        <div class="act"><div class="tot">PKR 216,000<small>whole stay · prepaid or deposit drawdown</small></div>
+          <button class="btn" onclick="openModal('Hotel Mehran','PKR 216,000')">Book Mehran</button><button class="btn ghost">See property</button></div>
+      </div>
+
+      <div class="off" style="opacity:.8">
+        <div>
+          <div class="h"><span class="nm">Regent Plaza</span><span class="chip c-wait">No answer yet</span></div>
+          <div class="meta">Shahrah-e-Faisal · 4★ · HT2 · link opened 09:40, not yet replied</div>
+          <div class="note">If they answer before the window closes, their offer appears here. You don't have to wait.</div>
+        </div>
+        <div class="act"><div class="tot" style="color:var(--soft)">—</div><button class="btn" disabled>Waiting</button></div>
+      </div>
+    </div>
+
+    <aside class="spine">
+      <div class="hd"><div class="r">CF-2613-KHI · in decision</div><h3>Audit team — September</h3></div>
+      <dl>
+        <dt>Stay</dt><dd>14 → 17 Sept · 3 nights</dd>
+        <dt>Rooms</dt><dd>2 × twin · 1 × single · 4 guests</dd>
+        <dt>Sent to</dt><dd>Avari · Mehran · Regent Plaza</dd>
+        <dt>Auto-accept</dt><dd>Off — you choose</dd>
+      </dl>
+      <div class="tl"><h4>Activity</h4>
+        <div class="ev"><time>09:31</time><span>Request sent to 3 hotels via WhatsApp + email</span></div>
+        <div class="ev"><time>09:40</time><span>Regent Plaza opened the link</span></div>
+        <div class="ev"><time>09:42</time><span>Avari accepted at your rate — rooms on hold</span></div>
+        <div class="ev"><time>09:55</time><span>Mehran countered: Executive rooms, discounted</span></div>
+        <div class="ev"><time>now</time><span>Decision window · 1 h 47 m left</span></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="booked" id="booked">
+    <div class="big">✓</div>
+    <h2 id="bkTitle">Booked — Avari Towers</h2>
+    <p id="bkText">Voucher issued and sent to you and the hotel. The other holds were released. Guests check in with the voucher — nothing to pay at the desk.</p>
+    <div class="acts"><button class="btn">Download voucher</button><button class="btn ghost">Add airport transfer</button><button class="btn ghost" onclick="location.reload()">Back to file</button></div>
+  </div>
+</div>
+
+<div class="ov" id="ov">
+  <div class="md">
+    <h2 id="mdT">Book Avari Towers</h2>
+    <p>This confirms the booking on your company's terms. Rates and policies are frozen into the voucher exactly as shown.</p>
+    <div class="sumbox">Whole stay, 3 rooms × 3 nights<b id="mdA">PKR 181,500</b>invoiced on d20 terms from checkout · no payment at the hotel</div>
+    <div class="cs"><b>Company countersign is on for Northbridge.</b> A confirmation email goes to your official address (finance@northbridge.com.pk) — someone there clicks and signs with their name and designation. The booking is final the moment they do.</div>
+    <div class="acts"><button class="btn ghost" onclick="closeModal()">Not yet</button><button class="btn" onclick="book()">Confirm booking</button></div>
+  </div>
+</div>
+
+<script>
+let t=6432;setInterval(()=>{t=Math.max(0,t-1);const h=Math.floor(t/3600),m=String(Math.floor(t%3600/60)).padStart(2,'0'),s=String(t%60).padStart(2,'0');
+ const el=document.getElementById('cd');if(el)el.textContent=`${h}:${m}:${s}`},1000);
+let chosen='';
+function openModal(n,a){chosen=n;document.getElementById('mdT').textContent='Book '+n;document.getElementById('mdA').textContent=a;document.getElementById('ov').classList.add('on')}
+function closeModal(){document.getElementById('ov').classList.remove('on')}
+function book(){closeModal();document.getElementById('board').style.display='none';document.querySelector('.spine').style.display='none';
+ document.querySelectorAll('.st').forEach((s,i)=>{s.classList.remove('now');s.classList.add('done')});
+ const last=document.querySelectorAll('.st')[3];last.classList.add('now');last.innerHTML='Awaiting countersign<small>email sent to finance@</small>';
+ document.getElementById('bkTitle').textContent='Booking sent for countersign — '+chosen;
+ document.getElementById('bkText').textContent='Your rooms stay on hold. The moment someone at your official address signs, the voucher issues and the other holds release. You will see it here and by email.';
+ document.getElementById('booked').style.display='block';window.scrollTo(0,0)}
+document.getElementById('ov').addEventListener('click',e=>{if(e.target.id==='ov')closeModal()});
+</script>
+</body></html>

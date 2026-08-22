@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype — Rent-a-car results</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@500..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2b26;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F7F9F7;--brass:#A97D2B;--hair:#E3E9E4;--soft:#66756d}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:15px/1.6 "Instrument Sans",sans-serif}
+.top{background:#fff;border-bottom:1px solid var(--hair);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:9px;font:650 18px "Bricolage Grotesque"}
+.brand i{width:7px;height:7px;border-radius:50%;background:var(--brass)}
+.brand small{font:400 12px "Instrument Sans";color:var(--soft)}
+.nav{display:flex;gap:4px;margin-left:14px}
+.nav a{padding:8px 14px;border-radius:10px;font:600 13.5px "Instrument Sans";color:var(--soft);cursor:pointer}
+.nav a.on{background:var(--sage);color:var(--deep)}
+.who{margin-left:auto;font-size:12.5px;color:var(--soft)}
+.shell{max-width:1120px;margin:0 auto;padding:26px 24px 140px}
+.tagline{font:600 11px "Instrument Sans";letter-spacing:.1em;color:var(--brass);text-transform:uppercase;margin-bottom:10px}
+h1{font:650 26px "Bricolage Grotesque";letter-spacing:-.015em}
+.sub{color:var(--soft);font-size:14px;margin:4px 0 18px}
+.ctx{background:var(--deep);color:#fff;border-radius:16px;padding:14px 20px;display:flex;gap:26px;flex-wrap:wrap;align-items:center;margin-bottom:22px}
+.ctx b{font:600 10.5px "Instrument Sans";letter-spacing:.06em;color:#9fb5ab;text-transform:uppercase;display:block}
+.ctx span{font:650 15px "Bricolage Grotesque"}
+.ctx .r{font:600 12px "Spline Sans Mono";color:#e8c789;margin-left:auto}
+.lay{display:grid;grid-template-columns:230px 1fr;gap:22px;align-items:start}
+.side{background:#fff;border-radius:18px;padding:18px;box-shadow:0 1px 3px rgba(20,36,31,.05);position:sticky;top:84px}
+.side h3{font:650 13px "Instrument Sans";margin:14px 0 8px}
+.side h3:first-child{margin-top:0}
+.opt{display:flex;align-items:center;gap:9px;font-size:13.5px;padding:5px 0;color:var(--ink);cursor:pointer}
+.opt i{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--hair);display:grid;place-items:center;font-size:11px;color:#fff;font-style:normal}
+.opt.on i{background:var(--pine);border-color:var(--pine)}
+.opt small{margin-left:auto;color:var(--soft);font-size:12px}
+.card{background:#fff;border-radius:20px;box-shadow:0 1px 3px rgba(20,36,31,.05),0 14px 36px -22px rgba(20,36,31,.16);display:grid;grid-template-columns:250px 1fr;overflow:hidden;margin-bottom:16px}
+.ph{position:relative;min-height:220px;background:linear-gradient(135deg,#D9E4DD,#B9CDC3)}
+.ph img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}
+.ph .cat{position:absolute;top:12px;left:12px;background:#fff;border-radius:99px;padding:4px 11px;font:600 11.5px "Instrument Sans";color:var(--deep)}
+.ph .neg{position:absolute;bottom:12px;left:12px;background:var(--ink);color:#e8c789;border-radius:99px;padding:4px 11px;font:600 11px "Instrument Sans"}
+.bd{padding:18px 20px}
+.nm{font:650 18px "Bricolage Grotesque"}
+.vend{font-size:13px;color:var(--soft);margin-top:2px}
+.vend b{color:var(--ink);font-weight:600}
+.ver{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 12px}
+.ver span{background:var(--sage);color:var(--deep);border-radius:99px;padding:4px 10px;font:600 11.5px "Instrument Sans"}
+.ver span.no{background:#f1f1ef;color:#8a978f;text-decoration:line-through}
+table{width:100%;border-collapse:collapse}
+td{padding:8px 0;border-top:1px solid var(--paper);font-size:13.5px;vertical-align:middle}
+td.pk{width:38px}
+td.pk span{display:inline-block;width:30px;height:30px;border-radius:9px;background:var(--sage);font:650 12px "Spline Sans Mono";color:var(--deep);display:grid;place-items:center}
+td .d{font-weight:600}
+td .e{display:block;font-size:12px;color:var(--soft)}
+td.rt{text-align:right;white-space:nowrap}
+td.rt b{font:650 15px "Bricolage Grotesque";color:var(--deep)}
+td.rt small{display:block;font-size:11.5px;color:var(--soft)}
+td.rt .dot{color:var(--brass);margin-right:3px}
+tr.sel td{background:#FBF7EE}
+tr[data-pk]{cursor:pointer}
+.pick{margin-top:12px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{background:var(--pine);color:#fff;border:0;border-radius:12px;font:650 13.5px "Instrument Sans";padding:11px 18px;cursor:pointer}
+.btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 1.5px var(--hair)}
+.btn.in{background:var(--brass)}
+.pol{font-size:12px;color:var(--soft)}
+.tray{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--hair);padding:14px 24px;box-shadow:0 -10px 30px -16px rgba(20,36,31,.25);z-index:30}
+.tray .in{max-width:1120px;margin:0 auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tray .slot{border:1.5px dashed var(--hair);border-radius:12px;padding:8px 13px;font-size:13px;color:var(--soft);min-width:170px}
+.tray .slot.f{border-style:solid;border-color:var(--deep);color:var(--ink);font-weight:600}
+.tray .cta{margin-left:auto;display:flex;align-items:center;gap:14px}
+.tray .cta small{color:var(--soft);font-size:12px;max-width:26ch;text-align:right}
+@media(max-width:860px){.lay{grid-template-columns:1fr}.side{position:static}.card{grid-template-columns:1fr}.ph{min-height:180px}}
+</style></head><body>
+<div class="top">
+  <span class="brand"><i></i>Corlington <small>Northbridge Textiles</small></span>
+  <nav class="nav"><a class="on">Booking files</a><a>Transfers</a><a>Invoices</a></nav>
+  <span class="who">Bilal Shaikh · booker</span>
+</div>
+<div class="shell">
+  <div class="tagline">Prototype · Rent-a-car results · Front-end only</div>
+  <h1>Vehicles for your site visit</h1>
+  <div class="sub">Pick up to three operators — each gets your request and answers inside the window. Rates shown are your contracted card.</div>
+
+  <div class="ctx">
+    <div><b>Rental</b><span>Site visit — vehicle</span></div>
+    <div><b>Days</b><span>25 → 27 Aug · 3 days</span></div>
+    <div><b>Category</b><span>Sedan</span></div>
+    <div><b>Vehicles</b><span>2 · 3 passengers</span></div>
+    <span class="r">CF-2612-KHI · draft</span>
+  </div>
+
+  <div class="lay">
+    <aside class="side">
+      <h3>Category</h3>
+      <div class="opt on" onclick="this.classList.toggle('on')"><i>✓</i>Sedan<small>5</small></div>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>SUV<small>3</small></div>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>Premium<small>2</small></div>
+      <h3>Verified — only what we've checked</h3>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>Comprehensive insurance<small>4</small></div>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>GPS tracker<small>4</small></div>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>2021 or newer<small>3</small></div>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>Replacement on breakdown<small>2</small></div>
+      <h3>Driver</h3>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>Driver's lodging included<small>3</small></div>
+      <div class="opt" onclick="this.classList.toggle('on')"><i>✓</i>Overtime capped<small>2</small></div>
+      <h3>Sort</h3>
+      <div class="opt on"><i>✓</i>Negotiated first</div>
+      <div class="opt"><i>✓</i>Lowest 3-day total</div>
+    </aside>
+
+    <div id="cards"></div>
+  </div>
+</div>
+
+<div class="tray"><div class="in">
+  <span style="font:650 13px 'Instrument Sans';color:var(--soft)">Your request, up to 3</span>
+  <span class="slot" id="s0">Operator 1</span><span class="slot" id="s1">Operator 2</span><span class="slot" id="s2">Operator 3</span>
+  <div class="cta"><small>Operators answer inside your window · first to accept holds the vehicles</small><button class="btn" onclick="alert('→ sends the request; continues to the offers board prototype')">Send request</button></div>
+</div></div>
+
+<script>
+const CARS=[
+ {v:"Karachi Executive Cars",m:"Toyota Corolla Altis 1.6",yr:2023,cat:"Sedan",img:"https://images.unsplash.com/photo-1590362891991-f776e747a588?w=700&q=60",neg:true,
+  ver:["Insured","Tracker","2023 model","Replacement"],no:[],rates:{V1:9500,V2:12500,V3:16800},pol:"Driver 10 hrs/day · overtime PKR 400/hr capped at 4 · 200 km/day on V3"},
+ {v:"Metro Rent-a-Car",m:"Honda City 1.5",yr:2022,cat:"Sedan",img:"https://images.unsplash.com/photo-1549399542-7e3f8b79c341?w=700&q=60",neg:true,
+  ver:["Insured","Tracker","2022 model"],no:["Replacement"],rates:{V1:8800,V2:11800,V3:15900},pol:"Driver 10 hrs/day · overtime PKR 350/hr · 180 km/day on V3"},
+ {v:"Sindh Motors",m:"Toyota Yaris 1.3",yr:2021,cat:"Sedan",img:"https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=700&q=60",neg:false,
+  ver:["Insured","Tracker","2021 model"],no:["Replacement"],rates:{V1:7900,V2:10900,V3:14500},pol:"Driver 9 hrs/day · overtime PKR 300/hr · 150 km/day on V3"},
+ {v:"Rehman Car Rental",m:"Toyota Fortuner 2.7",yr:2022,cat:"SUV",img:"https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?w=700&q=60",neg:true,
+  ver:["Insured","Tracker","2022 model","Replacement"],no:[],rates:{V1:16500,V2:19500,V3:26500},pol:"Driver 10 hrs/day · overtime PKR 500/hr · 200 km/day on V3"},
+ {v:"Bhatti Rentals",m:"Mercedes-Benz C200",yr:2021,cat:"Premium",img:"https://images.unsplash.com/photo-1549924231-f129b911e442?w=700&q=60",neg:false,
+  ver:["Insured","Tracker"],no:["2021 or newer"],rates:{V1:0,V2:32000,V3:41000},pol:"With driver only · 10 hrs/day · overtime PKR 900/hr · 150 km/day on V3"},
+];
+const PK={V1:["Self-drive","keys only — your driver, your fuel"],V2:["With driver","vendor driver, fuel on you"],V3:["Driver + fuel","all-in, km cap applies"]};
+const DAYS=3,VEH=2;
+let sel={};
+const pkr=n=>'PKR '+n.toLocaleString('en-PK');
+function draw(){document.getElementById('cards').innerHTML=CARS.map((c,i)=>{
+  const cur=sel[i]||'V2';
+  return `<div class="card">
+   <div class="ph"><img src="${c.img}" onerror="this.remove()" alt=""><span class="cat">${c.cat}</span>${c.neg?'<span class="neg">● YOUR RATE</span>':''}</div>
+   <div class="bd">
+    <div class="nm">${c.m}</div>
+    <div class="vend"><b>${c.v}</b> · ${c.yr} · verified fleet</div>
+    <div class="ver">${c.ver.map(x=>`<span>${x}</span>`).join('')}${c.no.map(x=>`<span class="no">${x}</span>`).join('')}</div>
+    <table>${Object.keys(PK).map(k=>{const r=c.rates[k];if(!r)return '';
+      return `<tr data-pk="${k}" class="${cur===k?'sel':''}" onclick="pick(${i},'${k}')">
+        <td class="pk"><span>${k}</span></td>
+        <td><span class="d">${PK[k][0]}</span><span class="e">${PK[k][1]}</span></td>
+        <td class="rt"><b>${c.neg?'<span class="dot">●</span>':''}${pkr(r)}</b><small>per day · ≈ ${pkr(r*DAYS*VEH)} trip, ${VEH} vehicles</small></td></tr>`}).join('')}</table>
+    <div class="pick">
+      <button class="btn ${inTray(i)?'in':''}" onclick="toggle(${i})">${inTray(i)?'✓ In your request':'Add to request'}</button>
+      <span class="pol">${c.pol}</span>
+    </div>
+   </div></div>`}).join('');
+  [0,1,2].forEach(n=>{const k=tray[n];const el=document.getElementById('s'+n);
+    if(k===undefined){el.className='slot';el.textContent='Operator '+(n+1)}else{el.className='slot f';el.textContent=CARS[k].v+' · '+(sel[k]||'V2')}})}
+let tray=[];
+function inTray(i){return tray.includes(i)}
+function toggle(i){if(inTray(i))tray=tray.filter(x=>x!==i);else if(tray.length<3)tray.push(i);else alert('Three operators max — remove one first.');draw()}
+function pick(i,k){sel[i]=k;draw()}
+draw();
+</script>
+</body></html>

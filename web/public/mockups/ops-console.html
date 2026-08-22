@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype — Ops console</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@500..700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c2b26;--pine:#1D5C4D;--deep:#12443A;--sage:#EAF1ED;--paper:#F7F9F7;--brass:#A97D2B;--hair:#E3E9E4;--soft:#66756d;--red:#8f3b2e}
+*{margin:0;box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:14.5px/1.55 "Instrument Sans",sans-serif}
+.top{background:var(--ink);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:9px;font:650 17px "Bricolage Grotesque"}
+.brand i{width:7px;height:7px;border-radius:50%;background:var(--brass)}
+.brand small{font:600 10.5px "Instrument Sans";letter-spacing:.08em;color:#e8c789;text-transform:uppercase;margin-left:4px}
+.nav{display:flex;gap:2px;margin-left:14px}
+.nav a{padding:8px 13px;border-radius:9px;font:600 13px "Instrument Sans";color:#b9cdc4;cursor:pointer}
+.nav a.on{background:rgba(255,255,255,.12);color:#fff}
+.who{margin-left:auto;font-size:12px;color:#9fb5ab}
+.shell{max-width:1240px;margin:0 auto;padding:24px 24px 90px}
+.tagline{font:600 11px "Instrument Sans";letter-spacing:.1em;color:var(--brass);text-transform:uppercase;margin-bottom:8px}
+h1{font:650 24px "Bricolage Grotesque";letter-spacing:-.015em}
+.sub{color:var(--soft);font-size:13.5px;margin:3px 0 18px}
+.view{display:none}.view.on{display:block}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 1px 3px rgba(20,36,31,.05)}
+.kpi b{font:600 11px "Instrument Sans";letter-spacing:.05em;color:var(--soft);text-transform:uppercase;display:block;margin-bottom:3px}
+.kpi .v{font:650 22px "Bricolage Grotesque";color:var(--deep)}
+.kpi.hot .v{color:var(--brass)}
+.kpi.bad .v{color:var(--red)}
+.kpi small{color:var(--soft);font-size:11.5px;display:block}
+.sect{font:600 12px "Instrument Sans";letter-spacing:.06em;color:var(--soft);text-transform:uppercase;margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+.sect .cnt{background:var(--sage);color:var(--deep);border-radius:99px;padding:1px 9px;font-size:11px}
+.panel{background:#fff;border-radius:18px;box-shadow:0 1px 3px rgba(20,36,31,.05);overflow:hidden;margin-bottom:16px}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font:600 10.5px "Instrument Sans";letter-spacing:.06em;color:var(--soft);text-transform:uppercase;padding:11px 14px;background:var(--paper);border-bottom:1px solid var(--hair)}
+td{padding:11px 14px;border-bottom:1px solid var(--paper);font-size:13.5px;vertical-align:middle}
+tr:last-child td{border:0}
+tr.risk td:first-child{box-shadow:inset 4px 0 0 var(--brass)}
+tr.breach td:first-child{box-shadow:inset 4px 0 0 var(--red)}
+.ref{font:600 11.5px "Spline Sans Mono";color:var(--deep);background:var(--sage);border-radius:7px;padding:3px 8px;white-space:nowrap}
+.cd{font:650 13px "Spline Sans Mono";color:var(--brass)}
+.cd.bad{color:var(--red)}
+.chip{border-radius:99px;padding:3px 10px;font:600 11px "Instrument Sans";white-space:nowrap}
+.c-ok{background:var(--sage);color:var(--deep)}.c-wait{background:#eef0ee;color:#8a978f}.c-hot{background:#FBF3E2;color:var(--brass)}.c-bad{background:#f7e9e6;color:var(--red)}.c-ink{background:var(--ink);color:#e8c789}
+.m{font-size:12px;color:var(--soft);display:block}
+.dots{display:flex;gap:4px}
+.dots i{width:9px;height:9px;border-radius:50%;background:#dfe5e0;display:inline-block}
+.dots i.a{background:var(--pine)}.dots i.c{background:var(--brass)}.dots i.d{background:#c9b7b2}
+.btn{background:var(--pine);color:#fff;border:0;border-radius:10px;font:650 12.5px "Instrument Sans";padding:8px 13px;cursor:pointer;white-space:nowrap}
+.btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 1.5px var(--hair)}
+.btn.warn{background:var(--brass)}
+.btn.sm{padding:6px 10px;font-size:12px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lay{display:grid;grid-template-columns:330px 1fr;gap:18px;align-items:start}
+.list .it{padding:12px 16px;border-bottom:1px solid var(--paper);cursor:pointer;display:flex;gap:10px;align-items:center}
+.list .it:hover{background:var(--paper)}
+.list .it.on{background:var(--sage)}
+.list .it b{font:650 14px "Instrument Sans";display:block}
+.list .it small{color:var(--soft);font-size:12px}
+.list .it .chip{margin-left:auto}
+.ed{padding:20px 22px}
+.ed h2{font:650 19px "Bricolage Grotesque";display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ed h3{font:650 13px "Instrument Sans";letter-spacing:.03em;color:var(--soft);text-transform:uppercase;margin:18px 0 8px;padding-top:14px;border-top:1px solid var(--paper)}
+label.f{display:block;margin-bottom:10px}
+label.f b{display:block;font:600 12px "Instrument Sans";color:var(--soft);margin-bottom:4px}
+input[type=text],select{width:100%;border:1.5px solid var(--hair);border-radius:10px;background:#fff;padding:9px 12px;font:500 13.5px "Instrument Sans";color:var(--ink)}
+input:focus,select:focus{outline:none;border-color:var(--pine)}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chips span{border:1.5px solid var(--hair);border-radius:99px;padding:6px 12px;font:600 12.5px "Instrument Sans";color:var(--soft);cursor:pointer}
+.chips span.on{background:var(--deep);border-color:var(--deep);color:#fff}
+.shots{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.shot{border:1.5px dashed var(--hair);border-radius:10px;padding:10px;font-size:12px;color:var(--soft);text-align:center;min-height:64px;display:grid;place-items:center}
+.shot.ok{border-style:solid;border-color:var(--pine);background:var(--sage);color:var(--deep);font-weight:600}
+.rc{width:100%}
+.rc td{padding:6px 8px;border:0}
+.rc input{text-align:right;font-family:"Bricolage Grotesque";font-weight:650;color:var(--deep)}
+.rc th{background:none;border:0;padding:4px 8px}
+.tgl{display:flex;align-items:center;gap:10px;background:var(--paper);border-radius:12px;padding:10px 13px;cursor:pointer;margin-bottom:8px}
+.tgl .sw{flex:none;width:34px;height:20px;border-radius:99px;background:#ccd8d1;position:relative}
+.tgl .sw:after{content:"";position:absolute;top:2.5px;left:2.5px;width:15px;height:15px;border-radius:50%;background:#fff;transition:.15s}
+.tgl.on .sw{background:var(--brass)}.tgl.on .sw:after{left:16.5px}
+.tgl b{font:650 13px}.tgl small{display:block;color:var(--soft);font-size:12px}
+.warn{background:#f7e9e6;color:var(--red);border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:6px;display:none}
+.warn.on{display:block}
+.rule{background:var(--deep);color:#cfe0d8;border-radius:14px;padding:12px 16px;font-size:12.5px;margin-bottom:14px}
+.rule b{color:#e8c789}
+.save{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid var(--paper)}
+.flag{background:#FBF3E2;border:1px solid #EBDFC6;border-radius:14px;padding:12px 16px;font-size:13px;margin-bottom:14px;display:flex;gap:12px;align-items:flex-start}
+.flag b{color:var(--brass)}
+@media(max-width:980px){.kpis{grid-template-columns:1fr 1fr}.lay,.split{grid-template-columns:1fr}.nav{display:none}.g3{grid-template-columns:1fr}.shots{grid-template-columns:1fr 1fr}.panel{overflow-x:auto}}
+</style></head><body>
+<div class="top">
+  <span class="brand"><i></i>Corlington <small>Ops</small></span>
+  <nav class="nav">
+    <a class="on" onclick="show(this,'dash')">Dashboard</a><a onclick="show(this,'vend')">Vendors</a><a onclick="show(this,'corp')">Corporates</a><a onclick="show(this,'money')">Money</a>
+  </nav>
+  <span class="who">Hassan · ops admin · 14:07 PKT</span>
+</div>
+
+<!-- ================= DASHBOARD / LIVE BOARD ================= -->
+<div class="view on shell" id="dash">
+  <div class="tagline">Prototype · Ops dashboard & live board · Front-end only</div>
+  <h1>Today</h1>
+  <div class="sub">Everything in flight, ordered by how soon it bites. Breaches in red need a hand; at-risk in brass will probably resolve themselves.</div>
+  <div class="kpis">
+    <div class="kpi"><b>Requests in flight</b><div class="v">6</div><small>2 in decision · 4 waiting on hotels</small></div>
+    <div class="kpi hot"><b>SLA at risk</b><div class="v">2</div><small>offer window under 5 min left</small></div>
+    <div class="kpi bad"><b>Breached</b><div class="v">1</div><small>no hotel answered · override?</small></div>
+    <div class="kpi"><b>Check-ins today</b><div class="v">9</div><small>7 hotel · 1 car · 1 transfer</small></div>
+    <div class="kpi"><b>Month to date</b><div class="v">PKR 3.1 M</div><small>41 bookings · margin 11.8%</small></div>
+  </div>
+
+  <div class="sect">Live board <span class="cnt">6 open</span></div>
+  <div class="panel"><table>
+    <tr><th>File</th><th>Corporate · stay</th><th>Hotels (3)</th><th>Stage</th><th>Window</th><th></th></tr>
+    <tr class="breach"><td><span class="ref">CF-2615-KHI</span></td><td>Meridian Logistics<span class="m">tonight · 1 room · Airport</span></td>
+      <td><span class="dots"><i class="d"></i><i></i><i></i></span><span class="m">Ramada declined · Airport Inn, Regent silent</span></td>
+      <td><span class="chip c-bad">offer window lapsed</span></td><td><span class="cd bad">−00:06:12</span></td>
+      <td><button class="btn warn sm" onclick="ov('CF-2615-KHI')">Override — book manually</button></td></tr>
+    <tr class="risk"><td><span class="ref">CF-2613-KHI</span></td><td>Northbridge Textiles<span class="m">14–17 Sept · 3 rooms · SEF</span></td>
+      <td><span class="dots"><i class="a"></i><i class="c"></i><i></i></span><span class="m">Avari accepted · Mehran countered · Regent silent</span></td>
+      <td><span class="chip c-hot">client deciding</span></td><td><span class="cd" id="cd1">1:47:12</span></td>
+      <td><button class="btn ghost sm">Nudge Regent</button></td></tr>
+    <tr class="risk"><td><span class="ref">CF-2616-KHI</span></td><td>Sunrise Foods<span class="m">28 Aug · 2 rooms · Clifton/DHA</span></td>
+      <td><span class="dots"><i></i><i></i><i></i></span><span class="m">all 3 links opened, none answered</span></td>
+      <td><span class="chip c-wait">waiting on hotels</span></td><td><span class="cd" id="cd2">0:04:40</span></td>
+      <td><button class="btn ghost sm">Call Carlton</button></td></tr>
+    <tr><td><span class="ref">CF-2614-KHI</span></td><td>Karachi Freight Co<span class="m">2–4 Sept · 1 room · Saddar · auto-accept ON</span></td>
+      <td><span class="dots"><i class="a"></i><i></i><i></i></span><span class="m">PC accepted → booked instantly</span></td>
+      <td><span class="chip c-ok">booked · voucher out</span></td><td>—</td><td></td></tr>
+    <tr><td><span class="ref">CF-2612-KHI</span></td><td>Northbridge Textiles<span class="m">25–27 Aug · 2 vehicles · Sedan · rent-a-car</span></td>
+      <td><span class="dots"><i class="a"></i><i class="a"></i><i></i></span><span class="m">Executive Cars + Metro accepted</span></td>
+      <td><span class="chip c-hot">client deciding</span></td><td><span class="cd">2:10:05</span></td><td></td></tr>
+    <tr><td><span class="ref">CF-2611-KHI</span></td><td>Meridian Logistics<span class="m">10–13 Sept · apartment · 2-Bed · Clifton/DHA</span></td>
+      <td><span class="dots"><i></i><i></i><i></i></span><span class="m">hosts — 24 h window</span></td>
+      <td><span class="chip c-wait">waiting on hosts</span></td><td><span class="cd">19:22:40</span></td><td></td></tr>
+  </table></div>
+
+  <div class="split">
+    <div>
+      <div class="sect">Arrivals today <span class="cnt">9</span></div>
+      <div class="panel"><table>
+        <tr><th>Guest</th><th>Where</th><th>Voucher</th></tr>
+        <tr><td>Saad Qureshi +1<span class="m">Northbridge</span></td><td>Corniche Suites · Exec twin<span class="m">+ transfer TF-501, 09:30</span></td><td><span class="chip c-ok">issued</span></td></tr>
+        <tr><td>Ahmed Raza<span class="m">Karachi Freight</span></td><td>Pearl Continental · Standard<span class="m">P2 · 2 nights</span></td><td><span class="chip c-ok">issued</span></td></tr>
+        <tr><td>Site team ×3<span class="m">Northbridge</span></td><td>Karachi Executive Cars · Corolla × 2<span class="m">V2 · 3 days</span></td><td><span class="chip c-hot">vehicle wording pending</span></td></tr>
+      </table></div>
+    </div>
+    <div>
+      <div class="sect">Needs a human</div>
+      <div class="panel" style="padding:6px 0">
+        <div class="list">
+          <div class="it"><span><b>Countersign pending 3 h — Northbridge</b><small>CF-2613 booked, finance@ hasn't signed · hold expires with window</small></span><button class="btn ghost sm">Remind</button></div>
+          <div class="it"><span><b>Rate below floor? — Sindh Motors</b><small>countered V2 at 9,900 vs card 10,900 (−9%) · allowed, just notable</small></span><span class="chip c-wait">info</span></div>
+          <div class="it"><span><b>Relationship check — Sunrise × Carlton</b><small>5 bookings Jun–Jul, none since · Sunrise volume steady elsewhere</small></span><button class="btn ghost sm">Assign</button></div>
+          <div class="it"><span><b>Vendor onboarding incomplete — Beach Luxury</b><small>shot list 6/8 · rate card signed · not live</small></span><button class="btn ghost sm" onclick="document.querySelector('.nav a:nth-child(2)').click()">Open</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= VENDORS ================= -->
+<div class="view shell" id="vend">
+  <div class="tagline">Prototype · Vendor onboarding · Front-end only</div>
+  <h1>Vendors</h1>
+  <div class="sub">Hotels, car operators and apartment hosts. A vendor goes live only when the agreement is signed, the rate card is in, and the shot list is complete.</div>
+  <div class="lay">
+    <div class="panel list">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--hair)"><input type="text" placeholder="Search vendors…"></div>
+      <div class="it on"><span><b>Beach Luxury Hotel</b><small>Hotel · Clifton/DHA · HT2</small></span><span class="chip c-hot">onboarding</span></div>
+      <div class="it"><span><b>Avari Towers</b><small>Hotel · Saddar · HT2</small></span><span class="chip c-ok">live</span></div>
+      <div class="it"><span><b>Pearl Continental</b><small>Hotel · Saddar · HT1</small></span><span class="chip c-ok">live</span></div>
+      <div class="it"><span><b>Hotel Mehran</b><small>Hotel · SEF · HT3</small></span><span class="chip c-ok">live</span></div>
+      <div class="it"><span><b>Karachi Executive Cars</b><small>Rent-a-car · 14 vehicles</small></span><span class="chip c-ok">live</span></div>
+      <div class="it"><span><b>Clifton Serviced Apts</b><small>Apartments · Clifton/DHA · 9 units</small></span><span class="chip c-wait">draft</span></div>
+      <div class="it"><span><b>Hotel Airport Inn</b><small>Hotel · Airport · HT4</small></span><span class="chip c-ok">live</span></div>
+    </div>
+    <div class="panel ed">
+      <h2>Beach Luxury Hotel <span class="chip c-hot">onboarding · 80%</span></h2>
+      <div class="g3" style="margin-top:12px">
+        <label class="f"><b>Type</b><select><option>Hotel</option><option>Rent-a-car operator</option><option>Apartment host</option></select></label>
+        <label class="f"><b>Area (exactly one)</b><select><option>Clifton/DHA</option><option>Saddar</option><option>Shahrah-e-Faisal</option><option>Airport</option><option>SITE</option></select></label>
+        <label class="f"><b>Stars · bracket</b><select><option>4★ · B3</option><option>5★ · B4</option><option>3★ · B2</option></select></label>
+      </div>
+      <div class="g2">
+        <label class="f"><b>Front office WhatsApp (magic links go here)</b><input type="text" value="+92 3xx xxx xxxx · Reservations desk"></label>
+        <label class="f"><b>Front office email</b><input type="text" value="reservations@beachluxury.example"></label>
+      </div>
+
+      <h3>Agreement & credit</h3>
+      <div class="g3">
+        <label class="f"><b>Agreement</b><select><option>Signed 12 Aug 2026 · 12 months</option></select></label>
+        <label class="f"><b>Hotel credit tier</b><select><option>HT1 · open (A+B+C)</option><option selected>HT2 · standard (A+B)</option><option>HT3 · selective (A)</option><option>HT4 · prepaid only</option></select></label>
+        <label class="f"><b>Settlement</b><select><option>Within 30 days of month-end</option></select></label>
+      </div>
+      <div class="chips"><span class="on">Non-circumvention clause ✓</span><span class="on">Rate parity ✓</span><span class="on">Default-split clause ✓</span><span>Blackout dates</span></div>
+
+      <h3>Rate card — contracted ceilings, per room per night</h3>
+      <table class="rc"><tr><th></th><th>P1 room only</th><th>P2 + breakfast</th><th>P3 + dinner</th><th>Max occ.</th></tr>
+        <tr><td><b>A · Standard</b></td><td><input type="text" value="17,500"></td><td><input type="text" value="20,000"></td><td><input type="text" value="23,500"></td><td><input type="text" value="3"></td></tr>
+        <tr><td><b>B · Sea-view</b></td><td><input type="text" value="22,000"></td><td><input type="text" value="24,500"></td><td><input type="text" value="28,000"></td><td><input type="text" value="3"></td></tr>
+        <tr><td><b>C · Suite</b></td><td><input type="text" value="34,000"></td><td><input type="text" value="36,500"></td><td><input type="text" value="40,000"></td><td><input type="text" value="4"></td></tr>
+      </table>
+      <div class="m" style="margin-top:6px">Extra person PKR 3,500 · 2-person rate = 1-person + 2,000 · these numbers are the ceiling hotels can only discount from</div>
+
+      <h3>Verified amenities — only what we've checked on site</h3>
+      <div class="chips"><span class="on">Fast wifi (measured 48 Mbps)</span><span class="on">Backup power</span><span class="on">Indoor parking</span><span>Meeting rooms</span><span class="on">Pool</span><span class="on">Airport transfer included</span><span class="on">Pressing · 5-page printing · evening tea</span></div>
+
+      <h3>Shot list — 6 of 8</h3>
+      <div class="shots">
+        <div class="shot ok">Front door ✓</div><div class="shot ok">Lobby ✓</div><div class="shot ok">Standard room ✓</div><div class="shot ok">Bed detail ✓</div>
+        <div class="shot ok">Bathroom ✓</div><div class="shot ok">Breakfast ✓</div><div class="shot">Wardrobe & desk — missing</div><div class="shot">Category B & C galleries — missing</div>
+      </div>
+      <div class="save"><button class="btn ghost">Save draft</button><button class="btn" onclick="alert('Blocked: shot list 6/8. Go-live needs all 8 plus category galleries.')">Go live</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= CORPORATES ================= -->
+<div class="view shell" id="corp">
+  <div class="tagline">Prototype · Corporates & credit · Front-end only</div>
+  <h1>Corporates</h1>
+  <div class="sub">Closed access: every booker is provisioned here. Tier sets the credit ceiling; pair overrides live on the credit matrix.</div>
+  <div class="lay">
+    <div class="panel list">
+      <div style="padding:10px 14px;border-bottom:1px solid var(--hair)"><input type="text" placeholder="Search corporates…"></div>
+      <div class="it on"><span><b>Northbridge Textiles</b><small>Tier A · d20 · 3 bookers</small></span><span class="chip c-ok">active</span></div>
+      <div class="it"><span><b>Meridian Logistics</b><small>Tier B · d15 · 2 bookers</small></span><span class="chip c-ok">active</span></div>
+      <div class="it"><span><b>Sunrise Foods</b><small>Tier B · d15 · 1 booker</small></span><span class="chip c-hot">relationship check</span></div>
+      <div class="it"><span><b>Karachi Freight Co</b><small>Tier C · on checkout · 1 booker</small></span><span class="chip c-ok">active</span></div>
+      <div class="it"><span><b>Indus Pharma</b><small>Tier C · not yet booked</small></span><span class="chip c-wait">onboarding</span></div>
+    </div>
+    <div class="panel ed">
+      <h2>Northbridge Textiles <span class="chip c-ok">active since Mar 2026</span></h2>
+      <div class="rule" style="margin-top:12px">Cash-flow rule: corporate ceilings sit below hotel settlement — <b>A ≤ d20 · B ≤ d15 · C = on checkout / d7</b>. Tier A is earned on payment history, never granted at onboarding.</div>
+      <div class="g3">
+        <label class="f"><b>Tier</b><select id="tier" onchange="ceil()"><option>A</option><option>B</option><option>C</option></select></label>
+        <label class="f"><b>Credit terms (from checkout)</b><select id="terms" onchange="ceil()"><option>on checkout</option><option>d7</option><option>d15</option><option selected>d20</option></select></label>
+        <label class="f"><b>Credit limit</b><input type="text" value="PKR 1,500,000"></label>
+      </div>
+      <div class="warn" id="cw">That exceeds the tier ceiling — pick a shorter term or raise the tier first.</div>
+      <div class="g2">
+        <label class="f"><b>Official email — countersign & invoices go here</b><input type="text" value="finance@northbridge.com.pk"></label>
+        <label class="f"><b>Standing deposit</b><input type="text" value="PKR 300,000 · available 264,000"></label>
+      </div>
+      <div class="tgl on" onclick="this.classList.toggle('on')"><span class="sw"></span><span><b>Booking countersign required</b><small>Every booking waits for a click + name + designation from the official address — stops a leaked login from committing spend</small></span></div>
+      <div class="tgl" onclick="this.classList.toggle('on')"><span class="sw"></span><span><b>Countersign only above PKR 150,000</b><small>Small bookings go straight through; big ones need the second key</small></span></div>
+
+      <h3>Bookers — provisioned accounts</h3>
+      <div class="panel"><table>
+        <tr><th>Name</th><th>Email</th><th>Role</th><th>Last sign-in</th><th></th></tr>
+        <tr><td>Bilal Shaikh</td><td>bilal@northbridge.com.pk</td><td>booker</td><td>today 09:31</td><td><button class="btn ghost sm">Reset</button></td></tr>
+        <tr><td>Amna Pirzada</td><td>amna@northbridge.com.pk</td><td>booker</td><td>12 Aug</td><td><button class="btn ghost sm">Reset</button></td></tr>
+        <tr><td>Farhan Siddiqui</td><td>farhan@northbridge.com.pk</td><td>approver</td><td>never</td><td><button class="btn ghost sm">Re-invite</button></td></tr>
+      </table></div>
+      <button class="btn ghost sm" style="margin-top:8px">+ Provision a booker</button>
+
+      <h3>Credit pairs</h3>
+      <div class="m">Defaults from tier × hotel tier. Overrides: <b>Hotel Mehran — prepaid for this company</b> (their refusal). Edit on the <a href="credit-matrix.html" style="color:var(--pine);font-weight:600">credit matrix</a>.</div>
+      <div class="save"><button class="btn ghost">Discard</button><button class="btn">Save corporate</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= MONEY ================= -->
+<div class="view shell" id="money">
+  <div class="tagline">Prototype · Money · Front-end only</div>
+  <h1>Money</h1>
+  <div class="sub">Corporate money in, hotel money out, never the other order. The buffer is the business.</div>
+  <div class="rule">This month's worst case: last checkout 31 Aug → tier-A cash due <b>20 Sept</b> → hotels settled by <b>30 Sept</b>. Buffer <b>10 days</b>. Float financed by Corlington: <b>PKR 0</b>.</div>
+  <div class="kpis">
+    <div class="kpi"><b>Receivable (corporates)</b><div class="v">PKR 1.42 M</div><small>9 invoices · 0 overdue</small></div>
+    <div class="kpi hot"><b>Due this week</b><div class="v">PKR 412,500</div><small>Northbridge · INV-2026-08-A</small></div>
+    <div class="kpi"><b>Payable (vendors)</b><div class="v">PKR 1.26 M</div><small>next settlement run 30 Sept</small></div>
+    <div class="kpi"><b>Deposits held</b><div class="v">PKR 900,000</div><small>4 corporates · 36,000 drawn</small></div>
+    <div class="kpi"><b>Margin MTD</b><div class="v">PKR 366,000</div><small>11.8% of 3.1 M</small></div>
+  </div>
+
+  <div class="split">
+    <div>
+      <div class="sect">Corporate invoices <span class="cnt">9 open</span></div>
+      <div class="panel"><table>
+        <tr><th>Invoice</th><th>Corporate</th><th>Due</th><th>Amount</th><th></th></tr>
+        <tr class="risk"><td><span class="ref">INV-2026-08-A</span></td><td>Northbridge<span class="m">tier A · d20</span></td><td>21 Sept<span class="m">9 days</span></td><td>412,500</td><td><button class="btn sm" onclick="alert('Records a bank receipt against this invoice')">Record payment</button></td></tr>
+        <tr><td><span class="ref">INV-2026-08-B</span></td><td>Meridian<span class="m">tier B · d15</span></td><td>16 Sept</td><td>286,000</td><td><button class="btn ghost sm">Record payment</button></td></tr>
+        <tr><td><span class="ref">INV-2026-08-C</span></td><td>Sunrise Foods<span class="m">tier B · d15</span></td><td>15 Sept</td><td>174,500</td><td><button class="btn ghost sm">Record payment</button></td></tr>
+        <tr><td><span class="ref">INV-2026-08-D</span></td><td>Karachi Freight<span class="m">tier C · on checkout</span></td><td>paid 4 Sept</td><td>98,000</td><td><span class="chip c-ok">paid</span></td></tr>
+      </table></div>
+      <div class="sect">Deposits</div>
+      <div class="panel"><table>
+        <tr><th>Corporate</th><th>Held</th><th>Drawn</th><th>Available</th></tr>
+        <tr><td>Northbridge</td><td>300,000</td><td>36,000<span class="m">CF-2608 · Mehran prepaid</span></td><td>264,000</td></tr>
+        <tr><td>Meridian</td><td>250,000</td><td>0</td><td>250,000</td></tr>
+        <tr><td>Sunrise Foods</td><td>200,000</td><td>0</td><td>200,000</td></tr>
+        <tr><td>Karachi Freight</td><td>150,000</td><td>0</td><td>150,000</td></tr>
+      </table></div>
+    </div>
+    <div>
+      <div class="sect">Vendor settlement — run for August <span class="cnt">due 30 Sept</span></div>
+      <div class="panel"><table>
+        <tr><th>Vendor</th><th>Bookings</th><th>Gross</th><th>Margin</th><th>Pay</th></tr>
+        <tr><td>Avari Towers</td><td>6</td><td>486,000</td><td>12%</td><td><b>427,680</b></td></tr>
+        <tr><td>Pearl Continental</td><td>4</td><td>392,000</td><td>10%</td><td><b>352,800</b></td></tr>
+        <tr><td>Hotel Mehran</td><td>3</td><td>168,000</td><td>14%</td><td><b>144,480</b></td></tr>
+        <tr><td>Karachi Executive Cars</td><td>5</td><td>225,000</td><td>12%</td><td><b>198,000</b></td></tr>
+        <tr><td>Regent Plaza</td><td>2</td><td>88,000</td><td>12%</td><td><b>77,440</b></td></tr>
+        <tr><td colspan="4" style="text-align:right;font-weight:600">Total payable</td><td><b>1,200,400</b></td></tr>
+      </table>
+      <div style="padding:12px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--paper)">
+        <span class="m" style="flex:1">Reconciles to the rupee against 20 vouchers. Runs only when corporate receipts cover it — the rule, enforced.</span>
+        <button class="btn ghost sm">Export statements</button><button class="btn sm" onclick="alert('Prototype: marks the run as paid, one line per vendor, audit-logged')">Mark run paid</button></div></div>
+      <div class="sect">Watch-list</div>
+      <div class="flag"><span>⚑</span><span><b>Relationship check — Sunrise Foods × Carlton Hotel.</b> Five bookings Jun–Jul, zero since, while Sunrise's volume elsewhere holds. Possible direct deal — account manager to call; non-circumvention clause applies until Jun 2027.</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+function show(a,v){document.querySelectorAll('.nav a').forEach(x=>x.classList.remove('on'));a.classList.add('on');
+ document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));document.getElementById(v).classList.add('on');window.scrollTo(0,0)}
+let t1=6432,t2=280;setInterval(()=>{t1=Math.max(0,t1-1);t2=Math.max(0,t2-1);
+ const f=s=>`${Math.floor(s/3600)}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+ document.getElementById('cd1').textContent=f(t1);const c2=document.getElementById('cd2');c2.textContent=f(t2);if(t2<120)c2.classList.add('bad')},1000);
+function ov(ref){if(confirm('Override for '+ref+': book manually with a hotel you have on the phone. This bypasses the offer race and is audit-logged with your name. Continue?'))alert('Prototype: opens the manual-booking form (hotel, rate ≤ card, reason)')}
+function ceil(){const t=document.getElementById('tier').value,d=document.getElementById('terms').value;
+ const cap={A:['on checkout','d7','d15','d20'],B:['on checkout','d7','d15'],C:['on checkout','d7']};
+ document.getElementById('cw').classList.toggle('on',!cap[t].includes(d))}
+const H={vend:1,corp:2,money:3}[location.hash.slice(1)];if(H)show(document.querySelectorAll('.nav a')[H],location.hash.slice(1));
+document.querySelectorAll('.list .it').forEach(it=>it.addEventListener('click',()=>{const l=it.parentNode;[...l.children].forEach(x=>x.classList.remove('on'));it.classList.add('on')}));
+</script>
+</body></html>

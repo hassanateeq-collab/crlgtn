@@ -689,3 +689,39 @@ yet list transfer bookings.
   chips remain the area picker. The real-boundary recipe (OSM fetch → simplify
   → embed) stays documented above for a future revisit (e.g. a designed map
   with the urban core magnified, or licensed tiles).
+
+## 2026-08-18 — Mockup inventory COMPLETE (13/13 pages prototyped)
+
+- Owner asked for the remaining pages in one go. Added four prototypes, all in
+  the soft Atlas language, all clickable on mock data:
+  - `car-listing.html` — rent-a-car results: verified operators, V1/V2/V3
+    ladder per card with per-day + trip totals, negotiated dots, verified-only
+    filters (insurance, tracker, model year, replacement), 3-operator request
+    tray. Stock photos are placeholders until operator shot lists.
+  - `offers-board.html` — the file view during the decision window: stepper,
+    live countdown, offer cards in three states (accepted at card / countered
+    with alternate category at discounted card / silent), whole-stay totals,
+    book → confirm modal that explains the countersign (F-001 designed in as
+    a per-corporate toggle), post-book "awaiting countersign" state, activity
+    log in the spine.
+  - `transfers-invoices.html` — instant airport transfer: direction segment,
+    flight + landing time, zone chips with fixed contracted prices, vehicle
+    multiplier, passenger cap hint, meet-&-greet/60-min wait rule, attach-to-
+    stay chips; invoices: open balance / paid / terms tiles, standing-deposit
+    strip, monthly consolidated invoices with expandable line items, bank-
+    transfer-only note.
+  - `ops-console.html` — four views: Dashboard (KPIs, live board ordered by
+    urgency with breach/at-risk rails and manual-override action, arrivals,
+    "needs a human" queue incl. countersign reminder, counter-below-floor
+    info, relationship check, onboarding gap); Vendors (list + editor: type,
+    exactly-one area, agreement with non-circumvention/rate-parity/default-
+    split chips, HT tier, rate-card CEILINGS per category incl. occupancy,
+    verified amenities, 8-shot list gating go-live); Corporates (tier + terms
+    with live ceiling validation A≤d20/B≤d15/C≤d7, official email, countersign
+    toggle + amount threshold, booker provisioning, pair-override pointer to
+    the matrix); Money (cash-flow-rule banner with this month's buffer,
+    receivables/deposits/settlement-run reconciled to the rupee and gated by
+    receipts, margin, leakage watch-list = F-005 surfaced).
+- Gallery `mockups/index.html` now lists all 13 with status chips; ops views
+  deep-link via #vend/#corp/#money. Design phase is feature-complete pending
+  owner redlines; next phase = integration with the existing M0–M8 backend.

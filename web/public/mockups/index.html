@@ -29,7 +29,7 @@ a.card:hover{box-shadow:0 2px 6px rgba(20,36,31,.08),0 14px 32px -18px rgba(20,3
 <div class="wrap">
   <div class="tagline">Prototype gallery · front-end only · mock data</div>
   <h1><i></i>Corlington — every screen so far</h1>
-  <div class="sub">The booker's journey, in order. Everything is clickable; nothing is saved.
+  <div class="sub">All 13 pages of the inventory, in the booker's order. Everything is clickable; nothing is saved.
   Reload any page to reset its state. Redlines welcome on any screen at any time.</div>
 
   <div class="sect">The corporate journey</div>
@@ -53,25 +53,55 @@ a.card:hover{box-shadow:0 2px 6px rgba(20,36,31,.08),0 14px 32px -18px rgba(20,3
     <span><b>Property inner page</b>
     <small>Fixed shot list, lightbox · dining exactly · corporate courtesies · categories A/B/C with occupancy pricing</small></span>
     <span class="chip ok">approved</span></a>
+  <a class="card" href="car-listing.html">
+    <span class="num">5</span>
+    <span><b>Rent-a-car results</b>
+    <small>Verified operators · V1 self-drive / V2 with driver / V3 driver + fuel ladder · per-day and trip totals · 3-operator request</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="offers-board.html">
+    <span class="num">6</span>
+    <span><b>Booking file · offers board</b>
+    <small>Decision window countdown · accepted / countered-with-alternates / silent hotels · book → countersign email (F-001) · activity log</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="transfers-invoices.html">
+    <span class="num">7</span>
+    <span><b>Airport transfers + invoices</b>
+    <small>Instant fixed-price transfer by zone, attach to a stay · monthly consolidated invoice, deposit balance, line items</small></span>
+    <span class="chip rev">in review</span></a>
 
   <div class="sect">The vendor's side</div>
   <a class="card" href="sign-in.html#vendor">
-    <span class="num">5</span>
+    <span class="num">8</span>
     <span><b>Vendor magic link · hotel front office</b>
     <small>No password · reply-window countdown · accept holds rooms · counter = alternates or discounts, never above card</small></span>
     <span class="chip rev">in review</span></a>
 
   <div class="sect">Ops — Corlington's own console</div>
   <a class="card" href="credit-matrix.html">
-    <span class="num">6</span>
+    <span class="num">9</span>
     <span><b>Credit matrix</b>
     <small>Hotel tiers HT1–HT4 × corporate A/B/C · pair overrides · the cash-flow rule</small></span>
     <span class="chip ok">approved</span></a>
-  <a class="card" style="cursor:default" onclick="return false">
-    <span class="num">7</span>
-    <span><b>Ops console — dashboard · live board · money</b>
-    <small>The last design batch — starts on your go</small></span>
-    <span class="chip soon">up next</span></a>
+  <a class="card" href="ops-console.html">
+    <span class="num">10</span>
+    <span><b>Ops console — dashboard &amp; live board</b>
+    <small>KPIs · SLA risk/breach rows with override · arrivals · "needs a human" queue (countersign, leakage, onboarding)</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="ops-console.html#vend">
+    <span class="num">11</span>
+    <span><b>Vendor onboarding</b>
+    <small>Type, single area, agreement clauses, HT tier, rate-card ceilings per category, verified amenities, 8-shot list gating go-live</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="ops-console.html#corp">
+    <span class="num">12</span>
+    <span><b>Corporates &amp; credit</b>
+    <small>Tier + terms with ceiling validation, official email, countersign toggle (and threshold), bookers provisioning, pair overrides</small></span>
+    <span class="chip rev">in review</span></a>
+  <a class="card" href="ops-console.html#money">
+    <span class="num">13</span>
+    <span><b>Money</b>
+    <small>Receivables, deposits, vendor settlement run gated by the cash-flow rule, margin, relationship watch-list</small></span>
+    <span class="chip rev">in review</span></a>
 
   <div class="sect">Archive — direction studies</div>
   <a class="card arch" href="direction-b-atlas.html">
@@ -87,6 +117,6 @@ a.card:hover{box-shadow:0 2px 6px rgba(20,36,31,.08),0 14px 32px -18px rgba(20,3
     <span><b>Terminal</b><small>Not chosen</small></span></a>
 
   <div class="note"><b>How to test:</b> start at 1 and walk down. Each page resets on reload.
-  The magic-link page (5) is best tried on a phone — that's where hotel staff will tap it.</div>
+  The magic-link page (8) is best tried on a phone — that's where hotel staff will tap it.</div>
 </div>
 </body></html>
