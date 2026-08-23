@@ -289,6 +289,13 @@ export function VendorEditor() {
     }
   }
   const removePhoto = (path: string) => setPhotos((p) => p.filter((x) => x.storage_path !== path))
+  /** Put an already-uploaded property photo into a shot-list slot (one photo per slot). */
+  const assignShot = (path: string, key: string) =>
+    setPhotos((p) =>
+      p
+        .filter((x) => !(x.shot_type === key && !x.listing_name && x.storage_path !== path))
+        .map((x) => (x.storage_path === path ? { ...x, shot_type: key, listing_name: '' } : x)),
+    )
 
   // ---- listings -------------------------------------------------------------
   const setListing = (i: number, patch: Partial<ListingDraft>) =>
@@ -614,7 +621,7 @@ export function VendorEditor() {
                         <span className="font-semibold text-deep">✓ {s.label}</span>
                         <span className="flex gap-2">
                           <label className="cursor-pointer text-pine">replace<input type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files, { shot_type: s.key, listing_name: '' })} /></label>
-                          <button type="button" className="text-ink/40" onClick={() => removePhoto(p.storage_path)}>remove</button>
+                          <button type="button" className="text-ink/40" onClick={() => assignShot(p.storage_path, 'other')}>unassign</button>
                         </span>
                       </div>
                     </div>
@@ -626,7 +633,22 @@ export function VendorEditor() {
               <div className="mt-4 border-t border-paper pt-3">
                 <div className="mb-2 text-[12.5px] font-semibold text-ink/60">More property photos (optional)</div>
                 <div className="flex flex-wrap gap-2">
-                  {otherPhotos.map((p) => <Thumb key={p.storage_path} photo={p} onRemove={() => removePhoto(p.storage_path)} />)}
+                  {otherPhotos.map((p) => (
+                    <div key={p.storage_path} className="flex flex-col gap-1">
+                      <Thumb photo={p} onRemove={() => removePhoto(p.storage_path)} />
+                      <select
+                        className="w-[88px] rounded-md border border-hairline bg-white px-1 py-0.5 text-[10.5px] text-ink/70"
+                        value=""
+                        onChange={(e) => e.target.value && assignShot(p.storage_path, e.target.value)}
+                        aria-label="Use this photo as a shot-list slot"
+                      >
+                        <option value="">use as…</option>
+                        {SHOT_LIST.map((s) => (
+                          <option key={s.key} value={s.key}>{s.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
                   <UploadBox label="+ Add" hint="exterior, dining, meeting rooms" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_name: '' })} />
                 </div>
               </div>
