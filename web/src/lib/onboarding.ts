@@ -136,6 +136,7 @@ export type VendorFacts = Pick<
 export function vendorSteps(f: VendorFacts): Step[] {
   const car = f.vendor_type === 'rent_a_car'
   const noun = car ? 'vehicle class' : 'room category'
+  const nouns = car ? 'vehicle classes' : 'room categories'
   const steps: Step[] = [
     {
       key: 'profile',
@@ -162,7 +163,7 @@ export function vendorSteps(f: VendorFacts): Step[] {
       detail:
         f.listings_active === 0
           ? `Add at least one ${noun}`
-          : `${f.listings_priced} of ${f.listings_active} ${noun}s priced`,
+          : `${f.listings_priced} of ${f.listings_active} ${nouns} priced`,
     },
   ]
   if (!car) {

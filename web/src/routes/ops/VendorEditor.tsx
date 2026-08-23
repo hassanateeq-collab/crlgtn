@@ -86,6 +86,9 @@ export function VendorEditor() {
   const [vendorType, setVendorType] = useState('hotel')
   const [name, setName] = useState('')
   const [status, setStatus] = useState('prospect')
+  // Vendors that were live before the plan rules existed keep saving as live;
+  // the gate only guards the onboarding → live transition.
+  const [wasLive, setWasLive] = useState(false)
   const [corridorId, setCorridorId] = useState('')
   const [stars, setStars] = useState('')
   const [bracket, setBracket] = useState('')
@@ -158,6 +161,7 @@ export function VendorEditor() {
       setVendorType(d.vendor_type)
       setName(d.name)
       setStatus(d.status)
+      setWasLive(d.status === 'live')
       setCorridorId(d.corridor_id ?? '')
       setStars(d.stars_assigned?.toString() ?? '')
       setBracket(d.price_bracket ?? '')
@@ -299,7 +303,7 @@ export function VendorEditor() {
     setSaved(null)
     try {
       if (!name.trim()) throw new Error('Give the vendor a name.')
-      if (status === 'live' && !ready) {
+      if (status === 'live' && !ready && !wasLive) {
         throw new Error(`Can't go live yet — ${steps.filter((s) => !s.done).map((s) => s.label.toLowerCase()).join(', ')}.`)
       }
       let docUrl: string | null = null
@@ -685,11 +689,20 @@ export function VendorEditor() {
         {/* ---------------- spine ---------------- */}
         <aside className="space-y-4 lg:sticky lg:top-[72px]">
           <ACard>
-            <AField label="Status" hint={status === 'live' && !ready ? 'Blocked until the plan is complete.' : undefined}>
+            <AField
+              label="Status"
+              hint={
+                status === 'live' && !ready
+                  ? wasLive
+                    ? 'Live since before the plan existed — complete it anyway.'
+                    : 'Blocked until the plan is complete.'
+                  : undefined
+              }
+            >
               <ASelect value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="prospect">Prospect</option>
                 <option value="onboarding">Onboarding</option>
-                <option value="live" disabled={!ready}>Live{ready ? '' : ' — plan incomplete'}</option>
+                <option value="live" disabled={!ready && !wasLive}>Live{ready || wasLive ? '' : ' — plan incomplete'}</option>
                 <option value="suspended">Suspended</option>
               </ASelect>
             </AField>
