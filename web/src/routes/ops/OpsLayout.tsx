@@ -1,17 +1,16 @@
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
 import { useIdentity } from '@/lib/identity'
 import { useSession } from '@/lib/session'
-import { Button } from '@/components/ui'
 
 /**
- * Ops console shell. The role gate here is UX only — RLS and the Edge
+ * Ops console shell (Atlas). The role gate here is UX only — RLS and the Edge
  * Functions are the real enforcement; a corporate user who somehow lands on
  * /ops sees empty lists and gets 403s on save.
  */
 
 const tabs = [
   { to: '/ops', label: 'Dashboard', end: true },
-  { to: '/ops/vendors', label: 'Vendors' },
+  { to: '/ops/vendors', label: 'Supply' },
   { to: '/ops/corporates', label: 'Corporates' },
   { to: '/ops/money', label: 'Money' },
   { to: '/ops/diagnostics', label: 'Diagnostics' },
@@ -26,44 +25,43 @@ export function OpsLayout() {
 
   return (
     <div className="min-h-svh bg-paper">
-      <header className="border-b border-hairline bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span aria-hidden className="h-8 w-px bg-hairline" />
-            <span aria-hidden className="size-1.5 rounded-full bg-brass" />
-            <div>
-              <span className="font-display text-lg leading-none">Corlington</span>
-              <span className="ml-2 text-xs text-ink/50">ops console</span>
-            </div>
+      <header className="sticky top-0 z-20 bg-ink text-white">
+        <div className="mx-auto flex max-w-[1240px] items-center gap-4 px-6 py-3">
+          <div className="flex items-center gap-2.5">
+            <span aria-hidden className="size-[7px] rounded-full bg-brass" />
+            <span className="font-display text-[17px] font-semibold leading-none">Corlington</span>
+            <span className="ml-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#e8c789]">Ops</span>
           </div>
-          <nav className="flex items-center gap-1">
+          <nav className="ml-3 hidden items-center gap-0.5 sm:flex">
             {tabs.map((t) => (
               <NavLink
                 key={t.to}
                 to={t.to}
                 end={t.end}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm ${
-                    isActive
-                      ? 'bg-sage font-medium text-deep'
-                      : 'text-ink/70 hover:bg-sage/60'
+                  `rounded-lg px-3 py-1.5 text-[13px] font-semibold ${
+                    isActive ? 'bg-white/12 text-white' : 'text-[#b9cdc4] hover:text-white'
                   }`
                 }
               >
                 {t.label}
               </NavLink>
             ))}
-            <span className="mx-2 h-5 w-px bg-hairline" />
-            <span className="mr-2 hidden text-xs text-ink/50 sm:inline">
-              {identity.name} · {identity.opsRole}
-            </span>
-            <Button variant="ghost" onClick={signOut}>
-              Sign out
-            </Button>
           </nav>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden text-xs text-[#9fb5ab] sm:inline">
+              {identity.name} · {identity.opsRole === 'ops_admin' ? 'ops admin' : 'ops agent'}
+            </span>
+            <button
+              onClick={signOut}
+              className="rounded-lg px-3 py-1.5 text-[12.5px] font-semibold text-[#b9cdc4] hover:bg-white/10 hover:text-white"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-[1240px] px-6 py-7">
         <Outlet />
       </main>
     </div>

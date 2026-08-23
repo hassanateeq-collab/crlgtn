@@ -1,89 +1,79 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { pkrPlain } from '@/lib/format'
-import { Button, Notice } from '@/components/ui'
+import { corporateSteps, nextStep, type CorporateProgressRow } from '@/lib/onboarding'
+import { ABtn, Chip, PageHead, Progress, statusTone } from '@/components/atlas'
 
-interface CorporateRow {
-  id: string
-  name: string
-  status: string
-  credit_limit_pkr: number
-  credit_terms: string
-  security_type: string
-  approval_required: boolean
-}
-
-const TERMS_LABEL: Record<string, string> = {
-  on_checkout: 'upon checkout',
-  d7: '7 days',
-  d15: '15 days',
-  d30: '30 days',
-}
-
-export function Corporates() {
-  const [rows, setRows] = useState<CorporateRow[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
+/** Corporate cards fed by the corporate_onboarding view (migration 019). */
+export function CorporateCards() {
+  const [rows, setRows] = useState<CorporateProgressRow[] | null>(null)
 
   useEffect(() => {
     supabase
-      .from('corporates')
-      .select('id, name, status, credit_limit_pkr, credit_terms, security_type, approval_required')
+      .from('corporate_onboarding')
+      .select('*')
       .order('name')
-      .then(({ data, error }) => {
-        if (error) setError(error.message)
-        else setRows(data ?? [])
-      })
+      .then(({ data }) => setRows((data ?? []) as CorporateProgressRow[]))
   }, [])
 
+  if (!rows) return <p className="text-sm text-ink/50">Loading…</p>
+  if (rows.length === 0) return <p className="rounded-2xl bg-white p-6 text-sm text-ink/60">No corporates yet.</p>
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl">Corporates</h1>
-        <Link to="/ops/corporates/new">
-          <Button>Add corporate</Button>
-        </Link>
-      </div>
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {rows.map((r) => {
+        const steps = corporateSteps(r)
+        const next = nextStep(steps)
+        const done = steps.filter((s) => s.done).length
+        return (
+          <article key={r.corporate_id} className="flex flex-col rounded-[20px] bg-white p-4 shadow-[0_1px_3px_rgba(20,36,31,.05),0_14px_36px_-22px_rgba(20,36,31,.16)]">
+            <div className="flex items-start gap-2">
+              <h3 className="min-w-0 flex-1 text-[17px]">{r.name}</h3>
+              <Chip tone={statusTone(r.status)}>{r.status}</Chip>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <Chip tone="ink">Tier {r.tier}</Chip>
+              <Chip tone="sage">{r.credit_terms.replace('_', ' ')}</Chip>
+              {r.countersign_required && <Chip tone="hot">countersign on</Chip>}
+              {r.security_type !== 'none' && <Chip tone="sage">{r.security_type} {r.security_amount_pkr.toLocaleString('en-PK')}</Chip>}
+            </div>
+            <p className={`mt-2 text-[12.5px] ${r.official_email ? 'text-ink/60' : 'text-brass'}`}>
+              {r.official_email ?? 'No official email yet'}
+            </p>
+            <p className="text-[12.5px] text-ink/60">
+              {r.users_linked} of {r.users_total} bookers can sign in · {r.files_total} booking files
+            </p>
+            <div className="mt-3 flex items-center gap-3">
+              <Progress value={done} max={steps.length} />
+              <span className="tabular text-xs text-ink/55">{done}/{steps.length}</span>
+            </div>
+            <p className="mt-2 text-[13px]">
+              {next ? (
+                <span><span className="font-semibold text-brass">Next:</span> {next.label} — <span className="text-ink/60">{next.detail}</span></span>
+              ) : (
+                <span className="font-semibold text-deep">Setup complete</span>
+              )}
+            </p>
+            <div className="mt-auto pt-3">
+              <Link to={`/ops/corporates/${r.corporate_id}`} className="text-[13px] font-semibold text-pine">Open setup →</Link>
+            </div>
+          </article>
+        )
+      })}
+    </div>
+  )
+}
 
-      {error && <Notice tone="error">{error}</Notice>}
-
-      <div className="overflow-x-auto rounded-lg border border-hairline bg-white">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-hairline text-left text-xs text-ink/50">
-              <th className="px-4 py-2.5 font-medium">Name</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
-              <th className="px-4 py-2.5 font-medium">Credit limit (PKR)</th>
-              <th className="px-4 py-2.5 font-medium">Terms</th>
-              <th className="px-4 py-2.5 font-medium">Security</th>
-              <th className="px-4 py-2.5 font-medium">Approval</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-hairline">
-            {rows?.map((c) => (
-              <tr key={c.id} className="hover:bg-paper/60">
-                <td className="px-4 py-2.5">
-                  <Link to={`/ops/corporates/${c.id}`} className="font-medium text-deep hover:underline">
-                    {c.name}
-                  </Link>
-                </td>
-                <td className="px-4 py-2.5">{c.status}</td>
-                <td className="px-4 py-2.5 tabular">{pkrPlain(c.credit_limit_pkr)}</td>
-                <td className="px-4 py-2.5">{TERMS_LABEL[c.credit_terms] ?? c.credit_terms}</td>
-                <td className="px-4 py-2.5">{c.security_type}</td>
-                <td className="px-4 py-2.5">{c.approval_required ? 'required' : '—'}</td>
-              </tr>
-            ))}
-            {rows && rows.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-ink/50">
-                  No corporates yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+export function Corporates() {
+  return (
+    <div>
+      <PageHead
+        eyebrow="Clients"
+        title="Corporates"
+        sub="Closed access — every booker is provisioned here. Tier sets the credit ceiling."
+        actions={<Link to="/ops/corporates/new"><ABtn>+ New corporate</ABtn></Link>}
+      />
+      <CorporateCards />
     </div>
   )
 }

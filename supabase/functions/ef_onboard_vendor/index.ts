@@ -19,6 +19,8 @@ import { badRequest, forbidden, unprocessable } from "../_shared/errors.ts";
 interface ListingInput {
   name: string;
   listing_type?: string;
+  /** Sedan / SUV / Premium · Studio / 1-Bed / 2-Bed / Serviced · hotel A / B / C label. */
+  category?: string | null;
   max_occupancy?: number;
   active?: boolean;
   description?: string | null;
@@ -34,7 +36,15 @@ interface MediaInput {
   caption?: string | null;
   sort?: number;
   is_cover?: boolean;
+  /** Fixed shot list (migration 019): front_door … amenity; category = room gallery. */
+  shot_type?: string | null;
 }
+
+const SHOT_TYPES = [
+  "front_door", "lobby", "standard_room", "bed", "bathroom", "wardrobe_desk",
+  "breakfast", "amenity", "category", "other",
+];
+const CREDIT_TIERS = ["HT1", "HT2", "HT3", "HT4"];
 
 serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: EdgeContext) => {
   // ---- validate -----------------------------------------------------------
@@ -50,7 +60,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   for (const l of listingsIn) {
     if (!l.name?.trim()) throw badRequest("every listing needs a name");
     for (const [code, rate] of Object.entries(l.rates ?? {})) {
-      if (!/^P[1-9]$/.test(code)) throw unprocessable(`unknown package code ${code}`);
+      if (!/^[PV][1-9]$/.test(code)) throw unprocessable(`unknown package code ${code}`);
       if (!Number.isInteger(rate) || rate <= 0) {
         throw unprocessable(`rate for ${l.name}/${code} must be a positive integer (PKR)`);
       }
@@ -61,6 +71,9 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   if (mediaIn) {
     for (const m of mediaIn) {
       if (!m.storage_path?.trim()) throw badRequest("every media row needs storage_path");
+      if (m.shot_type && !SHOT_TYPES.includes(m.shot_type)) {
+        throw unprocessable(`unknown shot_type ${m.shot_type}`);
+      }
     }
     if (mediaIn.filter((m) => m.is_cover && !m.listing_name).length > 1) {
       throw unprocessable("only one property-level photo can be the cover");
@@ -73,6 +86,17 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     | { label: string; price_pkr: number; unit?: string }[]
     | undefined;
   const agreementIn = body.agreement as Record<string, unknown> | undefined;
+  // Front office = the vendor_users row magic links are sent to.
+  const frontOfficeIn = body.front_office as
+    | { name?: string; whatsapp?: string | null; email?: string | null }
+    | undefined;
+  if (vendorIn.credit_tier !== undefined && !CREDIT_TIERS.includes(String(vendorIn.credit_tier))) {
+    throw unprocessable("credit_tier must be HT1–HT4");
+  }
+  if (vendorIn.total_rooms !== undefined && vendorIn.total_rooms !== null) {
+    const tr = vendorIn.total_rooms as number;
+    if (!Number.isInteger(tr) || tr <= 0) throw unprocessable("total_rooms must be a positive integer");
+  }
 
   if (addonsIn) {
     for (const a of addonsIn) {
@@ -102,6 +126,13 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     checkout_time: vendorIn.checkout_time ?? null,
     cancellation_policy: vendorIn.cancellation_policy ?? null,
     noshow_policy: vendorIn.noshow_policy ?? null,
+    // Onboarding setup (migration 019).
+    credit_tier: vendorIn.credit_tier ?? "HT4",
+    total_rooms: vendorIn.total_rooms ?? null,
+    airport_transfer_included: vendorIn.airport_transfer_included ?? false,
+    courtesies: Array.isArray(vendorIn.courtesies)
+      ? (vendorIn.courtesies as string[]).map((c) => String(c).trim()).filter(Boolean)
+      : [],
   };
 
   let vendorId = vendorIn.id as string | undefined;
@@ -130,6 +161,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
           description: l.description ?? null,
           bed_config: l.bed_config ?? null,
           size_sqm: l.size_sqm ?? null,
+          category: l.category?.trim() || null,
         },
         { onConflict: "vendor_id,name" },
       )
@@ -229,11 +261,29 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
           caption: m.caption ?? null,
           sort: m.sort ?? i,
           is_cover: m.is_cover ?? false,
+          shot_type: m.shot_type ?? (listingId ? "category" : null),
         };
       });
       const { error } = await admin.from("media").insert(rows);
       if (error) throw unprocessable(`media: ${error.message}`);
     }
+  }
+
+  // ---- write: front office contact (one vendor_users row, upserted) -------
+  if (frontOfficeIn) {
+    const fo = {
+      vendor_id: vendorId,
+      name: frontOfficeIn.name?.trim() || "Front office",
+      whatsapp: frontOfficeIn.whatsapp?.trim() || null,
+      email: frontOfficeIn.email?.trim().toLowerCase() || null,
+    };
+    const { data: existing } = await admin
+      .from("vendor_users").select("id").eq("vendor_id", vendorId)
+      .order("created_at").limit(1).maybeSingle();
+    const { error } = existing
+      ? await admin.from("vendor_users").update(fo).eq("id", existing.id)
+      : await admin.from("vendor_users").insert(fo);
+    if (error) throw unprocessable(`front office: ${error.message}`);
   }
 
   // ---- write: agreement record (append, never overwrite) ------------------
@@ -269,7 +319,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   });
 
   // ---- respond: full snapshot ---------------------------------------------
-  const [vendor, listings, rates, vendorAmenities, inclusions, addons, agreements, media] =
+  const [vendor, listings, rates, vendorAmenities, inclusions, addons, agreements, media, frontOffice] =
     await Promise.all([
       admin.from("vendors").select("*").eq("id", vendorId).single(),
       admin.from("listings").select("*").eq("vendor_id", vendorId).order("name"),
@@ -290,6 +340,8 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
         .eq("party_id", vendorId)
         .order("created_at", { ascending: false }),
       admin.from("media").select("*").eq("vendor_id", vendorId).order("sort"),
+      admin.from("vendor_users").select("id, name, whatsapp, email").eq("vendor_id", vendorId)
+        .order("created_at").limit(1).maybeSingle(),
     ]);
 
   return {
@@ -301,5 +353,6 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     addons: addons.data ?? [],
     agreements: agreements.data ?? [],
     media: media.data ?? [],
+    front_office: frontOffice.data ?? null,
   };
 });

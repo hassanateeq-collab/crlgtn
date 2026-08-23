@@ -1,12 +1,36 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { upsertCorporate, ApiError } from '@/lib/api'
-import { Button, Card, Field, Input, Notice } from '@/components/ui'
+import { upsertCorporate, ApiError, type CorporatePayload } from '@/lib/api'
+import {
+  CORP_TIERS,
+  TERMS_BY_TIER,
+  TERM_LABEL,
+  allDone,
+  corporateSteps,
+  termsWithinCeiling,
+  type CorporateFacts,
+} from '@/lib/onboarding'
+import {
+  ABtn,
+  ACard,
+  AField,
+  AInput,
+  ASelect,
+  ATextarea,
+  Chip,
+  ChipToggle,
+  Notice,
+  PageHead,
+  Plan,
+  Toggle,
+  statusTone,
+} from '@/components/atlas'
 
 /**
- * Corporate + credit profile + users (M1). One save calls ef_upsert_corporate.
- * Users are upserted by email, never deleted from this form.
+ * Corporate setup — tier + terms under the cash-flow ceiling, the official
+ * address of record, countersign, and booker provisioning (the save creates
+ * the sign-in accounts so the closed-access OTP works the first time).
  */
 
 interface UserDraft {
@@ -17,6 +41,19 @@ interface UserDraft {
   linked: boolean
 }
 
+const ROLES = [
+  { code: 'corp_booker', label: 'Booker' },
+  { code: 'corp_approver', label: 'Approver' },
+  { code: 'corp_finance', label: 'Finance' },
+  { code: 'corp_admin', label: 'Admin' },
+]
+
+const fmtPkr = (n: number) => `PKR ${n.toLocaleString('en-PK')}`
+const toInt = (s: string) => {
+  const n = parseInt(s.replace(/[^0-9]/g, ''), 10)
+  return Number.isFinite(n) && n >= 0 ? n : 0
+}
+
 export function CorporateEditor() {
   const { id } = useParams()
   const isNew = !id || id === 'new'
@@ -24,84 +61,143 @@ export function CorporateEditor() {
 
   const [name, setName] = useState('')
   const [status, setStatus] = useState('prospect')
-  const [creditLimit, setCreditLimit] = useState('0')
+  const [tier, setTier] = useState<'A' | 'B' | 'C'>('C')
   const [terms, setTerms] = useState('on_checkout')
+  const [limit, setLimit] = useState('')
   const [securityType, setSecurityType] = useState('none')
-  const [securityAmount, setSecurityAmount] = useState('0')
-  const [feeWaivedUntil, setFeeWaivedUntil] = useState('')
+  const [securityAmount, setSecurityAmount] = useState('')
+  const [officialEmail, setOfficialEmail] = useState('')
+  const [countersign, setCountersign] = useState(false)
+  const [threshold, setThreshold] = useState('')
   const [approvalRequired, setApprovalRequired] = useState(false)
   const [notes, setNotes] = useState('')
   const [users, setUsers] = useState<UserDraft[]>([])
+  const [agreementOnFile, setAgreementOnFile] = useState<{ signed: boolean; when: string | null } | null>(null)
+  const [recordAgreement, setRecordAgreement] = useState(false)
+  const [signedDigital, setSignedDigital] = useState(false)
+  const [signedPhysical, setSignedPhysical] = useState(false)
+  const [agreementFile, setAgreementFile] = useState<File | null>(null)
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(isNew)
 
   useEffect(() => {
     if (isNew) return
     async function load() {
-      const [c, u] = await Promise.all([
+      const [c, u, ag] = await Promise.all([
         supabase.from('corporates').select('*').eq('id', id).single(),
-        supabase
-          .from('corporate_users')
-          .select('role, name, email, phone, auth_user_id')
-          .eq('corporate_id', id)
-          .order('name'),
+        supabase.from('corporate_users').select('role, name, email, phone, auth_user_id').eq('corporate_id', id).order('name'),
+        supabase.from('agreements').select('signed_digital_at, signed_physical_at').eq('party_type', 'corporate').eq('party_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ])
-      if (c.error) { setError(c.error.message); return }
-      setName(c.data.name)
-      setStatus(c.data.status)
-      setCreditLimit(c.data.credit_limit_pkr.toString())
-      setTerms(c.data.credit_terms)
-      setSecurityType(c.data.security_type)
-      setSecurityAmount(c.data.security_amount_pkr.toString())
-      setFeeWaivedUntil(c.data.fee_waived_until ?? '')
-      setApprovalRequired(c.data.approval_required)
-      setNotes(c.data.notes ?? '')
-      setUsers(
-        (u.data ?? []).map((x) => ({
-          role: x.role,
-          name: x.name,
-          email: x.email,
-          phone: x.phone ?? '',
-          linked: x.auth_user_id !== null,
-        })),
-      )
+      if (c.error) {
+        setError(c.error.message)
+        return
+      }
+      const d = c.data
+      setName(d.name)
+      setStatus(d.status)
+      setTier(d.tier ?? 'C')
+      setTerms(d.credit_terms)
+      setLimit(d.credit_limit_pkr?.toString() ?? '')
+      setSecurityType(d.security_type)
+      setSecurityAmount(d.security_amount_pkr?.toString() ?? '')
+      setOfficialEmail(d.official_email ?? '')
+      setCountersign(!!d.countersign_required)
+      setThreshold(d.countersign_threshold_pkr?.toString() ?? '')
+      setApprovalRequired(!!d.approval_required)
+      setNotes(d.notes ?? '')
+      setUsers((u.data ?? []).map((x) => ({ role: x.role, name: x.name, email: x.email, phone: x.phone ?? '', linked: !!x.auth_user_id })))
+      if (ag.data) {
+        const when = ag.data.signed_digital_at ?? ag.data.signed_physical_at
+        setAgreementOnFile({ signed: !!when, when })
+      }
       setLoaded(true)
     }
     load()
   }, [id, isNew])
 
-  async function save(e: FormEvent) {
-    e.preventDefault()
+  const facts: CorporateFacts = useMemo(
+    () => ({
+      tier,
+      credit_terms: terms,
+      credit_set: toInt(limit) > 0,
+      has_official_email: !!officialEmail.trim(),
+      users_total: users.filter((u) => u.email.trim()).length,
+      users_linked: users.filter((u) => u.email.trim() && u.linked).length,
+      agreement_signed: !!agreementOnFile?.signed || (recordAgreement && (signedDigital || signedPhysical)),
+    }),
+    [tier, terms, limit, officialEmail, users, agreementOnFile, recordAgreement, signedDigital, signedPhysical],
+  )
+  const steps = corporateSteps(facts)
+  const ready = allDone(steps)
+  const ceilingOk = termsWithinCeiling(tier, terms)
+  const pendingAccounts = users.filter((u) => u.email.trim() && !u.linked).length
+
+  const setUser = (i: number, patch: Partial<UserDraft>) => setUsers((us) => us.map((u, j) => (j === i ? { ...u, ...patch } : u)))
+
+  async function save() {
     setBusy(true)
     setError(null)
+    setSaved(null)
     try {
-      await upsertCorporate({
+      if (!name.trim()) throw new Error('Give the corporate a name.')
+      if (!ceilingOk) throw new Error(`Terms ${terms} exceed the tier ${tier} ceiling — the cash-flow rule.`)
+      for (const u of users) {
+        if (u.email.trim() && !u.name.trim()) throw new Error(`Booker ${u.email} needs a name.`)
+      }
+      let docUrl: string | null = null
+      if (recordAgreement && agreementFile) {
+        const path = `corporate/${crypto.randomUUID()}/${agreementFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+        const { error: upErr } = await supabase.storage.from('agreements').upload(path, agreementFile)
+        if (upErr) throw new Error(`Agreement upload failed: ${upErr.message}`)
+        docUrl = path
+      }
+      const payload: CorporatePayload = {
         corporate: {
           ...(isNew ? {} : { id }),
           name: name.trim(),
           status,
-          credit_limit_pkr: parseInt(creditLimit || '0', 10),
+          tier,
           credit_terms: terms,
+          credit_limit_pkr: toInt(limit),
           security_type: securityType,
-          security_amount_pkr: securityType === 'none' ? 0 : parseInt(securityAmount || '0', 10),
-          fee_waived_until: feeWaivedUntil || null,
+          security_amount_pkr: securityType === 'none' ? 0 : toInt(securityAmount),
+          official_email: officialEmail.trim() || null,
+          countersign_required: countersign,
+          countersign_threshold_pkr: countersign && threshold ? toInt(threshold) : null,
           approval_required: approvalRequired,
           notes: notes.trim() || null,
         },
         users: users
-          .filter((u) => u.name.trim() && u.email.trim())
-          .map((u) => ({
-            role: u.role,
-            name: u.name.trim(),
-            email: u.email.trim(),
-            phone: u.phone.trim() || undefined,
-          })),
-      })
-      navigate('/ops/corporates')
+          .filter((u) => u.email.trim())
+          .map((u) => ({ role: u.role, name: u.name.trim(), email: u.email.trim(), phone: u.phone.trim() || undefined })),
+        ...(recordAgreement
+          ? {
+              agreement: {
+                tier,
+                doc_url: docUrl,
+                signed_digital_at: signedDigital ? new Date().toISOString() : null,
+                signed_physical_at: signedPhysical ? new Date().toISOString() : null,
+              },
+            }
+          : {}),
+      }
+      const res = await upsertCorporate(payload)
+      setUsers(res.users.map((x) => ({ role: x.role, name: x.name, email: x.email, phone: x.phone ?? '', linked: !!x.auth_user_id })))
+      setSaved(
+        res.provisioned.length
+          ? `Saved. Sign-in accounts created for ${res.provisioned.join(', ')} — they get a code the first time they sign in.`
+          : 'Saved.',
+      )
+      if (recordAgreement) {
+        setAgreementOnFile({ signed: signedDigital || signedPhysical, when: new Date().toISOString() })
+        setRecordAgreement(false)
+      }
+      if (isNew) navigate(`/ops/corporates/${res.corporate.id}`, { replace: true })
     } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : 'Save failed')
+      setError(err instanceof ApiError || err instanceof Error ? err.message : 'Save failed')
     } finally {
       setBusy(false)
     }
@@ -109,174 +205,145 @@ export function CorporateEditor() {
 
   if (!loaded && !error) return <p className="text-sm text-ink/50">Loading…</p>
 
-  const selectCls =
-    'w-full rounded-md border border-hairline bg-white px-3 py-2 text-sm text-ink focus:border-pine focus:outline-none'
-
   return (
-    <form onSubmit={save} className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl">{isNew ? 'Add corporate' : `Edit · ${name}`}</h1>
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={() => navigate('/ops/corporates')}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save corporate'}
-          </Button>
-        </div>
-      </div>
+    <div>
+      <PageHead
+        eyebrow={isNew ? 'New corporate' : 'Corporate setup'}
+        title={
+          <span className="flex flex-wrap items-center gap-3">
+            {name || 'Untitled corporate'}
+            <Chip tone={statusTone(status)}>{status}</Chip>
+          </span>
+        }
+        sub="Closed access: only people provisioned here can sign in."
+        actions={<Link to="/ops/corporates" className="text-[13px] font-semibold text-ink/55">← Corporates</Link>}
+      />
 
-      {error && <Notice tone="error">{error}</Notice>}
+      <div className="grid items-start gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="space-y-5">
+          <ACard title="Identity">
+            <div className="grid gap-3 md:grid-cols-3">
+              <AField label="Company name" className="md:col-span-2"><AInput value={name} onChange={(e) => setName(e.target.value)} /></AField>
+              <AField label="Official email — address of record" className="md:col-span-3" hint="Countersign emails and invoices go here. Never a booker's login.">
+                <AInput type="email" value={officialEmail} onChange={(e) => setOfficialEmail(e.target.value)} placeholder="finance@company.com.pk" />
+              </AField>
+            </div>
+          </ACard>
 
-      <Card title="Company & credit profile" footer={
-        <span className="text-xs text-ink/60">
-          Limit, terms and security are set by judgment on financials, references and
-          track record — there is no formula.
-        </span>
-      }>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Name">
-            <Input required value={name} onChange={(e) => setName(e.target.value)} />
-          </Field>
-          <Field label="Status">
-            <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
-              {['prospect', 'onboarding', 'live', 'suspended'].map((s) => (
-                <option key={s} value={s}>{s}</option>
+          <ACard title="Tier & credit" sub="The cash-flow rule: A ≤ d20 · B ≤ d15 · C ≤ d7 — always below the 30-day hotel settlement. New corporates start at C.">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {CORP_TIERS.map((t) => (
+                <ChipToggle key={t} on={tier === t} onClick={() => setTier(t)}>Tier {t}</ChipToggle>
               ))}
-            </select>
-          </Field>
-          <Field label="Credit limit (PKR)">
-            <Input
-              inputMode="numeric" className="tabular"
-              value={creditLimit}
-              onChange={(e) => setCreditLimit(e.target.value.replace(/\D/g, ''))}
-            />
-          </Field>
-          <Field label="Payment terms">
-            <select className={selectCls} value={terms} onChange={(e) => setTerms(e.target.value)}>
-              <option value="on_checkout">upon checkout</option>
-              <option value="d7">7 days</option>
-              <option value="d15">15 days</option>
-              <option value="d30">30 days</option>
-            </select>
-          </Field>
-          <Field label="Security">
-            <select
-              className={selectCls}
-              value={securityType}
-              onChange={(e) => setSecurityType(e.target.value)}
-            >
-              <option value="none">none</option>
-              <option value="deposit">deposit</option>
-              <option value="bank_guarantee">bank guarantee</option>
-            </select>
-          </Field>
-          {securityType !== 'none' && (
-            <Field label="Security amount (PKR)">
-              <Input
-                inputMode="numeric" className="tabular"
-                value={securityAmount}
-                onChange={(e) => setSecurityAmount(e.target.value.replace(/\D/g, ''))}
-              />
-            </Field>
-          )}
-          <Field label="Fee waived until" hint="Corporate fee published day one; waived 6–12 months">
-            <Input
-              type="date"
-              value={feeWaivedUntil}
-              onChange={(e) => setFeeWaivedUntil(e.target.value)}
-            />
-          </Field>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm">
-            <input
-              type="checkbox" className="size-4 accent-[#1D5C4D]"
-              checked={approvalRequired}
-              onChange={(e) => setApprovalRequired(e.target.checked)}
-            />
-            Bookings require approver sign-off
-          </label>
-        </div>
-        <div className="mt-4">
-          <Field label="Notes">
-            <textarea
-              className={`${selectCls} min-h-16`}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </Field>
-        </div>
-      </Card>
-
-      <Card title="Users" footer={
-        <span className="text-xs text-ink/60">
-          Accounts are provisioned here and linked when the person first signs in with
-          their email code. Removing a row does not delete the user.
-        </span>
-      }>
-        <div className="space-y-2">
-          {users.map((u, i) => (
-            <div key={i} className="grid grid-cols-[8rem_1fr_1fr_9rem_2rem] items-center gap-2">
-              <select
-                className={selectCls}
-                value={u.role}
-                onChange={(e) =>
-                  setUsers((us) => us.map((x, j) => (j === i ? { ...x, role: e.target.value } : x)))
-                }
-              >
-                <option value="corp_admin">admin</option>
-                <option value="corp_booker">booker</option>
-                <option value="corp_approver">approver</option>
-                <option value="corp_finance">finance</option>
-              </select>
-              <Input
-                placeholder="Name"
-                value={u.name}
-                onChange={(e) =>
-                  setUsers((us) => us.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))
-                }
-              />
-              <Input
-                type="email" placeholder="email@company.com"
-                value={u.email}
-                disabled={u.linked}
-                onChange={(e) =>
-                  setUsers((us) => us.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)))
-                }
-              />
-              <Input
-                placeholder="+92…"
-                value={u.phone}
-                onChange={(e) =>
-                  setUsers((us) => us.map((x, j) => (j === i ? { ...x, phone: e.target.value } : x)))
-                }
-              />
-              {!u.linked ? (
-                <button
-                  type="button"
-                  aria-label="Remove user row"
-                  className="text-ink/40 hover:text-ink"
-                  onClick={() => setUsers((us) => us.filter((_, j) => j !== i))}
-                >
-                  ×
-                </button>
-              ) : (
-                <span className="text-xs text-ink/40" title="Has signed in">✓</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <AField label="Credit terms — from checkout">
+                <ASelect value={terms} onChange={(e) => setTerms(e.target.value)}>
+                  {(ceilingOk ? TERMS_BY_TIER[tier] : [...TERMS_BY_TIER[tier], terms]).map((t) => (
+                    <option key={t} value={t}>{TERM_LABEL[t] ?? t}</option>
+                  ))}
+                </ASelect>
+              </AField>
+              <AField label="Credit limit (PKR)"><AInput inputMode="numeric" value={limit} onChange={(e) => setLimit(e.target.value)} placeholder="1,500,000" className="tabular" /></AField>
+              <AField label="Security">
+                <ASelect value={securityType} onChange={(e) => setSecurityType(e.target.value)}>
+                  <option value="none">None</option>
+                  <option value="deposit">Standing deposit</option>
+                  <option value="bank_guarantee">Bank guarantee</option>
+                </ASelect>
+              </AField>
+              {securityType !== 'none' && (
+                <AField label="Security amount (PKR)"><AInput inputMode="numeric" value={securityAmount} onChange={(e) => setSecurityAmount(e.target.value)} className="tabular" /></AField>
               )}
             </div>
-          ))}
-          <Button
-            type="button" variant="ghost"
-            onClick={() =>
-              setUsers((us) => [
-                ...us,
-                { role: 'corp_booker', name: '', email: '', phone: '', linked: false },
-              ])
-            }
+            {!ceilingOk && (
+              <div className="mt-3">
+                <Notice tone="error">{TERM_LABEL[terms] ?? terms} exceeds the tier {tier} ceiling. Pick {TERMS_BY_TIER[tier].map((t) => t.replace('_', ' ')).join(' / ')} — or raise the tier.</Notice>
+              </div>
+            )}
+            <div className="mt-4 space-y-2">
+              <Toggle on={countersign} onChange={setCountersign} label="Booking countersign required" hint="Every booking waits for a click + name + designation from the official address — a leaked login alone can't commit spend." />
+              {countersign && (
+                <AField label="Only above this amount (PKR) — leave blank for every booking" className="pl-1">
+                  <AInput inputMode="numeric" value={threshold} onChange={(e) => setThreshold(e.target.value)} placeholder="150,000" className="tabular max-w-xs" />
+                </AField>
+              )}
+              <Toggle on={approvalRequired} onChange={setApprovalRequired} label="Internal approver must clear bookings" hint="The corporate's own approver role signs off inside the portal before a request goes out." />
+            </div>
+          </ACard>
+
+          <ACard title="Agreement" sub="Preferred-channel commitment in exchange for negotiated rates and credit.">
+            <p className="mb-3 text-[13.5px]">
+              {agreementOnFile?.signed
+                ? <span className="text-deep">Signed · {new Date(agreementOnFile.when!).toLocaleDateString('en-GB')}</span>
+                : agreementOnFile
+                  ? <span className="text-brass">Recorded, not yet signed</span>
+                  : <span className="text-ink/50">Nothing recorded yet</span>}
+            </p>
+            <Toggle on={recordAgreement} onChange={setRecordAgreement} label="Record a signed agreement now" />
+            {recordAgreement && (
+              <div className="mt-3 grid gap-3 md:grid-cols-3">
+                <label className="flex items-center gap-2 text-[13.5px]"><input type="checkbox" checked={signedDigital} onChange={(e) => setSignedDigital(e.target.checked)} /> Signed digitally</label>
+                <label className="flex items-center gap-2 text-[13.5px]"><input type="checkbox" checked={signedPhysical} onChange={(e) => setSignedPhysical(e.target.checked)} /> Signed on paper</label>
+                <input type="file" accept=".pdf,image/*" onChange={(e) => setAgreementFile(e.target.files?.[0] ?? null)} className="text-[13px]" />
+              </div>
+            )}
+          </ACard>
+
+          <ACard
+            title="Bookers — provisioned accounts"
+            sub="Saving creates the sign-in account for anyone without one. No email goes out now; they get a code when they first sign in."
+            right={<ABtn variant="ghost" className="py-1.5" onClick={() => setUsers((us) => [...us, { role: 'corp_booker', name: '', email: '', phone: '', linked: false }])}>+ Add person</ABtn>}
           >
-            Add user
-          </Button>
+            {users.length === 0 && <p className="text-sm text-ink/50">Nobody can sign in yet.</p>}
+            <div className="space-y-2">
+              {users.map((u, i) => (
+                <div key={i} className="grid items-end gap-2 rounded-2xl border-[1.5px] border-hairline p-3 md:grid-cols-[1fr_1.3fr_1fr_0.9fr_auto]">
+                  <AField label="Name"><AInput value={u.name} onChange={(e) => setUser(i, { name: e.target.value })} /></AField>
+                  <AField label="Work email"><AInput type="email" value={u.email} onChange={(e) => setUser(i, { email: e.target.value })} disabled={u.linked} /></AField>
+                  <AField label="Phone"><AInput value={u.phone} onChange={(e) => setUser(i, { phone: e.target.value })} /></AField>
+                  <AField label="Role">
+                    <ASelect value={u.role} onChange={(e) => setUser(i, { role: e.target.value })}>
+                      {ROLES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
+                    </ASelect>
+                  </AField>
+                  <div className="pb-2.5">
+                    {u.linked ? <Chip tone="ok">can sign in</Chip> : <Chip tone="hot">account on save</Chip>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ACard>
+
+          <ACard title="Internal notes (ops only)">
+            <ATextarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </ACard>
         </div>
-      </Card>
-    </form>
+
+        <aside className="space-y-4 lg:sticky lg:top-[72px]">
+          <ACard>
+            <AField label="Status">
+              <ASelect value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="prospect">Prospect</option>
+                <option value="onboarding">Onboarding</option>
+                <option value="live">Live</option>
+                <option value="suspended">Suspended</option>
+              </ASelect>
+            </AField>
+            <div className="mt-4"><Plan steps={steps} /></div>
+            {ready && status !== 'live' && <div className="mt-3"><Notice tone="ok">Setup complete — set status to Live and save.</Notice></div>}
+            {pendingAccounts > 0 && <div className="mt-3"><Notice>{pendingAccounts} sign-in account{pendingAccounts > 1 ? 's' : ''} will be created on save.</Notice></div>}
+            <div className="mt-4 space-y-2">
+              {error && <Notice tone="error">{error}</Notice>}
+              {saved && <Notice tone="ok">{saved}</Notice>}
+              <ABtn className="w-full" onClick={save} disabled={busy || !ceilingOk}>{busy ? 'Saving…' : isNew ? 'Create corporate' : 'Save changes'}</ABtn>
+              <p className="text-center text-[11.5px] text-ink/50">
+                {toInt(limit) > 0 ? `${fmtPkr(toInt(limit))} on tier ${tier} · ${terms.replace('_', ' ')}` : 'Audit-logged under your name.'}
+              </p>
+            </div>
+          </ACard>
+        </aside>
+      </div>
+    </div>
   )
 }

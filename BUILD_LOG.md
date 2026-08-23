@@ -725,3 +725,41 @@ yet list transfer bookings.
 - Gallery `mockups/index.html` now lists all 13 with status chips; ops views
   deep-link via #vend/#corp/#money. Design phase is feature-complete pending
   owner redlines; next phase = integration with the existing M0–M8 backend.
+
+## 2026-08-18 — INTEGRATION BATCH 1: Supply & clients setup, wired (ops)
+
+Owner asked to wire the onboarding side first: a dashboard listing hotels with
+every shot-list picture and their property details, plus corporates — and the
+onboarding plan for each. Shipped against the existing backend:
+- **Migration 018** `credit_terms` gains `d20` (standalone, enum rule).
+- **Migration 019** onboarding setup: `vendors.credit_tier` HT1–HT4 (default
+  HT4), `total_rooms`, `airport_transfer_included`, `courtesies[]`;
+  `listings.category` (Sedan/SUV/Premium · Studio/1-Bed/2-Bed/Serviced · A/B/C);
+  `media.shot_type` = the fixed 8-shot list + `category`/`other`;
+  `corporates.tier` A/B/C (default C), `official_email`,
+  `countersign_required`, `countersign_threshold_pkr`; **trigger
+  `app.check_corporate_ceiling`** enforces A≤d20 / B≤d15 / C≤d7 on every
+  insert/update (d30 refused); views `vendor_onboarding` and
+  `corporate_onboarding` (security_invoker) compute progress facts. TEST rows
+  aligned (Northbridge A/d20 etc.).
+- **ef_onboard_vendor v3**: new vendor fields, listing.category,
+  media.shot_type, `front_office` upserts the vendor_users row magic links go
+  to; package regex now `^[PV][1-9]$` (closes the deferred V-code gap).
+- **ef_upsert_corporate v2**: tier/official_email/countersign, d30 rejected,
+  optional corporate agreement record, and **booker provisioning** — creates
+  the auth account (email_confirm) and links `auth_user_id`, so the closed-
+  access OTP works on first sign-in; returns `provisioned[]`.
+- **Front-end (Atlas)**: `components/atlas.tsx` primitives; `lib/onboarding.ts`
+  (shot list, tiers, ceilings, packages, categories, step rules mirrored from
+  the views); new `OpsLayout` (ink bar: Dashboard · Supply · Corporates ·
+  Money); **Supply** page = the dashboard (cover photo, type/status/HT chips,
+  progress, per-shot coverage, next step; corporates beneath); **VendorEditor**
+  rebuilt (identity, front office, agreement & credit tier, categories + rate
+  ceilings + per-category galleries, 8-slot shot list with replace/remove,
+  verified amenities, courtesies, policies, live plan panel, go-live gated on
+  the plan); **CorporateEditor** rebuilt (tier chips, terms limited to the
+  ceiling, official email, countersign + threshold, bookers with account
+  provisioning, agreement, plan). Old Vendors.tsx removed; /ops/vendors → Supply.
+- Deviation noted: Supabase CLI token stale (401) — functions deployed via the
+  MCP deploy as before. Verification: tsc/oxlint/vite clean; views checked in
+  SQL; UI check needs an ops login (owner to click through).

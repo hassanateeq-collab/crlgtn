@@ -6,7 +6,7 @@ import { SignIn } from '@/routes/SignIn'
 import { Foundations } from '@/routes/Foundations'
 import { OpsLayout } from '@/routes/ops/OpsLayout'
 import { Dashboard } from '@/routes/ops/Dashboard'
-import { Vendors } from '@/routes/ops/Vendors'
+import { Supply } from '@/routes/ops/Supply'
 import { VendorEditor } from '@/routes/ops/VendorEditor'
 import { PropertyPage } from '@/routes/ops/PropertyPage'
 import { Corporates } from '@/routes/ops/Corporates'
@@ -68,7 +68,7 @@ function Gate() {
         </Route>
         <Route path="/ops" element={<OpsLayout />}>
           <Route index element={<Dashboard />} />
-          <Route path="vendors" element={<Vendors />} />
+          <Route path="vendors" element={<Supply />} />
           <Route path="vendors/new" element={<VendorEditor />} />
           <Route path="vendors/:id" element={<VendorEditor />} />
           <Route path="vendors/:id/page" element={<PropertyPage />} />

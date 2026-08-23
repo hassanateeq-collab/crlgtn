@@ -1,56 +1,77 @@
-import { useEffect, useState, type FormEvent } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { onboardVendor, ApiError } from '@/lib/api'
-import { Button, Card, Field, Input, Notice } from '@/components/ui'
+import { onboardVendor, ApiError, type VendorPayload } from '@/lib/api'
+import {
+  CATEGORIES,
+  COURTESIES,
+  CREDIT_TIERS,
+  CORRIDOR_NOTE,
+  PACKAGES,
+  SHOT_KEYS,
+  SHOT_LIST,
+  VENDOR_TYPES,
+  allDone,
+  vendorSteps,
+  type VendorFacts,
+} from '@/lib/onboarding'
+import {
+  ABtn,
+  ACard,
+  AField,
+  AInput,
+  ASelect,
+  ATextarea,
+  Chip,
+  ChipToggle,
+  Notice,
+  PageHead,
+  Plan,
+  Toggle,
+  statusTone,
+} from '@/components/atlas'
 
 /**
- * The M1 vendor onboarding form: vendor → listings + P1–P3 base rates →
- * verified amenity checklist → inclusions → paid add-ons → agreement record.
- * One save calls ef_onboard_vendor; the milestone gate is a complete, bookable
- * hotel in under ten minutes.
+ * Vendor setup — hotel, car operator or apartment host — in the Atlas language.
+ * Everything here writes through ef_onboard_vendor in one save; photos upload
+ * straight to the private `media` bucket and are registered on save with their
+ * shot type. The plan panel mirrors the vendor_onboarding view on live form
+ * state, so ops see exactly what's left before go-live.
  */
 
 interface ListingDraft {
   name: string
+  category: string
   max_occupancy: number
   active: boolean
   bed_config: string
   size_sqm: string
   description: string
-  rates: { P1: string; P2: string; P3: string } // strings in form state; integers at submit
+  rates: Record<string, string>
 }
 
 interface PhotoDraft {
   storage_path: string
-  /** '' = property-level photo; otherwise the room-type name it belongs to. */
-  listing_name: string
+  listing_name: string // '' = property-level
+  shot_type: string // SHOT key, 'category', or 'other'
   caption: string
-  is_cover: boolean
-  /** Signed URL for thumbnail display; never persisted. */
   previewUrl: string
 }
 
-interface AddonDraft {
-  label: string
-  price_pkr: string
-  unit: string
-}
-
-const emptyListing = (): ListingDraft => ({
+const emptyListing = (cat: string): ListingDraft => ({
   name: '',
+  category: cat,
   max_occupancy: 2,
   active: true,
   bed_config: '',
   size_sqm: '',
   description: '',
-  rates: { P1: '', P2: '', P3: '' },
+  rates: {},
 })
 
-const PACKAGE_LABELS: Record<string, string> = {
-  P1: 'P1 · room only',
-  P2: 'P2 · + breakfast',
-  P3: 'P3 · half board',
+const toInt = (s: string) => {
+  const n = parseInt(s.replace(/[^0-9]/g, ''), 10)
+  return Number.isFinite(n) && n > 0 ? n : null
 }
 
 export function VendorEditor() {
@@ -61,205 +82,245 @@ export function VendorEditor() {
   const [corridors, setCorridors] = useState<{ id: string; name: string }[]>([])
   const [amenityList, setAmenityList] = useState<{ code: string; label: string }[]>([])
 
+  // identity
+  const [vendorType, setVendorType] = useState('hotel')
   const [name, setName] = useState('')
   const [status, setStatus] = useState('prospect')
   const [corridorId, setCorridorId] = useState('')
   const [stars, setStars] = useState('')
   const [bracket, setBracket] = useState('')
-  const [commission, setCommission] = useState('')
-  const [notes, setNotes] = useState('')
-  // Property profile (migration 006)
-  const [description, setDescription] = useState('')
   const [subtype, setSubtype] = useState('')
+  const [totalRooms, setTotalRooms] = useState('')
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
+  const [description, setDescription] = useState('')
+  const [notes, setNotes] = useState('')
+  // front office
+  const [foName, setFoName] = useState('')
+  const [foWa, setFoWa] = useState('')
+  const [foEmail, setFoEmail] = useState('')
+  // agreement & credit
+  const [creditTier, setCreditTier] = useState<'HT1' | 'HT2' | 'HT3' | 'HT4'>('HT4')
+  const [commission, setCommission] = useState('')
+  const [agreementOnFile, setAgreementOnFile] = useState<{ signed: boolean; when: string | null } | null>(null)
+  const [recordAgreement, setRecordAgreement] = useState(false)
+  const [signedDigital, setSignedDigital] = useState(false)
+  const [signedPhysical, setSignedPhysical] = useState(false)
+  const [agreementFile, setAgreementFile] = useState<File | null>(null)
+  // catalog
+  const [listings, setListings] = useState<ListingDraft[]>([])
+  const [verified, setVerified] = useState<Record<string, boolean>>({})
+  const [courtesies, setCourtesies] = useState<string[]>([])
+  const [customCourtesy, setCustomCourtesy] = useState('')
+  const [airportTransfer, setAirportTransfer] = useState(false)
+  const [inclusions, setInclusions] = useState('')
+  // photos
+  const [photos, setPhotos] = useState<PhotoDraft[]>([])
+  const [uploading, setUploading] = useState<string | null>(null)
+  // policies
   const [checkinTime, setCheckinTime] = useState('')
   const [checkoutTime, setCheckoutTime] = useState('')
   const [cancellationPolicy, setCancellationPolicy] = useState('')
   const [noshowPolicy, setNoshowPolicy] = useState('')
-  const [photos, setPhotos] = useState<PhotoDraft[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [listings, setListings] = useState<ListingDraft[]>([emptyListing()])
-  const [verified, setVerified] = useState<Record<string, boolean>>({})
-  const [inclusions, setInclusions] = useState('')
-  const [addons, setAddons] = useState<AddonDraft[]>([])
-  const [agreementTier, setAgreementTier] = useState('')
-  const [agreementFile, setAgreementFile] = useState<File | null>(null)
-  const [signedDigital, setSignedDigital] = useState(false)
-  const [signedPhysical, setSignedPhysical] = useState(false)
 
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [saved, setSaved] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(isNew)
 
-  // Reference data.
+  const isCar = vendorType === 'rent_a_car'
+  const packages = PACKAGES[vendorType] ?? PACKAGES.hotel
+  const categories = CATEGORIES[vendorType] ?? CATEGORIES.hotel
+
   useEffect(() => {
-    supabase.from('corridors').select('id, name').order('sort')
-      .then(({ data }) => setCorridors(data ?? []))
-    supabase.from('amenities').select('code, label').order('label')
-      .then(({ data }) => setAmenityList(data ?? []))
+    supabase.from('corridors').select('id, name').order('sort').then(({ data }) => setCorridors(data ?? []))
+    supabase.from('amenities').select('code, label').order('label').then(({ data }) => setAmenityList(data ?? []))
   }, [])
 
-  // Existing vendor: hydrate the form.
   useEffect(() => {
     if (isNew) return
     async function load() {
-      const [v, ls, rates, va, inc, ad, med] = await Promise.all([
+      const [v, ls, rates, va, inc, med, fo, ag] = await Promise.all([
         supabase.from('vendors').select('*').eq('id', id).single(),
         supabase.from('listings').select('*').eq('vendor_id', id).order('name'),
-        supabase
-          .from('listing_rates')
-          .select('listing_id, package_code, rate_pkr, corporate_id')
-          .is('corporate_id', null)
-          .is('valid_to', null),
+        supabase.from('listing_rates').select('listing_id, package_code, rate_pkr').is('corporate_id', null).is('valid_to', null),
         supabase.from('vendor_amenities').select('verified_at, amenities(code)').eq('vendor_id', id),
         supabase.from('inclusions').select('label').eq('vendor_id', id).order('label'),
-        supabase.from('addons').select('label, price_pkr, unit').eq('vendor_id', id).order('label'),
-        supabase
-          .from('media')
-          .select('storage_path, caption, sort, is_cover, listing_id, listings(name)')
-          .eq('vendor_id', id)
-          .order('sort'),
+        supabase.from('media').select('storage_path, caption, sort, listing_id, shot_type, listings(name)').eq('vendor_id', id).order('sort'),
+        supabase.from('vendor_users').select('name, whatsapp, email').eq('vendor_id', id).order('created_at').limit(1).maybeSingle(),
+        supabase.from('agreements').select('signed_digital_at, signed_physical_at, created_at').eq('party_type', 'vendor').eq('party_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ])
-      if (v.error) { setError(v.error.message); return }
-
-      setName(v.data.name)
-      setStatus(v.data.status)
-      setCorridorId(v.data.corridor_id ?? '')
-      setStars(v.data.stars_assigned?.toString() ?? '')
-      setBracket(v.data.price_bracket ?? '')
-      setCommission(v.data.commission_pct?.toString() ?? '')
-      setNotes(v.data.notes ?? '')
-      setDescription(v.data.description ?? '')
-      setSubtype(v.data.property_subtype ?? '')
-      setAddress(v.data.address ?? '')
-      setPhone(v.data.phone ?? '')
-      setCheckinTime(v.data.checkin_time ?? '')
-      setCheckoutTime(v.data.checkout_time ?? '')
-      setCancellationPolicy(v.data.cancellation_policy ?? '')
-      setNoshowPolicy(v.data.noshow_policy ?? '')
-
-      // Media rows + signed URLs for thumbnails (private bucket, 1h validity).
-      const medRows = (med.data ?? []) as unknown as {
-        storage_path: string
-        caption: string | null
-        is_cover: boolean
-        listings: { name: string } | null
-      }[]
-      if (medRows.length) {
-        const { data: signed } = await supabase.storage
-          .from('media')
-          .createSignedUrls(medRows.map((m) => m.storage_path), 3600)
-        setPhotos(
-          medRows.map((m, i) => ({
-            storage_path: m.storage_path,
-            listing_name: m.listings?.name ?? '',
-            caption: m.caption ?? '',
-            is_cover: m.is_cover,
-            previewUrl: signed?.[i]?.signedUrl ?? '',
-          })),
-        )
+      if (v.error) {
+        setError(v.error.message)
+        return
+      }
+      const d = v.data
+      setVendorType(d.vendor_type)
+      setName(d.name)
+      setStatus(d.status)
+      setCorridorId(d.corridor_id ?? '')
+      setStars(d.stars_assigned?.toString() ?? '')
+      setBracket(d.price_bracket ?? '')
+      setSubtype(d.property_subtype ?? '')
+      setTotalRooms(d.total_rooms?.toString() ?? '')
+      setAddress(d.address ?? '')
+      setPhone(d.phone ?? '')
+      setDescription(d.description ?? '')
+      setNotes(d.notes ?? '')
+      setCreditTier(d.credit_tier ?? 'HT4')
+      setCommission(d.commission_pct?.toString() ?? '')
+      setCourtesies(d.courtesies ?? [])
+      setAirportTransfer(!!d.airport_transfer_included)
+      setCheckinTime(d.checkin_time ?? '')
+      setCheckoutTime(d.checkout_time ?? '')
+      setCancellationPolicy(d.cancellation_policy ?? '')
+      setNoshowPolicy(d.noshow_policy ?? '')
+      if (fo.data) {
+        setFoName(fo.data.name ?? '')
+        setFoWa(fo.data.whatsapp ?? '')
+        setFoEmail(fo.data.email ?? '')
+      }
+      if (ag.data) {
+        const when = ag.data.signed_digital_at ?? ag.data.signed_physical_at
+        setAgreementOnFile({ signed: !!when, when })
       }
 
-      const rateByListing = new Map<string, Record<string, number>>()
+      const rateBy = new Map<string, Record<string, string>>()
       for (const r of rates.data ?? []) {
-        const m = rateByListing.get(r.listing_id) ?? {}
-        m[r.package_code] = r.rate_pkr
-        rateByListing.set(r.listing_id, m)
+        const m = rateBy.get(r.listing_id) ?? {}
+        m[r.package_code] = r.rate_pkr.toString()
+        rateBy.set(r.listing_id, m)
       }
-      const hydrated = (ls.data ?? []).map((l) => ({
-        name: l.name,
-        max_occupancy: l.max_occupancy,
-        active: l.active,
-        bed_config: l.bed_config ?? '',
-        size_sqm: l.size_sqm?.toString() ?? '',
-        description: l.description ?? '',
-        rates: {
-          P1: rateByListing.get(l.id)?.P1?.toString() ?? '',
-          P2: rateByListing.get(l.id)?.P2?.toString() ?? '',
-          P3: rateByListing.get(l.id)?.P3?.toString() ?? '',
-        },
-      }))
-      setListings(hydrated.length ? hydrated : [emptyListing()])
+      setListings(
+        (ls.data ?? []).map((l) => ({
+          name: l.name,
+          category: l.category ?? '',
+          max_occupancy: l.max_occupancy,
+          active: l.active,
+          bed_config: l.bed_config ?? '',
+          size_sqm: l.size_sqm?.toString() ?? '',
+          description: l.description ?? '',
+          rates: rateBy.get(l.id) ?? {},
+        })),
+      )
 
       const vMap: Record<string, boolean> = {}
-      for (const row of (va.data ?? []) as unknown as {
-        verified_at: string | null
-        amenities: { code: string } | null
-      }[]) {
+      for (const row of (va.data ?? []) as unknown as { verified_at: string | null; amenities: { code: string } | null }[]) {
         if (row.amenities) vMap[row.amenities.code] = row.verified_at !== null
       }
       setVerified(vMap)
       setInclusions((inc.data ?? []).map((i) => i.label).join('\n'))
-      setAddons(
-        (ad.data ?? []).map((a) => ({
-          label: a.label, price_pkr: a.price_pkr.toString(), unit: a.unit,
-        })),
-      )
+
+      const medRows = (med.data ?? []) as unknown as {
+        storage_path: string
+        caption: string | null
+        shot_type: string | null
+        listing_id: string | null
+        listings: { name: string } | null
+      }[]
+      if (medRows.length) {
+        const { data: signed } = await supabase.storage.from('media').createSignedUrls(medRows.map((m) => m.storage_path), 3600)
+        setPhotos(
+          medRows.map((m, i) => ({
+            storage_path: m.storage_path,
+            listing_name: m.listings?.name ?? '',
+            shot_type: m.shot_type ?? (m.listing_id ? 'category' : 'other'),
+            caption: m.caption ?? '',
+            previewUrl: signed?.[i]?.signedUrl ?? '',
+          })),
+        )
+      }
       setLoaded(true)
     }
     load()
   }, [id, isNew])
 
-  function setListing(i: number, patch: Partial<ListingDraft>) {
-    setListings((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
-  }
+  // ---- live progress (mirrors the vendor_onboarding view) ------------------
+  const facts: VendorFacts = useMemo(() => {
+    const active = listings.filter((l) => l.active && l.name.trim())
+    const priced = active.filter((l) => Object.values(l.rates).some((r) => toInt(r)))
+    const propertyShots = new Set(photos.filter((p) => !p.listing_name && SHOT_KEYS.includes(p.shot_type)).map((p) => p.shot_type))
+    const withGallery = active.filter((l) => photos.filter((p) => p.listing_name === l.name).length >= 3)
+    return {
+      vendor_type: vendorType,
+      profile_complete: !!(description.trim() && address.trim() && corridorId),
+      has_front_office: !!(foWa.trim() || foEmail.trim()),
+      agreement_signed: !!agreementOnFile?.signed || (recordAgreement && (signedDigital || signedPhysical)),
+      listings_active: active.length,
+      listings_priced: priced.length,
+      amenities_verified: Object.values(verified).filter(Boolean).length,
+      shots_done: propertyShots.size,
+      photos_total: photos.length,
+      listings_with_gallery: withGallery.length,
+    }
+  }, [listings, photos, vendorType, description, address, corridorId, foWa, foEmail, agreementOnFile, recordAgreement, signedDigital, signedPhysical, verified])
+  const steps = vendorSteps(facts)
+  const ready = allDone(steps)
 
-  /** Upload straight to the private media bucket; registration happens on save. */
-  async function addPhotos(files: FileList | null) {
+  // ---- photo uploads --------------------------------------------------------
+  async function upload(files: FileList | null, target: { shot_type: string; listing_name: string }) {
     if (!files?.length) return
-    setUploading(true)
+    setUploading(target.listing_name || target.shot_type)
     setError(null)
     try {
+      const added: PhotoDraft[] = []
       for (const file of Array.from(files)) {
-        const path = `vendor/${id && !isNew ? id : 'new'}/${crypto.randomUUID()}-${file.name}`
+        const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const path = `vendor/${isNew ? 'new' : id}/${crypto.randomUUID()}-${safe}`
         const { error: upErr } = await supabase.storage.from('media').upload(path, file)
         if (upErr) throw new Error(`${file.name}: ${upErr.message}`)
-        const { data: signed } = await supabase.storage
-          .from('media')
-          .createSignedUrl(path, 3600)
-        setPhotos((p) => [
-          ...p,
-          {
-            storage_path: path,
-            listing_name: '',
-            caption: '',
-            is_cover: p.length === 0, // first photo becomes the cover by default
-            previewUrl: signed?.signedUrl ?? '',
-          },
-        ])
+        const { data: signed } = await supabase.storage.from('media').createSignedUrl(path, 3600)
+        added.push({ storage_path: path, listing_name: target.listing_name, shot_type: target.shot_type, caption: '', previewUrl: signed?.signedUrl ?? '' })
       }
+      setPhotos((p) => {
+        // A shot-list slot holds exactly one photo: replace, don't stack.
+        const isSlot = SHOT_KEYS.includes(target.shot_type) && !target.listing_name
+        const kept = isSlot ? p.filter((x) => !(x.shot_type === target.shot_type && !x.listing_name)) : p
+        return [...kept, ...added]
+      })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed')
     } finally {
-      setUploading(false)
+      setUploading(null)
     }
   }
+  const removePhoto = (path: string) => setPhotos((p) => p.filter((x) => x.storage_path !== path))
 
-  async function save(e: FormEvent) {
-    e.preventDefault()
+  // ---- listings -------------------------------------------------------------
+  const setListing = (i: number, patch: Partial<ListingDraft>) =>
+    setListings((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
+  const setRate = (i: number, code: string, v: string) =>
+    setListings((ls) => ls.map((l, j) => (j === i ? { ...l, rates: { ...l.rates, [code]: v } } : l)))
+
+  // ---- save -----------------------------------------------------------------
+  async function save() {
     setBusy(true)
     setError(null)
+    setSaved(null)
     try {
-      // Agreement file goes to the private bucket first; the function records
-      // the object path. Storage RLS restricts this to ops.
+      if (!name.trim()) throw new Error('Give the vendor a name.')
+      if (status === 'live' && !ready) {
+        throw new Error(`Can't go live yet — ${steps.filter((s) => !s.done).map((s) => s.label.toLowerCase()).join(', ')}.`)
+      }
       let docUrl: string | null = null
-      if (agreementFile) {
-        const path = `vendor/${crypto.randomUUID()}/${agreementFile.name}`
-        const { error: upErr } = await supabase.storage
-          .from('agreements')
-          .upload(path, agreementFile)
+      if (recordAgreement && agreementFile) {
+        const path = `vendor/${crypto.randomUUID()}/${agreementFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`
+        const { error: upErr } = await supabase.storage.from('agreements').upload(path, agreementFile)
         if (upErr) throw new Error(`Agreement upload failed: ${upErr.message}`)
         docUrl = path
       }
+      // Cover = the front-door shot, else the first property photo.
+      const propertyPhotos = photos.filter((p) => !p.listing_name)
+      const coverPath = (propertyPhotos.find((p) => p.shot_type === 'front_door') ?? propertyPhotos[0])?.storage_path ?? null
 
-      const payload = {
+      const payload: VendorPayload = {
         vendor: {
           ...(isNew ? {} : { id }),
           name: name.trim(),
+          vendor_type: vendorType,
           status,
           corridor_id: corridorId || null,
-          stars_assigned: stars ? Number(stars) : null,
+          stars_assigned: isCar ? null : toInt(stars),
           price_bracket: bracket || null,
           commission_pct: commission ? Number(commission) : null,
           notes: notes.trim() || null,
@@ -271,45 +332,42 @@ export function VendorEditor() {
           checkout_time: checkoutTime || null,
           cancellation_policy: cancellationPolicy.trim() || null,
           noshow_policy: noshowPolicy.trim() || null,
+          credit_tier: creditTier,
+          total_rooms: isCar ? null : toInt(totalRooms),
+          airport_transfer_included: airportTransfer,
+          courtesies,
         },
         listings: listings
           .filter((l) => l.name.trim())
           .map((l) => ({
             name: l.name.trim(),
+            category: l.category || null,
             max_occupancy: l.max_occupancy,
             active: l.active,
             bed_config: l.bed_config.trim() || null,
-            size_sqm: l.size_sqm ? parseInt(l.size_sqm, 10) : null,
+            size_sqm: toInt(l.size_sqm),
             description: l.description.trim() || null,
             rates: Object.fromEntries(
               Object.entries(l.rates)
-                .filter(([, v]) => v.trim() !== '')
-                .map(([k, v]) => [k, parseInt(v, 10)]),
+                .map(([code, v]) => [code, toInt(v)] as const)
+                .filter((e): e is readonly [string, number] => e[1] !== null),
             ),
           })),
+        amenities: amenityList.map((a) => ({ code: a.code, verified: !!verified[a.code] })),
+        inclusions: inclusions.split('\n').map((s) => s.trim()).filter(Boolean),
         media: photos.map((p, i) => ({
           storage_path: p.storage_path,
           listing_name: p.listing_name || null,
-          caption: p.caption.trim() || null,
+          caption: p.caption || null,
           sort: i,
-          is_cover: p.is_cover,
+          is_cover: p.storage_path === coverPath,
+          shot_type: p.shot_type,
         })),
-        amenities: amenityList.map((a) => ({
-          code: a.code,
-          verified: verified[a.code] === true,
-        })),
-        inclusions: inclusions.split('\n').map((s) => s.trim()).filter(Boolean),
-        addons: addons
-          .filter((a) => a.label.trim())
-          .map((a) => ({
-            label: a.label.trim(),
-            price_pkr: parseInt(a.price_pkr || '0', 10),
-            unit: a.unit || 'per_stay',
-          })),
-        ...(agreementTier || docUrl || signedDigital || signedPhysical
+        front_office: { name: foName.trim() || 'Front office', whatsapp: foWa.trim() || null, email: foEmail.trim() || null },
+        ...(recordAgreement
           ? {
               agreement: {
-                tier: agreementTier || null,
+                tier: creditTier,
                 doc_url: docUrl,
                 signed_digital_at: signedDigital ? new Date().toISOString() : null,
                 signed_physical_at: signedPhysical ? new Date().toISOString() : null,
@@ -317,17 +375,15 @@ export function VendorEditor() {
             }
           : {}),
       }
-
-      await onboardVendor(payload)
-      navigate('/ops/vendors')
+      const res = await onboardVendor(payload)
+      setSaved(status === 'live' ? 'Saved — this vendor is live.' : 'Saved.')
+      if (recordAgreement) {
+        setAgreementOnFile({ signed: signedDigital || signedPhysical, when: new Date().toISOString() })
+        setRecordAgreement(false)
+      }
+      if (isNew) navigate(`/ops/vendors/${res.vendor.id}`, { replace: true })
     } catch (err: unknown) {
-      setError(
-        err instanceof ApiError
-          ? `${err.message}${err.details ? ` — ${JSON.stringify(err.details)}` : ''}`
-          : err instanceof Error
-            ? err.message
-            : 'Save failed',
-      )
+      setError(err instanceof ApiError || err instanceof Error ? err.message : 'Save failed')
     } finally {
       setBusy(false)
     }
@@ -335,454 +391,366 @@ export function VendorEditor() {
 
   if (!loaded && !error) return <p className="text-sm text-ink/50">Loading…</p>
 
-  const selectCls =
-    'w-full rounded-md border border-hairline bg-white px-3 py-2 text-sm text-ink focus:border-pine focus:outline-none'
+  const propertyPhoto = (key: string) => photos.find((p) => p.shot_type === key && !p.listing_name)
+  const otherPhotos = photos.filter((p) => !p.listing_name && !SHOT_KEYS.includes(p.shot_type))
 
   return (
-    <form onSubmit={save} className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl">{isNew ? 'Onboard vendor' : `Edit · ${name}`}</h1>
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={() => navigate('/ops/vendors')}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save vendor'}
-          </Button>
-        </div>
-      </div>
+    <div>
+      <PageHead
+        eyebrow={isNew ? 'New vendor' : 'Vendor setup'}
+        title={
+          <span className="flex flex-wrap items-center gap-3">
+            {name || 'Untitled vendor'}
+            <Chip tone={statusTone(status)}>{status}</Chip>
+          </span>
+        }
+        sub={isNew ? 'A vendor goes live only when every step of the plan is done.' : CORRIDOR_NOTE}
+        actions={
+          <>
+            <Link to="/ops/vendors" className="text-[13px] font-semibold text-ink/55">← Supply</Link>
+            {!isNew && (
+              <Link to={`/ops/vendors/${id}/page`}>
+                <ABtn variant="ghost">Preview property page</ABtn>
+              </Link>
+            )}
+          </>
+        }
+      />
 
-      {error && <Notice tone="error">{error}</Notice>}
-
-      <Card title="Vendor">
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Name">
-            <Input required value={name} onChange={(e) => setName(e.target.value)} />
-          </Field>
-          <Field label="Status">
-            <select className={selectCls} value={status} onChange={(e) => setStatus(e.target.value)}>
-              {['prospect', 'onboarding', 'live', 'suspended'].map((s) => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Corridor">
-            <select className={selectCls} value={corridorId} onChange={(e) => setCorridorId(e.target.value)}>
-              <option value="">—</option>
-              {corridors.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Stars (Corlington-assigned)">
-            <select className={selectCls} value={stars} onChange={(e) => setStars(e.target.value)}>
-              <option value="">—</option>
-              {[1, 2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>{n}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Price bracket">
-            <select className={selectCls} value={bracket} onChange={(e) => setBracket(e.target.value)}>
-              <option value="">—</option>
-              {['b1', 'b2', 'b3', 'b4', 'b5'].map((b) => (
-                <option key={b} value={b}>{b.toUpperCase()}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Commission %" hint="Contracted 8–12%">
-            <Input
-              type="number" min="0" max="100" step="0.5"
-              value={commission} onChange={(e) => setCommission(e.target.value)}
-            />
-          </Field>
-        </div>
-        <div className="mt-4">
-          <Field label="Notes (internal)">
-            <textarea
-              className={`${selectCls} min-h-16`}
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-            />
-          </Field>
-        </div>
-      </Card>
-
-      <Card title="Property profile" footer={
-        <span className="text-xs text-ink/60">
-          What corporates see on the property page — write it like a Booking.com
-          listing, not an internal note.
-        </span>
-      }>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Property type">
-            <select className={selectCls} value={subtype} onChange={(e) => setSubtype(e.target.value)}>
-              <option value="">—</option>
-              {['hotel', 'business hotel', 'boutique hotel', 'guesthouse', 'serviced apartment'].map(
-                (s) => (
-                  <option key={s} value={s}>{s}</option>
-                ),
+      <div className="grid items-start gap-5 lg:grid-cols-[1fr_320px]">
+        <div className="space-y-5">
+          {/* ---------------- identity ---------------- */}
+          <ACard title="Identity" sub="What the booker reads first.">
+            <div className="grid gap-3 md:grid-cols-3">
+              <AField label="Type">
+                <ASelect value={vendorType} onChange={(e) => setVendorType(e.target.value)} disabled={!isNew}>
+                  {VENDOR_TYPES.map((t) => (
+                    <option key={t.code} value={t.code}>{t.label}</option>
+                  ))}
+                </ASelect>
+              </AField>
+              <AField label="Name" className="md:col-span-2">
+                <AInput value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Beach Luxury Hotel" />
+              </AField>
+              <AField label="Area — exactly one">
+                <ASelect value={corridorId} onChange={(e) => setCorridorId(e.target.value)}>
+                  <option value="">— pick an area —</option>
+                  {corridors.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </ASelect>
+              </AField>
+              {!isCar && (
+                <AField label="Stars">
+                  <ASelect value={stars} onChange={(e) => setStars(e.target.value)}>
+                    <option value="">—</option>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <option key={s} value={s}>{s}★</option>
+                    ))}
+                  </ASelect>
+                </AField>
               )}
-            </select>
-          </Field>
-          <Field label="Front desk phone">
-            <Input placeholder="+92 21 …" value={phone} onChange={(e) => setPhone(e.target.value)} />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Address">
-              <Input
-                placeholder="Plot 12, Khayaban-e-Roomi, Clifton Block 5, Karachi"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-              />
-            </Field>
-          </div>
-          <Field label="Check-in from">
-            <Input type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} />
-          </Field>
-          <Field label="Check-out until">
-            <Input type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} />
-          </Field>
-          <div className="sm:col-span-2">
-            <Field label="Description">
-              <textarea
-                className={`${selectCls} min-h-28`}
-                placeholder="A quiet business hotel two minutes from the Clifton seafront…"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Field>
-          </div>
-          <Field label="Cancellation policy" hint="Hotel-set wording; snapshotted onto every booking">
-            <textarea
-              className={`${selectCls} min-h-20`}
-              placeholder="Free cancellation until 48h before check-in…"
-              value={cancellationPolicy}
-              onChange={(e) => setCancellationPolicy(e.target.value)}
-            />
-          </Field>
-          <Field label="No-show policy">
-            <textarea
-              className={`${selectCls} min-h-20`}
-              placeholder="First night charged on no-show…"
-              value={noshowPolicy}
-              onChange={(e) => setNoshowPolicy(e.target.value)}
-            />
-          </Field>
-        </div>
-      </Card>
+              <AField label="Price bracket">
+                <ASelect value={bracket} onChange={(e) => setBracket(e.target.value)}>
+                  <option value="">—</option>
+                  {['b1', 'b2', 'b3', 'b4', 'b5'].map((b) => (
+                    <option key={b} value={b}>{b.toUpperCase()}</option>
+                  ))}
+                </ASelect>
+              </AField>
+              {!isCar && (
+                <AField label="Total rooms">
+                  <AInput inputMode="numeric" value={totalRooms} onChange={(e) => setTotalRooms(e.target.value)} placeholder="e.g. 210" />
+                </AField>
+              )}
+              <AField label={isCar ? 'Fleet description' : 'Subtype'} className={isCar ? 'md:col-span-2' : ''}>
+                <AInput value={subtype} onChange={(e) => setSubtype(e.target.value)} placeholder={isCar ? 'e.g. 14 vehicles, 2019 or newer' : 'business hotel · boutique · guesthouse'} />
+              </AField>
+              <AField label="Address" className="md:col-span-2">
+                <AInput value={address} onChange={(e) => setAddress(e.target.value)} />
+              </AField>
+              <AField label="Switchboard phone">
+                <AInput value={phone} onChange={(e) => setPhone(e.target.value)} />
+              </AField>
+              <AField label="Description — exactly what matters, no brochure talk" className="md:col-span-3">
+                <ATextarea value={description} onChange={(e) => setDescription(e.target.value)} />
+              </AField>
+            </div>
+          </ACard>
 
-      <Card title="Photos" footer={
-        <span className="text-xs text-ink/60">
-          Fixed shot list, one format (spec §2). First photo is the cover unless you
-          change it. Assign room photos to their room type.
-        </span>
-      }>
-        <div className="space-y-3">
-          <input
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            multiple
-            disabled={uploading}
-            className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-md file:border file:border-hairline file:bg-paper file:px-3 file:py-1.5 file:text-sm"
-            onChange={(e) => {
-              addPhotos(e.target.files)
-              e.target.value = ''
-            }}
-          />
-          {uploading && <p className="text-xs text-ink/50">Uploading…</p>}
-          {photos.length > 0 && (
-            <ul className="grid gap-3 sm:grid-cols-2">
-              {photos.map((p, i) => (
-                <li key={p.storage_path} className="flex gap-3 rounded-md border border-hairline p-2">
-                  {p.previewUrl ? (
-                    <img
-                      src={p.previewUrl}
-                      alt={p.caption || 'Property photo'}
-                      className="size-20 shrink-0 rounded object-cover"
-                    />
-                  ) : (
-                    <div className="size-20 shrink-0 rounded bg-sage" />
-                  )}
-                  <div className="min-w-0 flex-1 space-y-1.5">
-                    <Input
-                      placeholder="Caption"
-                      value={p.caption}
-                      onChange={(e) =>
-                        setPhotos((ph) =>
-                          ph.map((x, j) => (j === i ? { ...x, caption: e.target.value } : x)),
-                        )
-                      }
-                    />
-                    <div className="flex items-center gap-2">
-                      <select
-                        className={`${selectCls} !py-1 text-xs`}
-                        value={p.listing_name}
-                        onChange={(e) =>
-                          setPhotos((ph) =>
-                            ph.map((x, j) =>
-                              j === i ? { ...x, listing_name: e.target.value } : x,
-                            ),
-                          )
-                        }
-                      >
-                        <option value="">Property</option>
-                        {listings
-                          .filter((l) => l.name.trim())
-                          .map((l) => (
-                            <option key={l.name} value={l.name.trim()}>
-                              {l.name.trim()}
-                            </option>
-                          ))}
-                      </select>
-                      <label className="flex shrink-0 items-center gap-1 text-xs">
-                        <input
-                          type="radio"
-                          name="cover"
-                          checked={p.is_cover && !p.listing_name}
-                          disabled={!!p.listing_name}
-                          onChange={() =>
-                            setPhotos((ph) => ph.map((x, j) => ({ ...x, is_cover: j === i })))
-                          }
-                        />
-                        cover
-                      </label>
-                      <button
-                        type="button"
-                        aria-label="Remove photo"
-                        className="ml-auto text-ink/40 hover:text-ink"
-                        onClick={() => setPhotos((ph) => ph.filter((_, j) => j !== i))}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                </li>
+          {/* ---------------- front office ---------------- */}
+          <ACard title="Front office" sub="Where the magic links go. No password on their side — the link is the key.">
+            <div className="grid gap-3 md:grid-cols-3">
+              <AField label="Desk / contact name"><AInput value={foName} onChange={(e) => setFoName(e.target.value)} placeholder="Reservations desk" /></AField>
+              <AField label="WhatsApp"><AInput value={foWa} onChange={(e) => setFoWa(e.target.value)} placeholder="+92 3xx xxx xxxx" /></AField>
+              <AField label="Email"><AInput value={foEmail} onChange={(e) => setFoEmail(e.target.value)} placeholder="reservations@…" /></AField>
+            </div>
+          </ACard>
+
+          {/* ---------------- agreement & credit ---------------- */}
+          <ACard title="Agreement & credit" sub="The tier is set by the signed agreement; it decides which corporates book here on credit.">
+            <div className="mb-3 flex flex-wrap gap-2">
+              {CREDIT_TIERS.map((t) => (
+                <ChipToggle key={t.code} on={creditTier === t.code} onClick={() => setCreditTier(t.code)} title={t.hint}>
+                  {t.label}
+                </ChipToggle>
               ))}
-            </ul>
-          )}
-        </div>
-      </Card>
-
-      <Card title="Listings & base rates (PKR per night)">
-        <div className="space-y-4">
-          {listings.map((l, i) => (
-            <div key={i} className="rounded-md border border-hairline p-3">
-              <div className="grid gap-3 sm:grid-cols-[1fr_7rem_6rem]">
-                <Field label="Room type">
-                  <Input
-                    value={l.name}
-                    placeholder="Executive Twin"
-                    onChange={(e) => setListing(i, { name: e.target.value })}
-                  />
-                </Field>
-                <Field label="Max occupancy">
-                  <Input
-                    type="number" min="1" max="20"
-                    value={l.max_occupancy}
-                    onChange={(e) => setListing(i, { max_occupancy: Number(e.target.value) })}
-                  />
-                </Field>
-                <Field label="Active">
-                  <select
-                    className={selectCls}
-                    value={l.active ? 'yes' : 'no'}
-                    onChange={(e) => setListing(i, { active: e.target.value === 'yes' })}
-                  >
-                    <option value="yes">yes</option>
-                    <option value="no">no</option>
-                  </select>
-                </Field>
+            </div>
+            <p className="mb-4 text-xs text-ink/55">{CREDIT_TIERS.find((t) => t.code === creditTier)?.hint} · hotels are settled within 30 days of month-end.</p>
+            <div className="grid gap-3 md:grid-cols-3">
+              <AField label="Commission %"><AInput inputMode="decimal" value={commission} onChange={(e) => setCommission(e.target.value)} placeholder="12" /></AField>
+              <div className="md:col-span-2">
+                <span className="mb-1.5 block text-[12.5px] font-semibold text-ink/60">Agreement on file</span>
+                <p className="text-[13.5px]">
+                  {agreementOnFile?.signed
+                    ? <span className="text-deep">Signed · {new Date(agreementOnFile.when!).toLocaleDateString('en-GB')}</span>
+                    : agreementOnFile
+                      ? <span className="text-brass">Recorded, not yet signed</span>
+                      : <span className="text-ink/50">Nothing recorded yet</span>}
+                </p>
               </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                <Field label="Bed configuration">
-                  <Input
-                    placeholder="1 king / 2 twin"
-                    value={l.bed_config}
-                    onChange={(e) => setListing(i, { bed_config: e.target.value })}
-                  />
-                </Field>
-                <Field label="Size (m²)">
-                  <Input
-                    inputMode="numeric" className="tabular" placeholder="—"
-                    value={l.size_sqm}
-                    onChange={(e) => setListing(i, { size_sqm: e.target.value.replace(/\D/g, '') })}
-                  />
-                </Field>
-                <div className="sm:col-span-1">
-                  <Field label="Room description">
-                    <Input
-                      placeholder="City view, work desk…"
-                      value={l.description}
-                      onChange={(e) => setListing(i, { description: e.target.value })}
-                    />
-                  </Field>
-                </div>
-              </div>
-              <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                {(['P1', 'P2', 'P3'] as const).map((code) => (
-                  <Field key={code} label={PACKAGE_LABELS[code]}>
-                    <Input
-                      inputMode="numeric"
-                      className="tabular"
-                      placeholder="—"
-                      value={l.rates[code]}
-                      onChange={(e) =>
-                        setListing(i, {
-                          rates: { ...l.rates, [code]: e.target.value.replace(/\D/g, '') },
-                        })
-                      }
-                    />
-                  </Field>
-                ))}
-              </div>
-              {listings.length > 1 && (
-                <div className="mt-2 text-right">
-                  <button
-                    type="button"
-                    className="text-xs text-ink/50 hover:text-ink"
-                    onClick={() => setListings((ls) => ls.filter((_, j) => j !== i))}
-                  >
-                    Remove listing
-                  </button>
+            </div>
+            <div className="mt-3">
+              <Toggle on={recordAgreement} onChange={setRecordAgreement} label="Record a signed agreement now" hint="Appends a versioned record — non-circumvention, rate parity and default-split clauses are in the template." />
+              {recordAgreement && (
+                <div className="mt-3 grid gap-3 md:grid-cols-3">
+                  <label className="flex items-center gap-2 text-[13.5px]"><input type="checkbox" checked={signedDigital} onChange={(e) => setSignedDigital(e.target.checked)} /> Signed digitally</label>
+                  <label className="flex items-center gap-2 text-[13.5px]"><input type="checkbox" checked={signedPhysical} onChange={(e) => setSignedPhysical(e.target.checked)} /> Signed on paper</label>
+                  <input type="file" accept=".pdf,image/*" onChange={(e) => setAgreementFile(e.target.files?.[0] ?? null)} className="text-[13px]" />
                 </div>
               )}
             </div>
-          ))}
-          <Button type="button" variant="ghost" onClick={() => setListings((ls) => [...ls, emptyListing()])}>
-            Add listing
-          </Button>
-        </div>
-      </Card>
+          </ACard>
 
-      <Card title="Amenity checklist" footer={
-        <span className="text-xs text-ink/60">
-          Only verified amenities are visible to corporates and count for deal-breakers.
-          Verification happens at the onboarding visit.
-        </span>
-      }>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {amenityList.map((a) => (
-            <label key={a.code} className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                className="size-4 accent-[#1D5C4D]"
-                checked={verified[a.code] === true}
-                onChange={(e) => setVerified((v) => ({ ...v, [a.code]: e.target.checked }))}
-              />
-              {a.label}
-              <span className="text-xs text-ink/40">
-                {verified[a.code] ? '· verified' : ''}
-              </span>
-            </label>
-          ))}
-        </div>
-      </Card>
+          {/* ---------------- categories & rate card ---------------- */}
+          <ACard
+            title={isCar ? 'Vehicle classes & rate card' : 'Room categories & rate card'}
+            sub="These rates are the contracted ceiling — hotels can only counter below them, never above."
+            right={<ABtn variant="ghost" className="py-1.5" onClick={() => setListings((ls) => [...ls, emptyListing(categories[Math.min(ls.length, categories.length - 1)])])}>+ Add</ABtn>}
+          >
+            {listings.length === 0 && <p className="text-sm text-ink/50">No {isCar ? 'vehicle classes' : 'categories'} yet.</p>}
+            <div className="space-y-4">
+              {listings.map((l, i) => {
+                const gallery = photos.filter((p) => p.listing_name === l.name)
+                return (
+                  <div key={i} className={`rounded-2xl border-[1.5px] border-hairline p-4 ${l.active ? '' : 'opacity-60'}`}>
+                    <div className="grid gap-3 md:grid-cols-4">
+                      <AField label="Category">
+                        <ASelect value={l.category} onChange={(e) => setListing(i, { category: e.target.value })}>
+                          <option value="">—</option>
+                          {categories.map((c) => (
+                            <option key={c} value={c}>{c}</option>
+                          ))}
+                        </ASelect>
+                      </AField>
+                      <AField label={isCar ? 'Model' : 'Room name'} className="md:col-span-2">
+                        <AInput value={l.name} onChange={(e) => setListing(i, { name: e.target.value })} placeholder={isCar ? 'Toyota Corolla Altis 1.6' : 'Standard twin'} />
+                      </AField>
+                      <AField label={isCar ? 'Passengers (max)' : 'Max occupancy'}>
+                        <AInput inputMode="numeric" value={l.max_occupancy} onChange={(e) => setListing(i, { max_occupancy: Math.max(1, Math.min(20, parseInt(e.target.value) || 1)) })} />
+                      </AField>
+                      {!isCar && (
+                        <>
+                          <AField label="Bed configuration"><AInput value={l.bed_config} onChange={(e) => setListing(i, { bed_config: e.target.value })} placeholder="1 king · 2 twin" /></AField>
+                          <AField label="Size m²"><AInput inputMode="numeric" value={l.size_sqm} onChange={(e) => setListing(i, { size_sqm: e.target.value })} /></AField>
+                        </>
+                      )}
+                      <AField label="What's different about it" className={isCar ? 'md:col-span-3' : 'md:col-span-2'}>
+                        <AInput value={l.description} onChange={(e) => setListing(i, { description: e.target.value })} placeholder={isCar ? '2023 · insured · tracker' : 'sea view · bathtub · 28 m²'} />
+                      </AField>
+                      {!isCar && <div />}
+                      {packages.map((p) => (
+                        <AField key={p.code} label={`${p.code} · ${p.label}`} hint={p.unit}>
+                          <AInput inputMode="numeric" value={l.rates[p.code] ?? ''} onChange={(e) => setRate(i, p.code, e.target.value)} placeholder="PKR" className="tabular text-right" />
+                        </AField>
+                      ))}
+                      <div className="flex items-end gap-2 pb-5">
+                        <ChipToggle on={l.active} onClick={() => setListing(i, { active: !l.active })}>{l.active ? 'Active' : 'Inactive'}</ChipToggle>
+                      </div>
+                    </div>
 
-      <div className="grid gap-6 sm:grid-cols-2">
-        <Card title="Complimentary inclusions" footer={
-          <span className="text-xs text-ink/60">Shown on the listing card. One per line.</span>
-        }>
-          <textarea
-            className={`${selectCls} min-h-24`}
-            placeholder={'Airport pickup\nLate checkout to 2pm'}
-            value={inclusions}
-            onChange={(e) => setInclusions(e.target.value)}
-          />
-        </Card>
+                    {/* gallery */}
+                    <div className="mt-3 border-t border-paper pt-3">
+                      <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <span className="text-[12.5px] font-semibold text-ink/60">{isCar ? 'Vehicle photos' : 'Category gallery'}</span>
+                        <Chip tone={gallery.length >= 3 ? 'ok' : 'hot'}>{gallery.length} / 3 minimum</Chip>
+                        {!l.name.trim() && <span className="text-xs text-brass">name the {isCar ? 'model' : 'room'} first</span>}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {gallery.map((p) => (
+                          <Thumb key={p.storage_path} photo={p} onRemove={() => removePhoto(p.storage_path)} />
+                        ))}
+                        {l.name.trim() && (
+                          <UploadBox
+                            label="+ Add photos"
+                            hint="3–5 that show the difference"
+                            multiple
+                            busy={uploading === l.name}
+                            onFiles={(f) => upload(f, { shot_type: 'category', listing_name: l.name })}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </ACard>
 
-        <Card title="Paid add-ons">
-          <div className="space-y-2">
-            {addons.map((a, i) => (
-              <div key={i} className="grid grid-cols-[1fr_6rem_6rem_2rem] items-center gap-2">
-                <Input
-                  placeholder="Extra bed"
-                  value={a.label}
-                  onChange={(e) =>
-                    setAddons((ad) => ad.map((x, j) => (j === i ? { ...x, label: e.target.value } : x)))
-                  }
-                />
-                <Input
-                  inputMode="numeric" className="tabular" placeholder="PKR"
-                  value={a.price_pkr}
-                  onChange={(e) =>
-                    setAddons((ad) =>
-                      ad.map((x, j) =>
-                        j === i ? { ...x, price_pkr: e.target.value.replace(/\D/g, '') } : x,
-                      ),
-                    )
-                  }
-                />
-                <select
-                  className={selectCls}
-                  value={a.unit}
-                  onChange={(e) =>
-                    setAddons((ad) => ad.map((x, j) => (j === i ? { ...x, unit: e.target.value } : x)))
-                  }
-                >
-                  <option value="per_stay">per stay</option>
-                  <option value="per_night">per night</option>
-                  <option value="per_person">per person</option>
-                </select>
-                <button
-                  type="button"
-                  aria-label="Remove add-on"
-                  className="text-ink/40 hover:text-ink"
-                  onClick={() => setAddons((ad) => ad.filter((_, j) => j !== i))}
-                >
-                  ×
-                </button>
+          {/* ---------------- shot list ---------------- */}
+          {!isCar ? (
+            <ACard title="Shot list — 8 required" sub="Same eight photos for every property, so bookers compare like with like. The front door becomes the cover.">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                {SHOT_LIST.map((s) => {
+                  const p = propertyPhoto(s.key)
+                  return p ? (
+                    <div key={s.key} className="relative overflow-hidden rounded-xl bg-paper">
+                      <img src={p.previewUrl} alt={s.label} className="aspect-[4/3] w-full object-cover" />
+                      <div className="flex items-center justify-between px-2 py-1.5 text-[11.5px]">
+                        <span className="font-semibold text-deep">✓ {s.label}</span>
+                        <span className="flex gap-2">
+                          <label className="cursor-pointer text-pine">replace<input type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files, { shot_type: s.key, listing_name: '' })} /></label>
+                          <button type="button" className="text-ink/40" onClick={() => removePhoto(p.storage_path)}>remove</button>
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <UploadBox key={s.key} label={s.label} hint={s.hint} busy={uploading === s.key} onFiles={(f) => upload(f, { shot_type: s.key, listing_name: '' })} tall />
+                  )
+                })}
               </div>
-            ))}
-            <Button
-              type="button" variant="ghost"
-              onClick={() => setAddons((ad) => [...ad, { label: '', price_pkr: '', unit: 'per_stay' }])}
-            >
-              Add add-on
-            </Button>
-          </div>
-        </Card>
-      </div>
+              <div className="mt-4 border-t border-paper pt-3">
+                <div className="mb-2 text-[12.5px] font-semibold text-ink/60">More property photos (optional)</div>
+                <div className="flex flex-wrap gap-2">
+                  {otherPhotos.map((p) => <Thumb key={p.storage_path} photo={p} onRemove={() => removePhoto(p.storage_path)} />)}
+                  <UploadBox label="+ Add" hint="exterior, dining, meeting rooms" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_name: '' })} />
+                </div>
+              </div>
+            </ACard>
+          ) : (
+            <ACard title="Fleet photos" sub="Real vehicles, not brochure renders — at least three across the fleet.">
+              <div className="flex flex-wrap gap-2">
+                {otherPhotos.map((p) => <Thumb key={p.storage_path} photo={p} onRemove={() => removePhoto(p.storage_path)} />)}
+                <UploadBox label="+ Add photos" hint="fleet, interiors, documents" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_name: '' })} />
+              </div>
+            </ACard>
+          )}
 
-      <Card title="Agreement" footer={
-        <span className="text-xs text-ink/60">
-          Each save with agreement details appends a new record — history is never overwritten.
-        </span>
-      }>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Tier">
-            <Input
-              placeholder="standard / preferred"
-              value={agreementTier}
-              onChange={(e) => setAgreementTier(e.target.value)}
-            />
-          </Field>
-          <Field label="Signed document (PDF)">
-            <input
-              type="file"
-              accept="application/pdf"
-              className="block w-full text-sm text-ink/70 file:mr-3 file:rounded-md file:border file:border-hairline file:bg-paper file:px-3 file:py-1.5 file:text-sm"
-              onChange={(e) => setAgreementFile(e.target.files?.[0] ?? null)}
-            />
-          </Field>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox" className="size-4 accent-[#1D5C4D]"
-              checked={signedDigital}
-              onChange={(e) => setSignedDigital(e.target.checked)}
-            />
-            Signed digitally
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox" className="size-4 accent-[#1D5C4D]"
-              checked={signedPhysical}
-              onChange={(e) => setSignedPhysical(e.target.checked)}
-            />
-            Signed on paper
-          </label>
+          {/* ---------------- amenities & courtesies ---------------- */}
+          {!isCar && (
+            <ACard title="Verified amenities & corporate courtesies" sub="Only what we have checked on site counts — unverified claims never reach a booker.">
+              <div className="mb-1 text-[12.5px] font-semibold text-ink/60">Verified on the site visit</div>
+              <div className="mb-4 flex flex-wrap gap-2">
+                {amenityList.map((a) => (
+                  <ChipToggle key={a.code} on={!!verified[a.code]} onClick={() => setVerified((v) => ({ ...v, [a.code]: !v[a.code] }))}>
+                    {verified[a.code] ? '✓ ' : ''}{a.label}
+                  </ChipToggle>
+                ))}
+              </div>
+              <div className="mb-1 text-[12.5px] font-semibold text-ink/60">Corporate courtesies — the standard practices</div>
+              <div className="mb-2 flex flex-wrap gap-2">
+                {[...new Set([...COURTESIES, ...courtesies])].map((c) => (
+                  <ChipToggle key={c} on={courtesies.includes(c)} onClick={() => setCourtesies((cs) => (cs.includes(c) ? cs.filter((x) => x !== c) : [...cs, c]))}>
+                    {c}
+                  </ChipToggle>
+                ))}
+              </div>
+              <div className="mb-4 flex gap-2">
+                <AInput value={customCourtesy} onChange={(e) => setCustomCourtesy(e.target.value)} placeholder="Add another courtesy…" className="max-w-xs" />
+                <ABtn variant="ghost" onClick={() => { if (customCourtesy.trim()) { setCourtesies((cs) => [...cs, customCourtesy.trim()]); setCustomCourtesy('') } }}>Add</ABtn>
+              </div>
+              <Toggle on={airportTransfer} onChange={setAirportTransfer} label="Airport transfer included" hint="Shown as a glance tile on the property page." />
+              <AField label="Included with every stay — one per line" className="mt-3" hint="Breakfast type, wifi, water…">
+                <ATextarea value={inclusions} onChange={(e) => setInclusions(e.target.value)} />
+              </AField>
+            </ACard>
+          )}
+
+          {/* ---------------- policies ---------------- */}
+          <ACard title="Policies" sub="Frozen onto every voucher exactly as written here.">
+            <div className="grid gap-3 md:grid-cols-2">
+              {!isCar && (
+                <>
+                  <AField label="Check-in from"><AInput type="time" value={checkinTime} onChange={(e) => setCheckinTime(e.target.value)} /></AField>
+                  <AField label="Check-out by"><AInput type="time" value={checkoutTime} onChange={(e) => setCheckoutTime(e.target.value)} /></AField>
+                </>
+              )}
+              <AField label="Cancellation"><ATextarea value={cancellationPolicy} onChange={(e) => setCancellationPolicy(e.target.value)} /></AField>
+              <AField label="No-show"><ATextarea value={noshowPolicy} onChange={(e) => setNoshowPolicy(e.target.value)} /></AField>
+              <AField label="Internal notes (ops only)" className="md:col-span-2"><ATextarea value={notes} onChange={(e) => setNotes(e.target.value)} /></AField>
+            </div>
+          </ACard>
         </div>
-      </Card>
-    </form>
+
+        {/* ---------------- spine ---------------- */}
+        <aside className="space-y-4 lg:sticky lg:top-[72px]">
+          <ACard>
+            <AField label="Status" hint={status === 'live' && !ready ? 'Blocked until the plan is complete.' : undefined}>
+              <ASelect value={status} onChange={(e) => setStatus(e.target.value)}>
+                <option value="prospect">Prospect</option>
+                <option value="onboarding">Onboarding</option>
+                <option value="live" disabled={!ready}>Live{ready ? '' : ' — plan incomplete'}</option>
+                <option value="suspended">Suspended</option>
+              </ASelect>
+            </AField>
+            <div className="mt-4">
+              <Plan steps={steps} />
+            </div>
+            {ready && status !== 'live' && (
+              <div className="mt-3">
+                <Notice tone="ok">All steps done — set status to Live and save.</Notice>
+              </div>
+            )}
+            <div className="mt-4 space-y-2">
+              {error && <Notice tone="error">{error}</Notice>}
+              {saved && <Notice tone="ok">{saved}</Notice>}
+              <ABtn className="w-full" onClick={save} disabled={busy || !!uploading}>
+                {busy ? 'Saving…' : isNew ? 'Create vendor' : 'Save changes'}
+              </ABtn>
+              <p className="text-center text-[11.5px] text-ink/50">One save writes everything — audit-logged under your name.</p>
+            </div>
+          </ACard>
+        </aside>
+      </div>
+    </div>
+  )
+}
+
+function Thumb({ photo, onRemove }: { photo: PhotoDraft; onRemove: () => void }) {
+  return (
+    <div className="relative size-[88px] overflow-hidden rounded-xl bg-paper">
+      {photo.previewUrl ? <img src={photo.previewUrl} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center text-[10px] text-ink/40">no preview</div>}
+      <button type="button" onClick={onRemove} className="absolute right-1 top-1 grid size-5 place-items-center rounded-full bg-white/90 text-[11px] text-ink/70" aria-label="Remove photo">✕</button>
+    </div>
+  )
+}
+
+function UploadBox({
+  label,
+  hint,
+  onFiles,
+  multiple,
+  busy,
+  tall,
+}: {
+  label: string
+  hint?: string
+  onFiles: (files: FileList | null) => void
+  multiple?: boolean
+  busy?: boolean
+  tall?: boolean
+}) {
+  return (
+    <label
+      className={`grid cursor-pointer place-items-center rounded-xl border-[1.5px] border-dashed border-hairline px-2 text-center hover:border-brass ${
+        tall ? 'aspect-[4/3]' : 'size-[88px]'
+      }`}
+    >
+      <span>
+        <span className="block text-[12px] font-semibold text-deep">{busy ? 'Uploading…' : label}</span>
+        {hint && tall && <span className="block text-[10.5px] text-ink/50">{hint}</span>}
+      </span>
+      <input type="file" accept="image/*" multiple={multiple} className="hidden" disabled={busy} onChange={(e: ChangeEvent<HTMLInputElement>) => { onFiles(e.target.files); e.target.value = '' }} />
+    </label>
   )
 }

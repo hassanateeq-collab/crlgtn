@@ -116,16 +116,42 @@ export interface VendorPayload {
     price_bracket?: string | null
     commission_pct?: number | null
     notes?: string | null
+    description?: string | null
+    property_subtype?: string | null
+    address?: string | null
+    phone?: string | null
+    checkin_time?: string | null
+    checkout_time?: string | null
+    cancellation_policy?: string | null
+    noshow_policy?: string | null
+    // Onboarding setup (migration 019)
+    credit_tier?: 'HT1' | 'HT2' | 'HT3' | 'HT4'
+    total_rooms?: number | null
+    airport_transfer_included?: boolean
+    courtesies?: string[]
   }
   listings?: {
     name: string
+    category?: string | null
     max_occupancy?: number
     active?: boolean
+    bed_config?: string | null
+    size_sqm?: number | null
+    description?: string | null
     rates?: Record<string, number>
   }[]
   amenities?: { code: string; verified: boolean }[]
   inclusions?: string[]
   addons?: { label: string; price_pkr: number; unit?: string }[]
+  media?: {
+    storage_path: string
+    listing_name?: string | null
+    caption?: string | null
+    sort?: number
+    is_cover?: boolean
+    shot_type?: string | null
+  }[]
+  front_office?: { name?: string; whatsapp?: string | null; email?: string | null }
   agreement?: {
     tier?: string | null
     version?: string
@@ -153,12 +179,30 @@ export interface CorporatePayload {
     fee_waived_until?: string | null
     approval_required?: boolean
     notes?: string | null
+    // Onboarding setup (migration 019)
+    tier?: 'A' | 'B' | 'C'
+    official_email?: string | null
+    countersign_required?: boolean
+    countersign_threshold_pkr?: number | null
   }
   users?: { role: string; name: string; email: string; phone?: string }[]
+  /** Create auth accounts for users without one (default true). */
+  provision?: boolean
+  agreement?: {
+    tier?: string | null
+    version?: string
+    doc_url?: string | null
+    signed_digital_at?: string | null
+    signed_physical_at?: string | null
+  }
 }
 
 export const upsertCorporate = (payload: CorporatePayload) =>
-  callFunction<{ corporate: { id: string } }>(
+  callFunction<{
+    corporate: { id: string }
+    users: { id: string; role: string; name: string; email: string; phone: string | null; auth_user_id: string | null }[]
+    provisioned: string[]
+  }>(
     'ef_upsert_corporate',
     payload as unknown as Record<string, unknown>,
   )
