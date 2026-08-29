@@ -1,0 +1,13 @@
+-- Corlington · migration 020 · Areas locked (owner 2026-08-30) · landmarks ·
+-- plain-word packages · two-level shot list.
+-- Applied to production 2026-08-30 via MCP; this file is the repo record.
+-- (Content identical to the applied migration — see mgmt API history.)
+-- Areas: Saddar & Club Road · Shahrah-e-Faisal & PECHS · Airport & Cantt ·
+--   Clifton · DHA · Gulshan & Stadium Road; SITE removed (routing, not area);
+--   corridors gain descriptor + grouping; landmarks table seeded (22 rows).
+-- Packages renamed to plain words; media.shot_type restructured:
+--   property-required 8 = front_door, gate, street_view, neighbourhood,
+--   reception, corridor_stairs, breakfast_area, breakfast;
+--   category-level = bed, bedroom, bathroom, shower (required) + living_room,
+--   detail; legacy values remain valid; vendor_onboarding view updated
+--   (galleries = 6+ photos with the 4 required shots).

@@ -7,17 +7,29 @@
  */
 
 export const SHOT_LIST = [
-  { key: 'front_door', label: 'Front door', hint: 'The entrance as a guest arrives' },
-  { key: 'lobby', label: 'Lobby', hint: 'Reception and seating' },
-  { key: 'standard_room', label: 'Standard room', hint: 'Whole room, from the door' },
-  { key: 'bed', label: 'Bed', hint: 'Linen, headboard, bedside' },
-  { key: 'bathroom', label: 'Bathroom', hint: 'Shower, basin, towels' },
-  { key: 'wardrobe_desk', label: 'Wardrobe & desk', hint: 'Storage, work surface, sockets' },
-  { key: 'breakfast', label: 'Breakfast', hint: 'As actually served' },
-  { key: 'amenity', label: 'Key amenity', hint: 'Pool, gym or meeting room — the one that sells' },
+  { key: 'front_door', label: 'Front door', hint: 'The entrance a guest walks into' },
+  { key: 'gate', label: 'Gate', hint: 'Compound gate or building entry' },
+  { key: 'street_view', label: 'Street view', hint: 'The street outside, as it really looks' },
+  { key: 'neighbourhood', label: 'Neighbourhood', hint: 'The locality around the property' },
+  { key: 'reception', label: 'Reception', hint: 'Front desk and lobby seating' },
+  { key: 'corridor_stairs', label: 'Corridors & stairs', hint: 'Passages, lift, stairwell' },
+  { key: 'breakfast_area', label: 'Breakfast area', hint: 'Where breakfast is served' },
+  { key: 'breakfast', label: 'The breakfast', hint: 'The spread itself — every item' },
 ] as const
 export type ShotKey = (typeof SHOT_LIST)[number]['key']
 export const SHOT_KEYS: string[] = SHOT_LIST.map((s) => s.key)
+
+/** Per-room-category shots: 6+ labeled photos, the first four required. */
+export const CATEGORY_SHOTS = [
+  { key: 'bed', label: 'Bed' },
+  { key: 'bedroom', label: 'Bedroom, complete' },
+  { key: 'bathroom', label: 'Bathroom' },
+  { key: 'shower', label: 'Shower' },
+  { key: 'living_room', label: 'Living room' },
+  { key: 'detail', label: 'Amenity detail' },
+] as const
+export const CATEGORY_REQUIRED = ['bed', 'bedroom', 'bathroom', 'shower']
+export const GALLERY_MIN = 6
 
 export const CREDIT_TIERS = [
   { code: 'HT1', label: 'HT1 · Open', hint: 'Credit for tiers A, B and C' },
@@ -56,8 +68,8 @@ export const CATEGORIES: Record<string, string[]> = {
 export const PACKAGES: Record<string, { code: string; label: string; unit: string }[]> = {
   hotel: [
     { code: 'P1', label: 'Room only', unit: 'per room · night' },
-    { code: 'P2', label: '+ breakfast', unit: 'per room · night' },
-    { code: 'P3', label: 'Half board', unit: 'per room · night' },
+    { code: 'P2', label: 'Room + breakfast', unit: 'per room · night' },
+    { code: 'P3', label: 'Half board (breakfast + dinner)', unit: 'per room · night' },
   ],
   property: [
     { code: 'P1', label: 'Unit only', unit: 'per unit · night' },
@@ -175,15 +187,15 @@ export function vendorSteps(f: VendorFacts): Step[] {
     })
     steps.push({
       key: 'shots',
-      label: 'Shot list',
+      label: 'Property shot list',
       done: f.shots_done >= SHOT_LIST.length,
       detail: `${f.shots_done} of ${SHOT_LIST.length} required photos`,
     })
     steps.push({
       key: 'galleries',
-      label: 'Category galleries',
+      label: 'Room-type galleries',
       done: f.listings_active > 0 && f.listings_with_gallery === f.listings_active,
-      detail: `${f.listings_with_gallery} of ${f.listings_active} categories with 3+ photos`,
+      detail: `${f.listings_with_gallery} of ${f.listings_active} room types with ${GALLERY_MIN}+ labeled photos`,
     })
   } else {
     steps.push({

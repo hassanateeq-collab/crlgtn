@@ -74,7 +74,13 @@ serveEdge("ef_send_rfq", async ({ admin, actor, body, functionName }: EdgeContex
   const windowMinutes = urgent ? urgentMin : standardMin;
   const windowExpiresAt = new Date(Date.now() + windowMinutes * 60_000).toISOString();
 
+  // Two different audiences, two different hosts. APP_BASE_URL is where
+  // corporate bookers and ops sign in; VENDOR_BASE_URL is the public,
+  // account-less host that hotels reach from WhatsApp. Vendor links must never
+  // carry the portal origin. Falls back to APP_BASE_URL so a missing secret
+  // degrades to today's single-host behaviour rather than breaking sends.
   const appBaseUrl = (Deno.env.get("APP_BASE_URL") ?? "http://localhost:5173").replace(/\/$/, "");
+  const vendorBaseUrl = (Deno.env.get("VENDOR_BASE_URL") ?? appBaseUrl).replace(/\/$/, "");
 
   // ---- build offers (validate each selection against the catalog) ----------
   const offers: Record<string, unknown>[] = [];
@@ -126,7 +132,7 @@ serveEdge("ef_send_rfq", async ({ admin, actor, body, functionName }: EdgeContex
     links.push({
       vendorId: vendor.id,
       vendorName: vendor.name,
-      url: `${appBaseUrl}/respond/${token}`,
+      url: `${vendorBaseUrl}/r/${token}`,
       priority: sel.priority,
     });
   }

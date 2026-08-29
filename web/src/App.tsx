@@ -33,9 +33,12 @@ function Gate() {
 
   // The vendor magic-link page is public by design: hotels hold no accounts in
   // MVP, the URL token is the credential. It must never bounce to sign-in.
-  if (location.pathname.startsWith('/respond/')) {
+  // `/r/` is the live path (short enough to read off a phone in WhatsApp);
+  // `/respond/` stays as an alias so links already sent keep resolving.
+  if (location.pathname.startsWith('/r/') || location.pathname.startsWith('/respond/')) {
     return (
       <Routes>
+        <Route path="/r/:token" element={<VendorRespond />} />
         <Route path="/respond/:token" element={<VendorRespond />} />
       </Routes>
     )

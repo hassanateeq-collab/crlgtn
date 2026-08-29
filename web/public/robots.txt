@@ -1,0 +1,9 @@
+# Corlington is a closed-access platform: the portal, the ops console and the
+# vendor magic-link pages are all invite-only and must never be indexed.
+#
+# NOTE: robots.txt is per-HOST, and every Corlington host is currently served
+# from this one Vercel project. When the marketing one-pager ships on the
+# public root it will need its own host-conditional robots (vercel.json
+# rewrite keyed on host) — do not simply relax this file.
+User-agent: *
+Disallow: /

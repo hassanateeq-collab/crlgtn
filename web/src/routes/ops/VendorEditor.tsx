@@ -4,9 +4,12 @@ import { supabase } from '@/lib/supabase'
 import { onboardVendor, ApiError, type VendorPayload } from '@/lib/api'
 import {
   CATEGORIES,
+  CATEGORY_REQUIRED,
+  CATEGORY_SHOTS,
   COURTESIES,
   CREDIT_TIERS,
   CORRIDOR_NOTE,
+  GALLERY_MIN,
   PACKAGES,
   SHOT_KEYS,
   SHOT_LIST,
@@ -244,7 +247,11 @@ export function VendorEditor() {
     const active = listings.filter((l) => l.active && l.name.trim())
     const priced = active.filter((l) => Object.values(l.rates).some((r) => toInt(r)))
     const propertyShots = new Set(photos.filter((p) => !p.listing_name && SHOT_KEYS.includes(p.shot_type)).map((p) => p.shot_type))
-    const withGallery = active.filter((l) => photos.filter((p) => p.listing_name === l.name).length >= 3)
+    const withGallery = active.filter((l) => {
+      const g = photos.filter((p) => p.listing_name === l.name)
+      const types = new Set(g.map((p) => p.shot_type))
+      return g.length >= GALLERY_MIN && CATEGORY_REQUIRED.every((k) => types.has(k))
+    })
     return {
       vendor_type: vendorType,
       profile_complete: !!(description.trim() && address.trim() && corridorId),
@@ -289,6 +296,8 @@ export function VendorEditor() {
     }
   }
   const removePhoto = (path: string) => setPhotos((p) => p.filter((x) => x.storage_path !== path))
+  const setPhotoType = (path: string, shot_type: string) =>
+    setPhotos((p) => p.map((x) => (x.storage_path === path ? { ...x, shot_type } : x)))
   /** Put an already-uploaded property photo into a shot-list slot (one photo per slot). */
   const assignShot = (path: string, key: string) =>
     setPhotos((p) =>
@@ -571,7 +580,7 @@ export function VendorEditor() {
                       </AField>
                       {!isCar && <div />}
                       {packages.map((p) => (
-                        <AField key={p.code} label={`${p.code} · ${p.label}`} hint={p.unit}>
+                        <AField key={p.code} label={p.label} hint={`${p.unit} · ${p.code}`}>
                           <AInput inputMode="numeric" value={l.rates[p.code] ?? ''} onChange={(e) => setRate(i, p.code, e.target.value)} placeholder="PKR" className="tabular text-right" />
                         </AField>
                       ))}
@@ -583,21 +592,40 @@ export function VendorEditor() {
                     {/* gallery */}
                     <div className="mt-3 border-t border-paper pt-3">
                       <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <span className="text-[12.5px] font-semibold text-ink/60">{isCar ? 'Vehicle photos' : 'Category gallery'}</span>
-                        <Chip tone={gallery.length >= 3 ? 'ok' : 'hot'}>{gallery.length} / 3 minimum</Chip>
+                        <span className="text-[12.5px] font-semibold text-ink/60">{isCar ? 'Vehicle photos' : 'Room-type gallery — label every photo'}</span>
+                        <Chip tone={gallery.length >= GALLERY_MIN ? 'ok' : 'hot'}>{gallery.length} / {GALLERY_MIN} minimum</Chip>
+                        {!isCar && CATEGORY_REQUIRED.map((k) => {
+                          const has = gallery.some((p) => p.shot_type === k)
+                          return <Chip key={k} tone={has ? 'ok' : 'wait'}>{has ? '✓ ' : ''}{CATEGORY_SHOTS.find((c) => c.key === k)?.label}</Chip>
+                        })}
                         {!l.name.trim() && <span className="text-xs text-brass">name the {isCar ? 'model' : 'room'} first</span>}
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {gallery.map((p) => (
-                          <Thumb key={p.storage_path} photo={p} onRemove={() => removePhoto(p.storage_path)} />
+                          <div key={p.storage_path} className="flex flex-col gap-1">
+                            <Thumb photo={p} onRemove={() => removePhoto(p.storage_path)} />
+                            {!isCar && (
+                              <select
+                                className="w-[88px] rounded-md border border-hairline bg-white px-1 py-0.5 text-[10.5px] text-ink/70"
+                                value={p.shot_type}
+                                onChange={(e) => setPhotoType(p.storage_path, e.target.value)}
+                                aria-label="Label this photo"
+                              >
+                                {p.shot_type === 'category' && <option value="category">unlabeled</option>}
+                                {CATEGORY_SHOTS.map((c) => (
+                                  <option key={c.key} value={c.key}>{c.label}</option>
+                                ))}
+                              </select>
+                            )}
+                          </div>
                         ))}
                         {l.name.trim() && (
                           <UploadBox
                             label="+ Add photos"
-                            hint="3–5 that show the difference"
+                            hint={isCar ? 'real vehicles' : 'label each after upload'}
                             multiple
                             busy={uploading === l.name}
-                            onFiles={(f) => upload(f, { shot_type: 'category', listing_name: l.name })}
+                            onFiles={(f) => upload(f, { shot_type: isCar ? 'category' : 'detail', listing_name: l.name })}
                           />
                         )}
                       </div>
@@ -610,7 +638,7 @@ export function VendorEditor() {
 
           {/* ---------------- shot list ---------------- */}
           {!isCar ? (
-            <ACard title="Shot list — 8 required" sub="Same eight photos for every property, so bookers compare like with like. The front door becomes the cover.">
+            <ACard title="Property shot list — 8 required" sub="Entrance to breakfast, the same eight for every property — bookers compare like with like. The front door becomes the cover.">
               <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                 {SHOT_LIST.map((s) => {
                   const p = propertyPhoto(s.key)
