@@ -112,6 +112,19 @@ dashboard as a "relationship check" flag for the account manager. Pairs with
 the non-circumvention + rate-parity clauses in the hotel agreement (commercial
 track, not code).
 
+## F-006 · Google Places autocomplete for meeting location
+
+**Proposed:** 2026-08-30 (owner asked "can we add a landmark from Google?") ·
+**Status:** parked — curated landmarks table shipped instead (migration 020) ·
+**Build when:** after journey wiring, if the curated table proves too narrow.
+
+The booking form's "where is your meeting?" field currently suggests areas
+from our own landmarks table (fast, free, opinionated — 22 entries, growable
+by ops). Google Places autocomplete would cover arbitrary addresses: needs an
+API key + billing, a proxy Edge Function (never expose the key client-side),
+and geocode→area mapping (point-in-corridor or nearest-landmark). Revisit when
+real bookers hit landmarks we don't know.
+
 ---
 
 ## Done / absorbed

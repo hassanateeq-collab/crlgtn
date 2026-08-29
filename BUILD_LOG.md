@@ -830,3 +830,22 @@ text can always change.
   rests on Corlington's guarantee + tier label under the default-split clause.
 - Areas: owner commissioned a Karachi supply/demand study before locking the
   list — delivered separately; migration follows approval.
+
+## 2026-08-30 — AREAS LOCKED (owner decision, after the Karachi study)
+
+- Owner reviewed the supply/demand study, weighed a compass division
+  (Central/South/North/East/West) and chose the synthesis: **six named areas
+  as the permanent booking unit**, each carrying a self-explaining descriptor
+  so a non-Karachi booker reads exactly what they're booking into, with the
+  compass label kept as a flexible display grouping:
+  1 Saddar & Club Road · 2 Shahrah-e-Faisal & PECHS · 3 Airport & Cantt ·
+  4 Clifton · 5 DHA · 6 Gulshan & Stadium Road   (SITE removed — industrial
+  zones are routing rules, not areas).
+- **Landmarks table** (22 seeded): "your meeting is at X → stay in Y, N min"
+  — powers area suggestion on the booking form at journey wiring; also the
+  industrial-belt routing. Google Places autocomplete parked as F-006.
+- Migration 020 applied: renames/split/new area, descriptors + grouping,
+  landmarks, plain-word package names, two-level shot list (8 property shots;
+  6+ labeled per room type with bed/bedroom/bathroom/shower required), view
+  updated; editor updated with per-photo labeling. Real properties re-filed
+  (our DHA property under DHA; Clifton under Clifton).
