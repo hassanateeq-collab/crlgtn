@@ -763,3 +763,30 @@ onboarding plan for each. Shipped against the existing backend:
 - Deviation noted: Supabase CLI token stale (401) — functions deployed via the
   MCP deploy as before. Verification: tsc/oxlint/vite clean; views checked in
   SQL; UI check needs an ops login (owner to click through).
+
+## 2026-08-18 — Lock register (proposed; owner to confirm each)
+
+Principle: software stays flexible where change lives in code; it locks where
+data is already written, paper is already signed, or habits are already formed.
+
+LOCKED BY DESIGN (standing): merchant-of-record position · cash-flow rule with
+tier ceilings (DB-enforced) · integer PKR / append-only audit / writes-via-
+functions · ref formats CF-####-KHI, TF-###-KHI, invoice numbers.
+
+TO LOCK NOW (awaiting owner yes on each — expensive after first real signing):
+1. Karachi area list: Airport · Shahrah-e-Faisal · Clifton/DHA · Saddar · SITE
+   (adding areas stays cheap; splitting one later re-files properties).
+2. The 8-shot list (in every hotel agreement; re-shoot everything if changed).
+3. Package code MEANINGS: P1 room only / P2 +breakfast / P3 half board;
+   V1 self-drive / V2 with driver / V3 driver+fuel (new codes cheap;
+   redefinition corrupts rate history).
+4. F-004 vendor anonymity — decide before any vendor pilot; not retrofittable.
+5. Commercial identity: legal entity + bank account on invoices/agreements;
+   the Corlington WABA number (vendors save it; templates approved per number).
+6. Commission structure = % of gross per vendor (rate per agreement flexible).
+
+DELIBERATELY FLEXIBLE (never lock): UI/copy · assigned tiers/rates/overrides ·
+deposits · window durations (per-file column) · amenities/courtesies/car
+categories · countersign per corporate · notification channels · new cities ·
+apartments vertical (F-003). Policies snapshot onto bookings so live policy
+text can always change.
