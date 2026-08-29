@@ -790,3 +790,19 @@ deposits · window durations (per-file column) · amenities/courtesies/car
 categories · countersign per corporate · notification channels · new cities ·
 apartments vertical (F-003). Policies snapshot onto bookings so live policy
 text can always change.
+
+## 2026-08-30 — First real supply onboarded (4 properties)
+
+- Four real Karachi properties (owner-arranged; names and details live in the
+  database only — this public log stays clean by policy) onboarded end-to-end
+  through the REAL path: photos → private media bucket via storage API, then
+  ef_onboard_vendor with full payloads (profile, policies imported from the
+  properties' public material, listings with categories, published base rate
+  as P2 — their rack rates include breakfast — verified amenities, inclusions,
+  paid add-ons incl. airport transfer and extra mattress, front-office
+  WhatsApp, shot-typed media with covers). All four sit in status
+  `onboarding`, HT1, with the plan showing exactly what's left (agreement,
+  remaining shots, full rate card) — invisible to corporates until flipped
+  live. Audit-logged under the ops test fixture.
+- Blocked path worth remembering: a temp unauthenticated ingest function was
+  (rightly) refused; the storage-API-with-ops-session route is the correct one.
