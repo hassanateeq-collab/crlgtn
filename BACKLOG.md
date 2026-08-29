@@ -84,19 +84,19 @@ spine, 24-hour window assumption). To design at build time:
 - Vouchers, invoices (monthly recurring?), settlement cadence for multi-month
   stays — one invoice per month per the cash-flow rule, never front the float.
 
-## F-004 · Vendor anonymity until confirmation (anti-bypass)
+## F-004 · Vendor anonymity — FULL (anti-bypass)
 
-**Proposed:** 2026-08-18 (Claude, from owner's disintermediation question) ·
-**Status:** proposed — needs owner confirmation · **Build when:** wiring the
-vendor respond page + voucher PDFs (vendor batch).
+**Decided:** 2026-08-30 (owner: "Full anonymity") · **Status:** decided ·
+**Build when:** wiring the vendor respond page + voucher PDFs (vendor batch).
 
-Vendors must never learn the corporate's identity before a confirmed booking:
-RFQ/magic-link shows only "Corporate client via Corlington · tier X" (the
-prototype already words it this way — make it a hard rule server-side, the
-corporate name must not travel in any vendor-facing payload). On confirmation
-the voucher carries guest names for check-in but NEVER booker/procurement
-contacts — Corlington's own WhatsApp/phone is the only contact on every
-vendor-facing artifact. Blocks the easy path to direct outreach.
+Vendors NEVER learn the corporate's identity — not at RFQ, not on the voucher.
+RFQ/magic-link shows only "Corporate client via Corlington · tier X · payment
+guaranteed under our agreement"; the corporate name must not travel in ANY
+vendor-facing payload, ever. Vouchers carry guest names only (check-in needs
+them); no company name, no booker/procurement contacts — Corlington's own
+WhatsApp/phone is the only contact on every vendor-facing artifact. Credit
+comfort comes from Corlington's guarantee + the tier label (the hotel's
+counterparty is Corlington, per the default-split clause).
 
 ## F-005 · Leakage analytics — pair-velocity alerts (anti-bypass)
 

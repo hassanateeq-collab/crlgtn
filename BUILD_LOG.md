@@ -806,3 +806,27 @@ text can always change.
   live. Audit-logged under the ops test fixture.
 - Blocked path worth remembering: a temp unauthenticated ingest function was
   (rightly) refused; the storage-API-with-ops-session route is the correct one.
+
+## 2026-08-30 — Lock decisions (owner) — round 1
+
+- **Packages: words first.** All vendor-, booker- and voucher-facing surfaces
+  lead with plain language — "Room only / With breakfast / Half board",
+  "Self-drive / With driver / Driver + fuel" — the P/V code may follow as a
+  small tag; codes remain the internal spine (primary keys, rate history).
+- **Shot list RESTRUCTURED (owner spec).** Two levels:
+  · Per ROOM CATEGORY — defined, labeled shots: bed close-up, complete bedroom,
+    living room (if the unit has one), bathroom, 1–2 shots properly covering
+    the shower area, plus in-room amenity details — 6–7 clearly labeled photos
+    per room type.
+  · PROPERTY general — entrance set (front entrance, front door, gate),
+    street view + neighbourhood/locality shots (a few), reception, passages/
+    corridors/stairs, breakfast area, and the breakfast itself with every item
+    included (item-wise).
+  Purpose: the booker has exact knowledge of what they are booking. Schema +
+  editor + agreement notes to be updated in the next migration (with areas).
+- **Vendor anonymity: FULL (F-004 hardened).** Vendors never learn the
+  corporate's identity — not at RFQ, not on the voucher. Vouchers carry guest
+  names only; Corlington is the only contact anywhere vendor-facing. Credit
+  rests on Corlington's guarantee + tier label under the default-split clause.
+- Areas: owner commissioned a Karachi supply/demand study before locking the
+  list — delivered separately; migration follows approval.
