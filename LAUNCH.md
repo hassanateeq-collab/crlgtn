@@ -30,7 +30,10 @@ file is what stands between that and a live pilot booking.*
      vendor_handover_wa. Until approval, ops forwards magic links manually
      from the notifications payloads (Money/board consoles show them).
 4. **Purge test data**: run `scripts/purge-test-data.sql` (read its header),
-   clear media/vouchers/agreements buckets from the dashboard.
+   clear media/vouchers/agreements buckets from the dashboard. Also delete the
+   `/dev` quick-role-switch route (`web/src/routes/Dev.tsx` + its branch in
+   `App.tsx`) — it ships no credentials, but a testing affordance has no place
+   on the production door.
 5. **Auth hygiene**: dashboard → enable leaked-password protection (moot for
    OTP but silences the advisor); confirm signups remain DISABLED.
 6. **Real accounts**: create ops staff via dashboard invite + set

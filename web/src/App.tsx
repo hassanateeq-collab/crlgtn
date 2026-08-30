@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { VendorRespond } from '@/routes/VendorRespond'
+import { Dev } from '@/routes/Dev'
 import { SessionProvider, useSession } from '@/lib/session'
 import { IdentityProvider, useIdentity } from '@/lib/identity'
 import { SignIn } from '@/routes/SignIn'
@@ -41,6 +42,12 @@ function Gate() {
   // MVP, the URL token is the credential. It must never bounce to sign-in.
   // `/r/` is the live path (short enough to read off a phone in WhatsApp);
   // `/respond/` stays as an alias so links already sent keep resolving.
+  // Testing-phase quick role switch — reachable with or without a session so
+  // switching accounts is one click. On the LAUNCH checklist for removal.
+  if (location.pathname === '/dev') {
+    return <Dev />
+  }
+
   if (location.pathname.startsWith('/r/') || location.pathname.startsWith('/respond/')) {
     return (
       <Routes>
