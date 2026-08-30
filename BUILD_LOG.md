@@ -1049,3 +1049,29 @@ adding the domain in Vercel — owner access required).
 - Still open from LAUNCH.md: Resend email secrets (OTP emails queue until
   then — desk-issued passwords cover sign-ins meanwhile), auth email template
   {{ .Token }} fix, WABA registration, test-data purge before real clients.
+
+## 2026-08-30 — ALLOWED_ORIGINS repaired (marketing forms were failing)
+
+Setting `ALLOWED_ORIGINS` during the corlington.pk wiring silently broke lead
+capture on the marketing site. The secret **REPLACES** the baked list in
+`_shared/cors.ts` — it does not merge with it — so the .pk origins going in
+took the .com origins out. Symptom was invisible from the platform side:
+corlington.com loaded perfectly and simply could not submit, and any enquiry
+made in that window was lost with the visitor seeing a generic failure.
+
+Repaired by probing which origins the live function actually accepted (the
+dashboard shows only a SHA-256 digest, so the old value could not be read
+back), then re-saving the union rather than a guess. Now allowed:
+
+  corlington.pk · www.corlington.pk · corlington.com.pk · crlgtn.vercel.app
+  · corlington.com · www.corlington.com · corlington-site.vercel.app
+  · localhost:5173 · localhost:4173
+
+Verified: all nine return `access-control-allow-origin`, an unknown origin
+still gets none, and a live POST carrying `Origin: https://corlington.com`
+stored a lead end to end (test row deleted). APP_BASE_URL untouched.
+
+**Standing rule**: any future edit to ALLOWED_ORIGINS must include EVERY origin
+that should work — platform and marketing site both. Adding a host means
+re-saving the whole list. The baked defaults in cors.ts are a fallback for when
+the secret is unset, never a supplement to it.
