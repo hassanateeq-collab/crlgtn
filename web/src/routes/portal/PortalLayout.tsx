@@ -1,77 +1,66 @@
 import { NavLink, Navigate, Outlet } from 'react-router-dom'
 import { useIdentity } from '@/lib/identity'
 import { useSession } from '@/lib/session'
-import { Button } from '@/components/ui'
 
 /**
- * Corporate portal shell (spec §9): topbar with the company's own name front
- * and center. The booking-file spine lives inside the file editor, not here —
- * it belongs to a file, not to the app.
+ * Corporate portal shell (Atlas): the company's own name beside the brand,
+ * pill navigation, booker identity on the right. The booking-file spine lives
+ * inside the file editor, not here — it belongs to a file, not to the app.
  */
+
+const tabs = [
+  { to: '/files', label: 'Booking files' },
+  { to: '/transfers', label: 'Transfers' },
+  { to: '/invoices', label: 'Invoices' },
+]
 
 export function PortalLayout() {
   const { identity, loading } = useIdentity()
   const { signOut } = useSession()
 
   if (loading) return null
-  // Ops have their own console; anyone unresolved goes back to the gate.
   if (!identity || identity.isOps) return <Navigate to="/" replace />
 
   return (
     <div className="min-h-svh bg-paper">
-      <header className="border-b border-hairline bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <span aria-hidden className="size-1.5 rounded-full bg-brass" />
-            <div>
-              <span className="font-display text-lg leading-none">Corlington</span>
-              {identity.corporate && (
-                <span className="ml-2 text-xs text-ink/50">{identity.corporate.name}</span>
-              )}
-            </div>
+      <header className="sticky top-0 z-20 border-b border-hairline bg-white">
+        <div className="mx-auto flex max-w-[1120px] items-center gap-4 px-6 py-3.5">
+          <div className="flex items-center gap-2.5">
+            <span aria-hidden className="size-[7px] rounded-full bg-brass" />
+            <span className="font-display text-lg font-semibold leading-none">Corlington</span>
+            {identity.corporate && (
+              <span className="hidden text-xs text-ink/50 sm:inline">{identity.corporate.name}</span>
+            )}
           </div>
-          <nav className="flex items-center gap-1">
-            <NavLink
-              to="/files"
-              className={({ isActive }) =>
-                `rounded-md px-3 py-1.5 text-sm ${
-                  isActive ? 'bg-sage font-medium text-deep' : 'text-ink/70 hover:bg-sage/60'
-                }`
-              }
-            >
-              Booking files
-            </NavLink>
-            <NavLink
-              to="/transfers"
-              className={({ isActive }) =>
-                `rounded-md px-3 py-1.5 text-sm ${
-                  isActive ? 'bg-sage font-medium text-deep' : 'text-ink/70 hover:bg-sage/60'
-                }`
-              }
-            >
-              Transfers
-            </NavLink>
-            <NavLink
-              to="/invoices"
-              className={({ isActive }) =>
-                `rounded-md px-3 py-1.5 text-sm ${
-                  isActive ? 'bg-sage font-medium text-deep' : 'text-ink/70 hover:bg-sage/60'
-                }`
-              }
-            >
-              Invoices
-            </NavLink>
-            <span className="mx-2 h-5 w-px bg-hairline" />
-            <span className="mr-2 hidden text-xs text-ink/50 sm:inline">
+          <nav className="ml-2 flex items-center gap-1">
+            {tabs.map((t) => (
+              <NavLink
+                key={t.to}
+                to={t.to}
+                className={({ isActive }) =>
+                  `rounded-[10px] px-3.5 py-2 text-[13.5px] font-semibold ${
+                    isActive ? 'bg-sage text-deep' : 'text-ink/60 hover:bg-sage/60'
+                  }`
+                }
+              >
+                {t.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div className="ml-auto flex items-center gap-3">
+            <span className="hidden text-[12.5px] text-ink/50 md:inline">
               {identity.name} · {identity.corporateRole?.replace('corp_', '')}
             </span>
-            <Button variant="ghost" onClick={signOut}>
+            <button
+              onClick={signOut}
+              className="rounded-lg px-2.5 py-1.5 text-[12.5px] font-semibold text-ink/55 hover:bg-sage/60"
+            >
               Sign out
-            </Button>
-          </nav>
+            </button>
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-[1120px] px-6 py-8">
         <Outlet />
       </main>
     </div>

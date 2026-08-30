@@ -849,3 +849,33 @@ text can always change.
   6+ labeled per room type with bed/bedroom/bathroom/shower required), view
   updated; editor updated with per-photo labeling. Real properties re-filed
   (our DHA property under DHA; Clifton under Clifton).
+
+## 2026-08-30 — INTEGRATION BATCH 2: the corporate journey, live (Atlas)
+
+Owner: "work from the corporate's point of view only and make all pages live."
+Rebuilt every booker-facing screen in the approved Atlas designs, wired to the
+existing engine (no backend changes needed beyond migration 020, already in):
+- **Sign-in** — split hero with the three promises; OTP + password logic and
+  closed-access neutrality preserved exactly.
+- **Portal home** — greeting, three live tiles (needs-attention, upcoming
+  across hotels/cars/transfers, month spend), needs-your-decision rows with
+  ticking countdowns, drafts, upcoming, past & closed.
+- **New booking file** — 4-service segments (Apartments visible, disabled
+  "coming soon" until F-003; Transfer jumps to the instant flow), the six
+  locked areas as chips with descriptors, **landmark → area suggestion** live
+  from the landmarks table ("Korangi → stay in DHA · 20 minutes"), guest
+  steppers, deal-breaker chips, auto-accept toggle, dark live spine with
+  Save & find hotels.
+- **Results** — approved card design gains the full **words-first rate
+  ladder**: every package as a row with per-night AND ≈trip totals, brass ●
+  on negotiated rows.
+- **Property page** — Atlas v3: labeled shot-list gallery + lightbox
+  (arrows/Esc), glance tiles (rooms, airport transfer, check-in/out),
+  corporate courtesies grid, room categories with galleries and words-first
+  rates (negotiated resolution matching Results).
+- **Offers board** — Atlas cards with plain-language statuses, whole-stay
+  totals, counter notes, one-click book (atomic ef_book_offer unchanged).
+- Verified end-to-end as the seeded corporate booker on live data: home →
+  new file (Korangi → DHA suggestion) → save → results (DHA honestly empty →
+  Anywhere: 4 live hotels, ladder with trip totals) → property page.
+  Transfers & Invoices pages remain from M6/M7, functional; Atlas polish next.

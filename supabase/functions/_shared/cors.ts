@@ -11,6 +11,11 @@
 // the moment they're deployed. ALLOWED_ORIGINS overrides (it REPLACES this
 // list, so include every origin you want when setting it).
 const DEFAULT_ORIGINS = [
+  // Production hosts, one per audience (canonical domain: corlington.pk).
+  "https://book.corlington.pk", // corporate portal
+  "https://link.corlington.pk", // vendor magic-link pages
+  "https://atlas.corlington.pk", // ops console
+  // Cutover fallback — REMOVE once the .pk hosts are verified and serving.
   "https://crlgtn.vercel.app",
   "http://localhost:5173",
   "http://127.0.0.1:5173",

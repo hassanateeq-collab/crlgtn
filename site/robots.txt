@@ -1,0 +1,5 @@
+# Public marketing page — this is the ONE Corlington host that should be indexed.
+# The platform itself (portal, vendor links, ops console) is a separate
+# deployment and disallows everything.
+User-agent: *
+Allow: /

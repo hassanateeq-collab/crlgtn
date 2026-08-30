@@ -190,6 +190,14 @@ export function Results() {
     () => Math.max(1, ...(file?.rooms ?? []).map((r) => r.guests)),
     [file],
   )
+  const nights = useMemo(() => {
+    if (!file) return null
+    const n = Math.round(
+      (new Date(file.check_out).getTime() - new Date(file.check_in).getTime()) / 86_400_000,
+    )
+    return n > 0 ? n : null
+  }, [file])
+  const unitCount = file?.rooms.length ?? 1
 
   /** Negotiated wins over base; absent means the package is not offered. */
   const resolveRate = (listingId: string, pkg: string): { rate: number; negotiated: boolean } | null => {
@@ -385,8 +393,8 @@ export function Results() {
                       PKR {pkrPlain(resolved.rate)}
                     </div>
                     <div className="text-[10.5px] opacity-75">
-                      per {file.service === 'car' ? 'day' : 'night'} ·{' '}
-                      {PACKAGE_LABELS[pick.pkg].toLowerCase()}
+                      {PACKAGE_LABELS[pick.pkg].toLowerCase()} · per{' '}
+                      {file.service === 'car' ? 'day' : 'night'}
                     </div>
                   </div>
                 )}
@@ -444,21 +452,21 @@ export function Results() {
                       .join(' · ')}
                   </div>
 
-                  {/* Package segments with live prices. */}
-                  <div className="mb-3 flex rounded-xl bg-paper p-1">
+                  {/* The rate ladder (approved listing design): every package
+                      with per-night AND whole-trip totals; brass dot marks the
+                      negotiated row. */}
+                  <div className="mb-3 overflow-hidden rounded-xl border border-hairline">
                     {PKG_ORDER.map((p) => {
                       const r = resolveRate(pick.listingId, p)
                       if (!r) return null
                       const on = pick.pkg === p
+                      const trip = nights ? r.rate * nights * unitCount : null
                       return (
                         <button
                           key={p}
                           type="button"
-                          title={PACKAGE_LABELS[p]}
-                          className={`flex-1 rounded-lg py-2 text-[11.5px] font-semibold transition ${
-                            on
-                              ? 'bg-white text-deep shadow-[0_1px_3px_rgba(20,36,31,.12)]'
-                              : 'text-ink/50 hover:text-ink'
+                          className={`flex w-full items-center gap-2 border-b border-paper px-3 py-2.5 text-left last:border-0 ${
+                            on ? 'bg-[#FBF7EE]' : 'hover:bg-paper'
                           }`}
                           onClick={() =>
                             setPicks((m) =>
@@ -466,7 +474,28 @@ export function Results() {
                             )
                           }
                         >
-                          {p} · {Math.round(r.rate / 1000)}k
+                          <span
+                            aria-hidden
+                            className={`grid size-4 flex-none place-items-center rounded-full border-[1.5px] ${
+                              on ? 'border-deep' : 'border-hairline'
+                            }`}
+                          >
+                            {on && <span className="size-2 rounded-full bg-deep" />}
+                          </span>
+                          <span className="min-w-0 flex-1 text-[12.5px] font-semibold">
+                            {PACKAGE_LABELS[p]}
+                          </span>
+                          <span className="text-right">
+                            <span className="tabular block text-[13px] font-semibold text-deep">
+                              {r.negotiated && <span className="mr-1 text-brass">●</span>}
+                              {pkrPlain(r.rate)}
+                            </span>
+                            {trip !== null && (
+                              <span className="tabular block text-[10.5px] text-ink/50">
+                                ≈ {pkrPlain(trip)} trip
+                              </span>
+                            )}
+                          </span>
                         </button>
                       )
                     })}

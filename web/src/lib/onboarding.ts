@@ -94,6 +94,15 @@ export const COURTESIES = [
   'Early check-in when free',
 ]
 
+export const PKG_LABEL: Record<string, string> = {
+  P1: 'Room only',
+  P2: 'Room + breakfast',
+  P3: 'Half board',
+  V1: 'Self-drive',
+  V2: 'With driver',
+  V3: 'Driver + fuel',
+}
+
 export const CORRIDOR_NOTE = 'Every property is filed under exactly one area.'
 
 // ---- progress -------------------------------------------------------------

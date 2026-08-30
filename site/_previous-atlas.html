@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Corlington — Corporate accommodation, Karachi</title>
+<meta name="description" content="Corlington books corporate stays in Karachi. File a request, three verified hotels respond inside a fixed window, settle on one monthly invoice.">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Corlington — Corporate accommodation, Karachi">
+<meta property="og:description" content="File a request. Three verified hotels respond inside a fixed window. Book the one you want, settle on one monthly invoice.">
+<meta property="og:site_name" content="Corlington">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Instrument+Sans:wght@400..700&family=Spline+Sans+Mono:wght@500..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1c2b26; --pine:#1D5C4D; --deep:#12443A; --sage:#EAF1ED;
+  --paper:#F7F9F7; --brass:#A97D2B; --hair:#E3E9E4; --soft:#66756d;
+  --shadow:0 1px 3px rgba(20,36,31,.05),0 14px 36px -22px rgba(20,36,31,.16);
+}
+*{margin:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font:16px/1.62 "Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+.wrap{max-width:1060px;margin:0 auto;padding:0 24px}
+
+/* ── top bar ─────────────────────────────────────────────── */
+.top{background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid var(--hair);position:sticky;top:0;z-index:30}
+.top .wrap{display:flex;align-items:center;gap:16px;padding-top:15px;padding-bottom:15px}
+.brand{display:flex;align-items:center;gap:9px;font:650 19px "Bricolage Grotesque",serif;letter-spacing:-.01em;text-decoration:none}
+.brand i{width:7px;height:7px;border-radius:50%;background:var(--brass);flex:none}
+.nav{display:flex;gap:2px;margin-left:10px}
+.nav a{padding:8px 13px;border-radius:10px;font:600 13.5px "Instrument Sans";color:var(--soft);text-decoration:none}
+.nav a:hover{background:var(--sage);color:var(--deep)}
+.top .btn{margin-left:auto}
+
+/* ── buttons ─────────────────────────────────────────────── */
+.btn{background:var(--pine);color:#fff;border:0;border-radius:13px;font:650 14.5px "Instrument Sans";padding:13px 22px;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s,transform .15s}
+.btn:hover{background:var(--deep);transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--deep);box-shadow:inset 0 0 0 1.5px var(--hair)}
+.btn.ghost:hover{background:#fff;box-shadow:inset 0 0 0 1.5px var(--pine)}
+.btn.sm{padding:10px 17px;font-size:13.5px;border-radius:11px}
+
+/* ── hero ────────────────────────────────────────────────── */
+.hero{padding:86px 0 70px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;inset:-40% 50% auto -20%;height:640px;background:radial-gradient(closest-side,rgba(29,92,77,.09),transparent 70%);pointer-events:none}
+.eyebrow{font:600 11.5px "Instrument Sans";letter-spacing:.13em;color:var(--brass);text-transform:uppercase;margin-bottom:16px}
+h1{font:650 clamp(34px,5.4vw,54px)/1.08 "Bricolage Grotesque",serif;letter-spacing:-.025em;max-width:15ch}
+.lede{color:var(--soft);font-size:18.5px;line-height:1.58;margin:20px 0 32px;max-width:56ch}
+.lede b{color:var(--ink);font-weight:600}
+.cta-row{display:flex;gap:11px;flex-wrap:wrap}
+.note{margin-top:20px;font-size:13.5px;color:var(--soft)}
+
+/* ── steps ───────────────────────────────────────────────── */
+section{padding:64px 0;position:relative}
+.kicker{font:600 12px "Instrument Sans";letter-spacing:.09em;color:var(--soft);text-transform:uppercase;margin-bottom:12px}
+h2{font:650 clamp(25px,3.2vw,33px)/1.15 "Bricolage Grotesque",serif;letter-spacing:-.02em;max-width:22ch}
+.intro{color:var(--soft);font-size:16.5px;margin-top:12px;max-width:60ch}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:34px}
+.step-card{background:#fff;border-radius:20px;padding:26px 24px 28px;box-shadow:var(--shadow)}
+.step-card .n{font:650 12px "Spline Sans Mono";color:var(--deep);background:var(--sage);border-radius:8px;padding:4px 9px;display:inline-block;margin-bottom:14px}
+.step-card h3{font:650 18px "Bricolage Grotesque",serif;margin-bottom:8px;letter-spacing:-.01em}
+.step-card p{color:var(--soft);font-size:14.6px;line-height:1.6}
+
+/* ── split panels ────────────────────────────────────────── */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:34px;align-items:start}
+.panel{background:#fff;border-radius:22px;padding:30px 30px 32px;box-shadow:var(--shadow)}
+.panel.dark{background:var(--deep);color:#fff}
+.panel h3{font:650 22px "Bricolage Grotesque",serif;letter-spacing:-.015em;margin-bottom:6px}
+.panel .who{font:600 11.5px "Instrument Sans";letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin-bottom:12px}
+.panel.dark .who{color:#e8c789}
+.panel ul{list-style:none;margin:20px 0 24px}
+.panel li{display:flex;gap:11px;padding:9px 0;border-top:1px solid var(--hair);font-size:14.8px;line-height:1.55}
+.panel li:first-child{border-top:0;padding-top:2px}
+.panel.dark li{border-color:rgba(255,255,255,.13)}
+.panel li s{flex:none;width:6px;height:6px;border-radius:50%;background:var(--brass);margin-top:8px;text-decoration:none}
+.panel li b{font-weight:600}
+.panel.dark li span{color:rgba(255,255,255,.82)}
+.panel.dark li b{color:#fff}
+.panel .btn.ghost{background:#fff}
+
+/* ── coverage ────────────────────────────────────────────── */
+.corridors{display:flex;flex-wrap:wrap;gap:9px;margin-top:26px}
+.corridors span{background:#fff;border-radius:99px;padding:11px 20px;font:600 14px "Instrument Sans";color:var(--deep);box-shadow:inset 0 0 0 1.5px var(--hair)}
+.corridors span i{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--brass);margin-right:8px;vertical-align:middle}
+
+/* ── standard (verification) ─────────────────────────────── */
+.standard{background:var(--deep);color:#fff;border-radius:26px;padding:46px 44px}
+.standard h2{color:#fff;max-width:20ch}
+.standard .kicker{color:#e8c789}
+.std-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 40px;margin-top:30px}
+.std-grid div{padding-top:16px;border-top:1px solid rgba(255,255,255,.15)}
+.std-grid b{display:block;font:650 15.5px "Instrument Sans";margin-bottom:5px}
+.std-grid p{color:rgba(255,255,255,.76);font-size:14.4px;line-height:1.58}
+
+/* ── forms ───────────────────────────────────────────────── */
+.form-card{background:#fff;border-radius:22px;padding:30px;box-shadow:var(--shadow);margin-top:34px}
+.form-card h3{font:650 21px "Bricolage Grotesque",serif;margin-bottom:4px;letter-spacing:-.015em}
+.form-card>p{color:var(--soft);font-size:14.6px;margin-bottom:22px}
+.seg{display:flex;background:var(--paper);border-radius:14px;padding:4px;margin-bottom:22px;max-width:430px}
+.seg button{flex:1;border:0;background:none;border-radius:11px;padding:11px 8px;font:650 14px "Instrument Sans";color:var(--soft);cursor:pointer}
+.seg button.on{background:var(--deep);color:#fff}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+label.f{display:block;margin-bottom:14px}
+label.f b{display:block;font:600 12.5px "Instrument Sans";color:var(--soft);margin-bottom:6px}
+input,textarea,select{width:100%;border:1.5px solid var(--hair);border-radius:12px;background:#fff;padding:11px 14px;font:500 14.5px "Instrument Sans";color:var(--ink);font-family:inherit}
+textarea{min-height:82px;resize:vertical}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--pine)}
+.form-foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:6px}
+.form-foot p{font-size:13px;color:var(--soft);max-width:42ch}
+
+/* ── footer ──────────────────────────────────────────────── */
+footer{border-top:1px solid var(--hair);padding:44px 0 60px;margin-top:40px}
+.f-grid{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start}
+.f-grid .brand{margin-bottom:10px}
+footer p{color:var(--soft);font-size:14px;max-width:38ch}
+.f-links{margin-left:auto;display:flex;gap:56px}
+.f-links div b{display:block;font:600 11.5px "Instrument Sans";letter-spacing:.09em;text-transform:uppercase;color:var(--soft);margin-bottom:11px}
+.f-links a{display:block;font-size:14.5px;color:var(--ink);text-decoration:none;margin-bottom:7px}
+.f-links a:hover{color:var(--pine)}
+.legal{margin-top:34px;padding-top:22px;border-top:1px solid var(--hair);font-size:13px;color:var(--soft);display:flex;gap:18px;flex-wrap:wrap}
+.mono{font-family:"Spline Sans Mono",monospace}
+
+@media(max-width:860px){
+  .steps,.split,.std-grid,.two{grid-template-columns:1fr}
+  .nav{display:none}
+  .hero{padding:56px 0 46px}
+  .standard{padding:34px 26px;border-radius:20px}
+  .f-links{margin-left:0;gap:40px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#top"><i></i>Corlington</a>
+    <nav class="nav">
+      <a href="#how">How it works</a>
+      <a href="#companies">For companies</a>
+      <a href="#hotels">For hotels</a>
+      <a href="#coverage">Coverage</a>
+    </nav>
+    <a class="btn sm" href="#request">Request access</a>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero">
+    <div class="wrap">
+      <div class="eyebrow">Karachi · Corporate accommodation</div>
+      <h1>Corporate stays, booked on your terms.</h1>
+      <p class="lede">File a request once. <b>Three verified hotels respond inside a fixed window</b> at rates agreed in advance. Book the one you want, and settle everything on a single monthly invoice.</p>
+      <div class="cta-row">
+        <a class="btn" href="#request" data-open="corporate">Request a company account</a>
+        <a class="btn ghost" href="#request" data-open="vendor">List your property</a>
+      </div>
+      <p class="note">Corlington is a closed platform — accounts are issued to registered companies, and every property is verified in person before it goes live.</p>
+    </div>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="kicker">How it works</div>
+      <h2>Three steps, one invoice.</h2>
+      <p class="intro">No back-and-forth on email, no chasing a rate that changed since last quarter, no reconciling a dozen separate hotel bills at month end.</p>
+      <div class="steps">
+        <div class="step-card">
+          <span class="n">01</span>
+          <h3>File the request</h3>
+          <p>Dates, corridor, rooms and the package you need — room only, with breakfast, or half board. It takes about a minute.</p>
+        </div>
+        <div class="step-card">
+          <span class="n">02</span>
+          <h3>Three hotels respond</h3>
+          <p>We put the request to three verified properties at once. They answer inside a fixed window — three hours as standard, one hour when you are inside 48 hours of check-in.</p>
+        </div>
+        <div class="step-card">
+          <span class="n">03</span>
+          <h3>Book and settle monthly</h3>
+          <p>Pick the offer you want. The voucher issues immediately with the policies attached, and the stay joins one consolidated invoice on your agreed credit terms.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="companies" style="padding-top:20px">
+    <div class="wrap">
+      <div class="split">
+        <div class="panel">
+          <div class="who">For companies</div>
+          <h3>Your travel desk, without the desk.</h3>
+          <ul>
+            <li><s></s><span><b>Vetted supply only.</b> Every property is visited, photographed to a fixed shot list and its amenities confirmed on site — not copied from a brochure.</span></li>
+            <li><s></s><span><b>Rates agreed in advance.</b> You see the contracted rate for the room, not a surge price discovered at checkout.</span></li>
+            <li><s></s><span><b>Approval built in.</b> Turn on countersign and bookings above your threshold go to your nominated approver before they are final.</span></li>
+            <li><s></s><span><b>One monthly invoice.</b> Consolidated, itemised, on your credit terms, settled by bank transfer.</span></li>
+            <li><s></s><span><b>Airport transfers</b> at fixed contracted prices by zone, with meet-and-greet and a waiting allowance built into the rule.</span></li>
+          </ul>
+          <a class="btn" href="#request" data-open="corporate">Request a company account</a>
+        </div>
+
+        <div class="panel dark" id="hotels">
+          <div class="who">For hotels &amp; operators</div>
+          <h3>Corporate demand, no dashboard to learn.</h3>
+          <ul>
+            <li><s></s><span><b>Answer on WhatsApp.</b> A request arrives as a message with a link. One tap to accept, counter or decline. No account, no password, no portal.</span></li>
+            <li><s></s><span><b>You set the ceiling.</b> Your rate card is countersigned before you go live and nothing is ever sold below it.</span></li>
+            <li><s></s><span><b>Rate parity and non-circumvention</b> are written into the agreement, and they bind both directions.</span></li>
+            <li><s></s><span><b>No listing fee.</b> Commission is a share of gross on bookings that actually complete.</span></li>
+            <li><s></s><span><b>Paid on agreed terms</b> against a reconciled settlement run — not whenever a corporate client gets round to it.</span></li>
+          </ul>
+          <a class="btn ghost" href="#request" data-open="vendor">Request an onboarding visit</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="coverage">
+    <div class="wrap">
+      <div class="kicker">Coverage</div>
+      <h2>Five Karachi corridors.</h2>
+      <p class="intro">Supply is organised by the corridors corporate travel actually moves through, so a request near the airport does not return a property an hour away in traffic.</p>
+      <div class="corridors">
+        <span><i></i>Airport</span>
+        <span><i></i>Shahrah-e-Faisal</span>
+        <span><i></i>Clifton &amp; DHA</span>
+        <span><i></i>Saddar</span>
+        <span><i></i>SITE</span>
+      </div>
+      <p class="note" style="margin-top:22px">Serviced apartments and vehicle hire roll out on the same verification standard.</p>
+    </div>
+  </section>
+
+  <section style="padding-top:20px">
+    <div class="wrap">
+      <div class="standard">
+        <div class="kicker">The verification standard</div>
+        <h2>The room you book is the room you saw.</h2>
+        <div class="std-grid">
+          <div><b>Visited in person</b><p>No property goes live on photographs alone. Someone from Corlington walks it first.</p></div>
+          <div><b>A fixed eight-photograph list</b><p>Every property is shot to the same list, so two options can be compared honestly rather than by whoever hired the better photographer.</p></div>
+          <div><b>Amenities ticked only when confirmed</b><p>The checklist is completed at the visit. If it was not seen working, it is not listed.</p></div>
+          <div><b>Signed agreement on file</b><p>Terms, rate card and policies are countersigned before the first request is ever sent.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="request" style="padding-top:44px">
+    <div class="wrap">
+      <div class="kicker">Request access</div>
+      <h2>Tell us which side you are on.</h2>
+      <div class="form-card">
+        <div class="seg" role="tablist">
+          <button id="tab-corporate" class="on" onclick="pick('corporate')">I book for a company</button>
+          <button id="tab-vendor" onclick="pick('vendor')">I have a property</button>
+        </div>
+
+        <form id="frm" onsubmit="return send(event)">
+          <h3 id="f-title">Request a company account</h3>
+          <p id="f-sub">We will come back to you with terms and set your team up. Accounts are issued to registered companies only.</p>
+
+          <div class="two">
+            <label class="f"><b id="l-org">Company name</b><input name="org" required autocomplete="organization"></label>
+            <label class="f"><b>Your name</b><input name="person" required autocomplete="name"></label>
+          </div>
+          <div class="two">
+            <label class="f"><b>Work email</b><input name="email" type="email" required autocomplete="email"></label>
+            <label class="f"><b>Phone or WhatsApp</b><input name="phone" required autocomplete="tel"></label>
+          </div>
+          <label class="f" id="wrap-extra"><b id="l-extra">Roughly how many room-nights a month?</b><input name="extra"></label>
+          <label class="f"><b>Anything we should know</b><textarea name="notes" placeholder="Optional"></textarea></label>
+
+          <div class="form-foot">
+            <button class="btn" type="submit">Send request</button>
+            <p>This opens your email app with the request filled in — nothing is submitted from this page.</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="f-grid">
+      <div>
+        <a class="brand" href="#top"><i></i>Corlington</a>
+        <p>Corporate accommodation, transfers and vehicle hire in Karachi — booked against verified supply and settled on terms.</p>
+      </div>
+      <div class="f-links">
+        <div>
+          <b>Platform</b>
+          <a href="#how">How it works</a>
+          <a href="#companies">For companies</a>
+          <a href="#hotels">For hotels</a>
+        </div>
+        <div>
+          <b>Contact</b>
+          <a href="mailto:desk@corlington.com" class="mono">desk@corlington.com</a>
+          <a href="#request">Request access</a>
+        </div>
+      </div>
+    </div>
+    <div class="legal">
+      <span>&copy; <span id="yr">2026</span> Corlington</span>
+      <span>Karachi, Pakistan</span>
+      <span><!-- TODO(owner): registered legal entity name + company number --></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+// Single place to change the destination address if the canonical domain changes.
+var DESK = "desk@corlington.com";
+
+var MODE = {
+  corporate: {
+    title: "Request a company account",
+    sub: "We will come back to you with terms and set your team up. Accounts are issued to registered companies only.",
+    org: "Company name",
+    extra: "Roughly how many room-nights a month?",
+    subject: "Company account request"
+  },
+  vendor: {
+    title: "Request an onboarding visit",
+    sub: "We will arrange a visit, shoot the property to the standard list and agree a rate card before anything goes live.",
+    org: "Property name",
+    extra: "Area and number of rooms",
+    subject: "Property onboarding request"
+  }
+};
+var current = "corporate";
+
+function pick(which){
+  current = which;
+  var m = MODE[which];
+  document.getElementById("f-title").textContent = m.title;
+  document.getElementById("f-sub").textContent = m.sub;
+  document.getElementById("l-org").textContent = m.org;
+  document.getElementById("l-extra").textContent = m.extra;
+  document.getElementById("tab-corporate").className = which === "corporate" ? "on" : "";
+  document.getElementById("tab-vendor").className = which === "vendor" ? "on" : "";
+}
+
+// Hero and panel buttons pre-select the right side before scrolling.
+document.querySelectorAll("[data-open]").forEach(function(el){
+  el.addEventListener("click", function(){ pick(el.getAttribute("data-open")); });
+});
+
+function send(e){
+  e.preventDefault();
+  var f = e.target, m = MODE[current], v = function(n){ return (f[n].value || "").trim(); };
+  var body = [
+    m.org + ": " + v("org"),
+    "Contact: " + v("person"),
+    "Email: " + v("email"),
+    "Phone: " + v("phone"),
+    m.extra + " — " + v("extra"),
+    "",
+    "Notes:",
+    v("notes") || "—"
+  ].join("\n");
+  window.location.href = "mailto:" + DESK
+    + "?subject=" + encodeURIComponent("Corlington — " + m.subject + " — " + v("org"))
+    + "&body=" + encodeURIComponent(body);
+  return false;
+}
+
+document.getElementById("yr").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>

@@ -3,12 +3,13 @@ import { supabase } from '@/lib/supabase'
 import { bookOffer, ApiError } from '@/lib/api'
 import { useIdentity } from '@/lib/identity'
 import { pkrPlain, dateTimePkt } from '@/lib/format'
-import { Button, Card, Notice } from '@/components/ui'
+import { PKG_LABEL } from '@/lib/onboarding'
+import { ABtn, Chip, Notice } from '@/components/atlas'
 
 /**
- * The response board (M4): live offer statuses for a sent file. Polls every
- * 5 seconds while the window is open — "reflects status within seconds"
- * without realtime plumbing. Booking actions attach at M5.
+ * The offers board (Atlas): live offer statuses for a sent file, polling every
+ * 5 seconds while the window is open. Booking goes through ef_book_offer —
+ * one atomic transaction that books, releases siblings, and raises the invoice.
  *
  * NOTE the explicit column list: token_hash and ops_evidence are revoked at
  * the column level for corporate roles, so a `select *` here would 403.
@@ -28,35 +29,39 @@ interface BoardOffer {
   listings: { name: string } | null
 }
 
-const statusTone: Record<string, string> = {
-  sent: 'bg-paper text-ink/60 border border-hairline',
-  viewed: 'bg-sage/70 text-deep',
-  hold: 'bg-brass/15 text-brass',
-  countered: 'bg-brass/15 text-brass',
-  declined: 'bg-ink/10 text-ink/60',
-  expired: 'bg-ink/10 text-ink/60',
-  released: 'bg-ink/10 text-ink/60',
-  booked: 'bg-pine text-paper',
+const tone: Record<string, 'ok' | 'hot' | 'wait' | 'bad' | 'ink'> = {
+  sent: 'wait',
+  viewed: 'wait',
+  hold: 'hot',
+  countered: 'hot',
+  declined: 'wait',
+  expired: 'wait',
+  released: 'wait',
+  booked: 'ok',
 }
 
 const statusLine: Record<string, string> = {
   sent: 'Waiting for the hotel to open the request',
   viewed: 'Seen by the hotel — awaiting answer',
-  hold: 'Room held for you until the window ends',
-  countered: 'Hotel proposed an alternative',
+  hold: 'Rooms held for you until the window ends',
+  countered: 'The hotel proposed an alternative',
   declined: 'Hotel declined this request',
   expired: 'Window ended before an answer',
   released: 'Released after another hotel was booked',
-  booked: 'Booked',
+  booked: 'Booked — voucher issued',
 }
 
 export function OffersBoard({
   fileId,
   windowOpen,
+  nights,
+  roomsCount,
   onBooked,
 }: {
   fileId: string
   windowOpen: boolean
+  nights: number | null
+  roomsCount: number
   onBooked?: () => void
 }) {
   const [offers, setOffers] = useState<BoardOffer[]>([])
@@ -93,7 +98,6 @@ export function OffersBoard({
       if (active && data) setOffers(data as unknown as BoardOffer[])
     }
     load()
-    // Poll while the decision window is open; a settled file stays static.
     const timer = windowOpen ? setInterval(load, 5000) : null
     return () => {
       active = false
@@ -103,56 +107,81 @@ export function OffersBoard({
 
   if (offers.length === 0) return null
 
+  const actionable = (s: string) => windowOpen && ['hold', 'countered'].includes(s)
+
   return (
-    <Card title="Offers">
+    <section>
+      <div className="mb-2.5 text-[12px] font-semibold uppercase tracking-[0.06em] text-ink/55">Offers</div>
       {error && (
         <div className="mb-3">
           <Notice tone="error">{error}</Notice>
         </div>
       )}
-      <ol className="divide-y divide-hairline">
-        {offers.map((o) => (
-          <li key={o.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
-            <span className="tabular flex size-6 shrink-0 items-center justify-center rounded-full bg-paper text-xs">
-              {o.priority}
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-baseline gap-x-2">
-                <span className="font-medium">{o.vendors?.name}</span>
-                <span className="text-xs text-ink/50">
-                  {o.listings?.name} · {o.package_code} ·{' '}
-                  <span className="tabular">PKR {pkrPlain(o.rate_pkr)}</span>/night
+      <div className="space-y-3">
+        {offers.map((o) => {
+          const stayTotal = nights ? o.rate_pkr * nights * roomsCount : null
+          const best = actionable(o.status)
+          return (
+            <article
+              key={o.id}
+              className={`rounded-[20px] bg-white p-4 shadow-[0_1px_3px_rgba(20,36,31,.05),0_14px_36px_-22px_rgba(20,36,31,.16)] ${
+                o.status === 'booked' ? 'ring-2 ring-pine' : ''
+              }`}
+            >
+              <div className="flex flex-wrap items-start gap-4">
+                <span className="tabular grid size-7 flex-none place-items-center rounded-full bg-paper text-xs font-semibold text-ink/60">
+                  {o.priority}
                 </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[16px] font-semibold">{o.vendors?.name}</span>
+                    <Chip tone={tone[o.status] ?? 'wait'}>
+                      {o.status === 'hold' ? 'accepted — on hold' : o.status}
+                    </Chip>
+                  </div>
+                  <p className="mt-0.5 text-[12.5px] text-ink/55">
+                    {o.listings?.name} · {PKG_LABEL[o.package_code] ?? o.package_code}
+                  </p>
+                  <p className="mt-1 text-[12.5px] text-ink/55">
+                    {statusLine[o.status] ?? o.status}
+                    {o.responded_at && ` · ${dateTimePkt(o.responded_at)}`}
+                  </p>
+                  {o.status === 'countered' && o.counter?.note && (
+                    <p className="mt-2 rounded-xl bg-[#FBF3E2] px-3 py-2 text-[12.5px] text-ink">
+                      “{o.counter.note}”
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="text-right">
+                    <div className="font-display text-[20px] font-semibold leading-tight text-deep">
+                      PKR {pkrPlain(o.rate_pkr)}
+                    </div>
+                    <div className="text-[11px] text-ink/50">
+                      per night
+                      {stayTotal ? ` · ≈ PKR ${pkrPlain(stayTotal)} whole stay` : ''}
+                    </div>
+                  </div>
+                  {canBook && best && (
+                    <ABtn disabled={bookingId !== null} onClick={() => book(o.id)}>
+                      {bookingId === o.id
+                        ? 'Booking…'
+                        : o.status === 'countered'
+                          ? 'Accept counter & book'
+                          : `Book ${o.vendors?.name?.split(' ')[0] ?? ''}`}
+                    </ABtn>
+                  )}
+                </div>
               </div>
-              <p className="mt-0.5 text-xs text-ink/50">
-                {statusLine[o.status] ?? o.status}
-                {o.responded_at && ` · ${dateTimePkt(o.responded_at)}`}
-              </p>
-              {o.status === 'countered' && o.counter?.note && (
-                <p className="mt-1 rounded-md bg-brass/10 px-2 py-1 text-xs text-ink">
-                  “{o.counter.note}”
-                </p>
-              )}
-            </div>
-            <span className={`rounded-full px-2.5 py-0.5 text-xs ${statusTone[o.status] ?? ''}`}>
-              {o.status === 'hold' ? 'on hold' : o.status}
-            </span>
-            {canBook && windowOpen && ['hold', 'countered'].includes(o.status) && (
-              <Button
-                type="button"
-                disabled={bookingId !== null}
-                onClick={() => book(o.id)}
-              >
-                {bookingId === o.id
-                  ? 'Booking…'
-                  : o.status === 'countered'
-                    ? 'Accept counter & book'
-                    : 'Book'}
-              </Button>
-            )}
-          </li>
-        ))}
-      </ol>
-    </Card>
+            </article>
+          )
+        })}
+      </div>
+      {windowOpen && (
+        <p className="mt-3 text-[12.5px] text-ink/55">
+          Book one and the other holds release automatically — no call needed.
+        </p>
+      )}
+    </section>
   )
 }
