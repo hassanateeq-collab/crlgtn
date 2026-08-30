@@ -40,9 +40,15 @@ interface MediaInput {
   shot_type?: string | null;
 }
 
+// Mirror of the migration-020 check constraint on media.shot_type.
 const SHOT_TYPES = [
-  "front_door", "lobby", "standard_room", "bed", "bathroom", "wardrobe_desk",
-  "breakfast", "amenity", "category", "other",
+  // property level
+  "front_door", "gate", "street_view", "neighbourhood", "reception",
+  "corridor_stairs", "breakfast_area", "breakfast", "amenity", "exterior", "other",
+  // category level
+  "bed", "bedroom", "living_room", "bathroom", "shower", "detail",
+  // legacy values kept valid
+  "lobby", "standard_room", "wardrobe_desk", "category",
 ];
 const CREDIT_TIERS = ["HT1", "HT2", "HT3", "HT4"];
 
