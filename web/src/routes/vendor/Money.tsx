@@ -42,6 +42,18 @@ const STATUS_LABEL = {
   paid: 'paid',
 } as const
 
+/** Stay lifecycle in hotel language: checked_out is a completed stay. */
+const STAY_LABEL: Record<string, string> = {
+  confirmed: 'confirmed',
+  checked_in: 'in house',
+  checked_out: 'completed',
+}
+
+/** The statement a stay rolls into — keyed by its check-out month. */
+export function stayPeriod(checkOut: string): string {
+  return checkOut.slice(0, 7)
+}
+
 function periodLabel(period: string): string {
   const [y, m] = period.split('-').map(Number)
   return new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric' }).format(
@@ -100,6 +112,11 @@ export function VendorMoney() {
     () => bookings.reduce((sum, b) => sum + b.grand_total_pkr, 0),
     [bookings],
   )
+  const settlementByPeriod = useMemo(
+    () => new Map(settlements.map((s) => [s.period, s])),
+    [settlements],
+  )
+  const todayIso = new Date().toISOString().slice(0, 10)
 
   if (loading) {
     return <p className="py-16 text-center text-sm text-ink/50">Loading settlements…</p>
@@ -170,13 +187,20 @@ export function VendorMoney() {
                   <th className="py-2 pr-4">File</th>
                   <th className="py-2 pr-4">Dates</th>
                   <th className="py-2 pr-4">Nights</th>
-                  <th className="py-2 pr-4">Status</th>
+                  <th className="py-2 pr-4">Stay</th>
+                  <th className="py-2 pr-4">Payment</th>
                   <th className="py-2 text-right">Gross</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairline">
                 {bookings.map((b) => {
                   const f = files.get(b.booking_file_id)
+                  // A completed stay also shows where its money stands, via the
+                  // statement of its check-out month. Ops flipping the status
+                  // to checked_out is not guaranteed, so a past check-out date
+                  // counts as completed too.
+                  const done = b.status === 'checked_out' || (!!f && f.check_out < todayIso)
+                  const stmt = done && f ? settlementByPeriod.get(stayPeriod(f.check_out)) : undefined
                   return (
                     <tr key={b.id}>
                       <td className="py-2.5 pr-4 font-semibold">{f?.ref ?? '—'}</td>
@@ -184,7 +208,16 @@ export function VendorMoney() {
                         {f ? `${datePkt(f.check_in)} → ${datePkt(f.check_out)}` : '—'}
                       </td>
                       <td className="py-2.5 pr-4 text-ink/60">{b.nights}</td>
-                      <td className="py-2.5 pr-4 text-ink/60">{b.status}</td>
+                      <td className="py-2.5 pr-4 text-ink/60">{done ? 'completed' : STAY_LABEL[b.status] ?? b.status}</td>
+                      <td className="py-2.5 pr-4">
+                        {!done ? (
+                          <span className="text-ink/40">after checkout</span>
+                        ) : stmt ? (
+                          <Chip tone={STATUS_TONE[stmt.status]}>{stmt.status === 'paid' ? 'paid' : STATUS_LABEL[stmt.status]}</Chip>
+                        ) : (
+                          <span className="text-ink/40">next statement</span>
+                        )}
+                      </td>
                       <td className="py-2.5 text-right font-semibold text-deep">{pkr(b.grand_total_pkr)}</td>
                     </tr>
                   )

@@ -54,6 +54,7 @@ export function VendorOverview() {
   const [listingNames, setListingNames] = useState<Map<string, string>>(new Map())
   const [guests, setGuests] = useState<Map<string, string[]>>(new Map())
   const [vouchers, setVouchers] = useState<Map<string, string>>(new Map())
+  const [settlementStatus, setSettlementStatus] = useState<Map<string, string>>(new Map())
   const [loading, setLoading] = useState(true)
   const [now, setNow] = useState(() => Date.now())
 
@@ -79,6 +80,9 @@ export function VendorOverview() {
           .order('created_at', { ascending: false })
           .limit(120),
         supabase.from('listings').select('id, name'),
+        supabase.from('settlements').select('period, status').then(({ data }) => {
+          if (!cancelled) setSettlementStatus(new Map((data ?? []).map((s) => [s.period, s.status as string])))
+        }),
       ])
       if (cancelled) return
 
@@ -274,12 +278,16 @@ export function VendorOverview() {
                   <th className="py-2 pr-4">File</th>
                   <th className="py-2 pr-4">Dates</th>
                   <th className="py-2 pr-4">Nights</th>
+                  <th className="py-2 pr-4">Payment</th>
                   <th className="py-2 text-right">Total</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-hairline">
                 {past.slice(0, 10).map((b) => {
                   const f = files.get(b.booking_file_id)
+                  // Completed stays also carry their money state, from the
+                  // statement of the check-out month.
+                  const stmt = f ? settlementStatus.get(f.check_out.slice(0, 7)) : undefined
                   return (
                     <tr key={b.id}>
                       <td className="py-2.5 pr-4 font-semibold">{f?.ref ?? '—'}</td>
@@ -287,6 +295,17 @@ export function VendorOverview() {
                         {f ? `${datePkt(f.check_in)} → ${datePkt(f.check_out)}` : '—'}
                       </td>
                       <td className="py-2.5 pr-4 text-ink/60">{b.nights}</td>
+                      <td className="py-2.5 pr-4">
+                        {stmt === 'paid' ? (
+                          <Chip tone="ok">paid</Chip>
+                        ) : stmt === 'approved' ? (
+                          <Chip tone="hot">payment on the way</Chip>
+                        ) : stmt === 'draft' ? (
+                          <Chip tone="wait">statement in preparation</Chip>
+                        ) : (
+                          <span className="text-[12px] text-ink/40">next statement</span>
+                        )}
+                      </td>
                       <td className="py-2.5 text-right font-semibold text-deep">{pkr(b.grand_total_pkr)}</td>
                     </tr>
                   )
