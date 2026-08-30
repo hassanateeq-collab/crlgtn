@@ -8,7 +8,7 @@ file is what stands between that and a live pilot booking.*
 1. **Email provider (blocks all outbound mail)**
    - Create a Resend account; verify the Corlington sending domain.
    - Supabase → Edge Functions → Secrets: set `RESEND_API_KEY`, `MAIL_FROM`
-     (e.g. `Corlington <desk@corlington.pk>`).
+     (`Corlington <desk@corlington.com>` — canonical domain, see 2026-08-30).
    - Auth → SMTP: point auth email at the same provider (kills the 2/hr cap).
    - Auth → Email Templates → Magic Link: body must contain `{{ .Token }}`
      (six-digit code), not just the link.

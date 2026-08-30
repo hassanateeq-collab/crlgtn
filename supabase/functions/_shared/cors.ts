@@ -19,7 +19,8 @@ const DEFAULT_ORIGINS = [
   "https://book.corlington.com", // corporate portal
   "https://link.corlington.com", // vendor magic-link pages
   "https://atlas.corlington.com", // ops console
-  // Cutover fallback — REMOVE once the custom domains are verified and serving.
+  // Cutover fallbacks — REMOVE once the custom domains are verified and serving.
+  "https://corlington-site.vercel.app", // marketing site, pre-DNS
   "https://crlgtn.vercel.app",
   "http://localhost:5173", // app dev server
   "http://127.0.0.1:5173",

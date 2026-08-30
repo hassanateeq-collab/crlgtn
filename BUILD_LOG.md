@@ -938,3 +938,82 @@ existing engine (no backend changes needed beyond migration 020, already in):
   land (and remains the desk's fallback after).
 - Hamsun SEF + Clifton set LIVE for owner review (audit-logged; agreement
   still pending — revisit before real corporates onboard).
+
+## 2026-08-30 — Public marketing site live, and lead capture
+
+**Domain decision: `corlington.com` is canonical.** Researched properly rather
+than by feel, and it reversed an earlier recommendation of `.pk`:
+- Identity protection was a **tie**, so it could not decide it. PKNIC publishes
+  **zero** registrant fields for `.pk`/`.com.pk` (verified: 0 identity fields in
+  the WHOIS response); `corlington.com` is already behind Domains By Proxy.
+- What decided it: **`dig DS pk` returns nothing — the `.pk` TLD is not
+  DNSSEC-signed at the root** (confirmed against a root server, Cloudflare's
+  validating resolver, and IANA's delegation record; `.com` and `.in` both
+  return 1 DS record). DNSSEC is therefore *permanently* impossible on any
+  `.pk` domain — a ceiling, not a to-do. That matters because PKNIC's registry
+  was compromised in 2012 (SQLi → ~284 `.pk` domains redirected, incl.
+  google.pk), and DNS redirection is exactly our exposure: a fake
+  `book.corlington.*` would harvest booker OTP codes and would pass DNS
+  validation for a real TLS cert.
+- `corlington.pk` + `corlington.com.pk` are **kept**, to 301 to `.com`, and
+  each needs a **null MX + DMARC p=reject** so they cannot be used to spoof
+  invoice mail — the specific fraud an MOR on d7–d20 terms attracts.
+- Host map: `corlington.com` marketing (only indexed host) · `book.` portal ·
+  `link.` vendor `/r/:token` · `atlas.` ops console.
+- Two standing rules: host the zone somewhere **DNSSEC-capable** (Vercel DNS
+  does not document support — use Cloudflare or GoDaddy DNS, not Vercel NS),
+  and **never buy an OV/EV certificate** — the org name is embedded in the cert
+  and published permanently in Certificate Transparency, undoing the WHOIS
+  privacy. Vercel's default Let's Encrypt DV certs carry no org name.
+- `corlington.com` expires **2027-02-16** (~5 months); the `.pk` pair runs to
+  2028-08-30. Auto-renew the `.com` — it is now the primary asset.
+
+**Marketing site** — new `site/`, its own Vercel project `corlington-site`
+(git-linked to this repo, root directory `site/`, so every push to `main`
+deploys). Live at **https://corlington-site.vercel.app** pending DNS.
+- Deliberately a **separate deployment** from the app: the platform is
+  closed-access and `noindex` with a disallow-all robots.txt; the marketing
+  site is public and indexed. Those postures cannot share a deploy.
+- Two pages: `/` is **corporates only**; `/vendors.html` is the supply side
+  (WhatsApp mock showing the vendor's own rate, six commercial terms, what the
+  verification visit asks of them). Shared `style.css` + `app.js`.
+- **No property names anywhere.** Listings read `Clifton · Deluxe twin · 5★`.
+  This keeps **F-004 vendor anonymity** open — naming properties publicly would
+  have quietly pre-committed us to the non-anonymous option. It also avoids
+  implying a commercial relationship with real Karachi hotels before signing.
+- Imagery: Pakistani cityscape/architecture where authentic; neutral tight
+  crops for interiors, because Pakistani hotel-interior stock does not exist on
+  Unsplash. Every product screen is marked "Illustrative". No fabricated
+  traction — no client logos, no testimonials, no invented statistics.
+- Design note: the first attempt used the Atlas type stack (spec §10) and read
+  as generic AI-template. Public site now uses **Schibsted Grotesk + IBM Plex
+  Mono**, white/`#F5F6F7`, emerald `#0C6B4F`. Site and product now diverge
+  visually — open question whether Atlas should follow.
+- Favicon was still the purple `#863bff` Vite default; replaced with the brand
+  mark (199 bytes, was 9.5 KB).
+
+**Lead capture (migration 021 + `ef_lead`)** — forms no longer open the
+visitor's mail client; they POST and land in the database.
+- `public.leads` is deliberately the **seed of the future CRM**: kind, status
+  (`new`→`contacted`→`qualified`→`converted`/`rejected`), the form fields,
+  provenance (source_page, user_agent, hashed IP) and ops working fields.
+  Verified born client-write-proof by migration 004's default privileges (0
+  write grants to anon/authenticated); RLS on; SELECT restricted to `app.is_ops()`.
+  A lead is a stranger's claim about themselves — it never auto-provisions.
+- `ef_lead` is the **second** function with `verify_jwt = false`, for the same
+  reason as `ef_vendor_respond`: the caller has no credential by definition.
+  Narrowest thing that works — inserts one row, reads nothing, returns nothing
+  about existing data, cannot be used to probe whether a company is a client.
+  Controls: origin allowlist, 5 per 10 min per IP via `check_rate_limit`,
+  honeypot (answers 200 so a bot cannot learn it was caught), hard length caps.
+- Ops email goes through the existing `notify()` — **queued until
+  `RESEND_API_KEY` + `MAIL_FROM` exist**, so leads are captured now and mail
+  starts flowing the moment those secrets land. Set `LEAD_NOTIFY_EMAIL` to
+  choose the destination.
+- Verified end to end on the live site: valid lead stored with line breaks
+  intact, missing fields → 422, bad email → 422, honeypot → 200 storing
+  nothing, disallowed origin gets no `allow-origin` header. Test rows deleted.
+
+**Still open**: registered legal entity name for both footers · confirmation of
+the city list and per-city statuses · the DNS cutover itself (GoDaddy records +
+adding the domain in Vercel — owner access required).
