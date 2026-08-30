@@ -924,3 +924,17 @@ existing engine (no backend changes needed beyond migration 020, already in):
   — the offer's guarded status machine already ensures only the first response
   acts, and later opens simply see the current state. The vendor email now
   says "sent to your whole front-office team — the first answer counts."
+
+## 2026-08-30 — Accounts console: ops Team page + desk-issued passwords
+
+- New `ef_manage_users` (ops-admin only): upsert_ops (registry row + auth
+  account + app_metadata role claim), set_password (issues a password for any
+  existing ops or corporate account — password never stored or logged; audit
+  records only who/when), set_ops_active (cannot deactivate yourself).
+- New **/ops/team** page: members list (role, can-sign-in, active), add member,
+  "Issue password" — generated in the admin's browser, set server-side, shown
+  ONCE with copy, stored nowhere. CorporateEditor gains the same per-booker
+  "Issue password" action. This unblocks real sign-ins before the mail secrets
+  land (and remains the desk's fallback after).
+- Hamsun SEF + Clifton set LIVE for owner review (audit-logged; agreement
+  still pending — revisit before real corporates onboard).

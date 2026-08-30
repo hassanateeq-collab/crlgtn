@@ -13,6 +13,7 @@ const tabs = [
   { to: '/ops/vendors', label: 'Supply' },
   { to: '/ops/corporates', label: 'Corporates' },
   { to: '/ops/money', label: 'Money' },
+  { to: '/ops/team', label: 'Team' },
   { to: '/ops/diagnostics', label: 'Diagnostics' },
 ]
 

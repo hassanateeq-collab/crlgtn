@@ -15,284 +15,27 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<style>
-:root{
-  --ink:#0B0E11; --bg:#FFFFFF; --band:#F5F6F7; --line:#E3E6E8; --line-2:#EEF0F2;
-  --muted:#5F6871; --accent:#0C6B4F; --accent-2:#E7F1ED; --amber:#B45309; --amber-2:#FDF3E4;
-  --sh-sm:0 1px 2px rgba(11,14,17,.05);
-  --sh:0 1px 2px rgba(11,14,17,.06),0 10px 26px -18px rgba(11,14,17,.22);
-  --sh-lg:0 1px 3px rgba(11,14,17,.07),0 28px 60px -32px rgba(11,14,17,.30);
-}
-*{margin:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--ink);font:16px/1.55 "Schibsted Grotesk",system-ui,sans-serif;-webkit-font-smoothing:antialiased;letter-spacing:-.006em}
-a{color:inherit}
-img{max-width:100%;display:block}
-.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
-.mono{font-family:"IBM Plex Mono",monospace}
-
-/* ── nav ─────────────────────────────────────────────────── */
-.nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line-2)}
-.nav .wrap{display:flex;align-items:center;gap:30px;height:62px}
-.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18.5px;letter-spacing:-.028em;text-decoration:none}
-.logo .mk{width:17px;height:17px;border-radius:5px;background:var(--accent);position:relative;flex:none}
-.logo .mk:after{content:"";position:absolute;inset:5px 5px auto auto;width:5px;height:5px;border-radius:50%;background:#fff}
-.nav .lnk{display:flex;gap:24px;margin-left:6px}
-.nav .lnk a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none}
-.nav .lnk a:hover{color:var(--ink)}
-.nav .act{margin-left:auto;display:flex;gap:9px;align-items:center}
-
-/* ── buttons ─────────────────────────────────────────────── */
-.btn{display:inline-flex;align-items:center;gap:8px;background:var(--ink);color:#fff;border:1px solid var(--ink);border-radius:9px;
-  font:600 14px "Schibsted Grotesk";letter-spacing:-.01em;padding:11px 18px;text-decoration:none;cursor:pointer;transition:.15s}
-.btn:hover{background:#20262c;border-color:#20262c}
-.btn.alt{background:var(--accent);border-color:var(--accent)}
-.btn.alt:hover{background:#0a5741;border-color:#0a5741}
-.btn.line{background:#fff;color:var(--ink);border-color:var(--line)}
-.btn.line:hover{background:var(--band);border-color:#d2d7db}
-.btn.sm{padding:8px 14px;font-size:13.2px;border-radius:8px}
-.btn.xs{padding:6px 12px;font-size:12.2px;border-radius:7px}
-
-/* ── generic section ─────────────────────────────────────── */
-section{padding:88px 0}
-.band{background:var(--band);border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
-.tag{display:inline-flex;align-items:center;gap:7px;font:600 12px "Schibsted Grotesk";letter-spacing:.02em;color:var(--accent);
-  background:var(--accent-2);border-radius:99px;padding:5px 12px;margin-bottom:18px}
-h1{font-weight:700;font-size:clamp(38px,5.2vw,62px);line-height:1.04;letter-spacing:-.038em;max-width:16ch}
-h2{font-weight:700;font-size:clamp(28px,3.4vw,40px);line-height:1.1;letter-spacing:-.032em;max-width:20ch}
-h3{font-weight:600;letter-spacing:-.02em}
-.lede{color:var(--muted);font-size:18px;line-height:1.56;max-width:50ch;margin-top:18px}
-.sub{color:var(--muted);font-size:16.5px;line-height:1.58;max-width:56ch;margin-top:14px}
-
-/* ── hero ────────────────────────────────────────────────── */
-.hero{padding:74px 0 0;position:relative;overflow:hidden}
-.hero:before{content:"";position:absolute;left:50%;top:-380px;width:1100px;height:700px;transform:translateX(-50%);
-  background:radial-gradient(50% 50% at 50% 50%,rgba(12,107,79,.09),transparent 72%);pointer-events:none}
-.hero .wrap{position:relative}
-.hero-top{max-width:780px}
-.hero .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}
-.hero .fine{margin-top:16px;font-size:13.4px;color:var(--muted)}
-.shot-wrap{margin-top:52px;position:relative}
-.shot-wrap:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:120px;
-  background:linear-gradient(to bottom,transparent,var(--bg));pointer-events:none}
-
-/* ── product UI ──────────────────────────────────────────── */
-.ui{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh-lg);overflow:hidden}
-.ui-bar{display:flex;align-items:center;gap:10px;padding:11px 15px;border-bottom:1px solid var(--line-2);background:#FCFCFD}
-.dots{display:flex;gap:5px}.dots i{width:9px;height:9px;border-radius:50%;background:#E1E5E8;display:block}
-.ui-bar .url{font:500 11.5px "IBM Plex Mono";color:var(--muted);background:var(--band);border-radius:6px;padding:4px 11px}
-.ui-bar .ill{margin-left:auto;font:600 10px "Schibsted Grotesk";letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.ui-head{display:flex;align-items:center;gap:14px;padding:17px 20px;border-bottom:1px solid var(--line-2);flex-wrap:wrap}
-.ref{font:600 11.5px "IBM Plex Mono";color:var(--accent);background:var(--accent-2);border-radius:6px;padding:4px 9px}
-.ui-head h4{font-size:15.5px;font-weight:600;letter-spacing:-.018em}
-.ui-head .meta{font-size:13px;color:var(--muted)}
-.cdown{margin-left:auto;display:flex;align-items:center;gap:8px;background:var(--amber-2);border:1px solid #F4DFBE;border-radius:8px;padding:6px 11px}
-.cdown b{font:600 13px "IBM Plex Mono";color:var(--amber)}
-.cdown span{font-size:11.4px;color:var(--amber);font-weight:600}
-.offer{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:15px 20px;border-bottom:1px solid var(--line-2)}
-.offer:last-child{border-bottom:0}
-.o-l{display:flex;align-items:center;gap:13px;min-width:0}
-.o-pic{width:46px;height:46px;border-radius:9px;object-fit:cover;flex:none;background:var(--band)}
-.o-name{font-size:14.6px;font-weight:600;letter-spacing:-.015em}
-.o-meta{font-size:12.6px;color:var(--muted);margin-top:2px}
-.pill{display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:3px 9px;font-size:11.2px;font-weight:600;letter-spacing:-.005em}
-.pill.ok{background:var(--accent-2);color:var(--accent)}
-.pill.warn{background:var(--amber-2);color:var(--amber)}
-.pill.mute{background:var(--band);color:var(--muted)}
-.o-r{display:flex;align-items:center;gap:15px}
-.amt{text-align:right}
-.amt b{display:block;font:600 15px "IBM Plex Mono";letter-spacing:-.02em}
-.amt span{font-size:11.5px;color:var(--muted)}
-.ui-foot{display:flex;align-items:center;gap:12px;padding:13px 20px;background:#FCFCFD;border-top:1px solid var(--line-2);flex-wrap:wrap}
-.ui-foot p{font-size:12.6px;color:var(--muted)}
-
-/* ── stat strip ──────────────────────────────────────────── */
-.strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
-.strip div{padding:22px 24px;border-right:1px solid var(--line-2)}
-.strip div:last-child{border-right:0}
-.strip b{display:block;font-size:26px;font-weight:700;letter-spacing:-.035em}
-.strip span{display:block;font-size:13.2px;color:var(--muted);margin-top:3px}
-
-/* ── category cards ──────────────────────────────────────── */
-.cats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:44px}
-.cat{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:var(--sh-sm);transition:.18s}
-.cat:hover{box-shadow:var(--sh);transform:translateY(-2px)}
-.cat .ph{aspect-ratio:4/3;overflow:hidden;background:var(--band)}
-.cat .ph img{width:100%;height:100%;object-fit:cover}
-.cat .bd{padding:17px 18px 20px}
-.cat .cd{font:600 10.5px "IBM Plex Mono";color:var(--accent);letter-spacing:.05em}
-.cat h3{font-size:16.5px;margin:7px 0 6px}
-.cat p{font-size:13.6px;color:var(--muted);line-height:1.5}
-
-/* ── steps ───────────────────────────────────────────────── */
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
-.step{background:#fff;border:1px solid var(--line);border-radius:14px;padding:24px 22px 22px;box-shadow:var(--sh-sm)}
-.step .n{width:27px;height:27px;border-radius:8px;background:var(--ink);color:#fff;display:grid;place-items:center;
-  font:600 12.5px "IBM Plex Mono";margin-bottom:15px}
-.step h3{font-size:17px;margin-bottom:7px}
-.step p{font-size:14.2px;color:var(--muted);line-height:1.56}
-.step .frag{margin-top:16px;border:1px solid var(--line-2);border-radius:9px;background:#FCFCFD;padding:11px 12px;font-size:12.4px}
-.frag .fr{display:flex;align-items:center;gap:8px;padding:4px 0}
-.frag .fr b{font:600 11.5px "IBM Plex Mono"}
-.frag .fr span{color:var(--muted);font-size:12px}
-.frag .fr .pill{margin-left:auto}
-
-/* ── split feature ───────────────────────────────────────── */
-.feat{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
-.feat.rev>div:first-child{order:2}
-.feat ul{list-style:none;margin-top:22px}
-.feat li{display:flex;gap:11px;padding:11px 0;border-top:1px solid var(--line-2);font-size:14.8px;color:var(--muted);line-height:1.55}
-.feat li:first-child{border-top:0}
-.feat li svg{flex:none;margin-top:3px}
-.feat li b{color:var(--ink);font-weight:600}
-.shot-side{border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--sh);background:#fff}
-
-/* phone */
-.phone{width:290px;margin:0 auto;border:9px solid #14181C;border-radius:34px;overflow:hidden;box-shadow:var(--sh-lg);background:#E9EDF0}
-.wa-top{background:#0C6B4F;color:#fff;padding:11px 14px;display:flex;align-items:center;gap:9px}
-.wa-top .av{width:27px;height:27px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:11px;font-weight:700}
-.wa-top b{font-size:13.4px;font-weight:600}
-.wa-top span{font-size:10.6px;opacity:.8;display:block}
-.wa-body{padding:14px 12px;min-height:290px;background:#ECE5DD}
-.msg{background:#fff;border-radius:9px;padding:11px 12px;font-size:12.7px;line-height:1.5;box-shadow:0 1px 1px rgba(0,0,0,.08);margin-bottom:9px}
-.msg .h{font-weight:700;margin-bottom:5px;font-size:12.9px}
-.msg .row{display:flex;justify-content:space-between;padding:2px 0;color:#4B5560}
-.msg .lnk{color:#0C6B4F;font-weight:600;margin-top:8px;display:block;word-break:break-all;font-family:"IBM Plex Mono";font-size:11.2px}
-.msg .t{text-align:right;font-size:9.8px;color:#8E9AA4;margin-top:5px}
-.wa-btns{display:flex;gap:6px;margin-top:2px}
-.wa-btns span{flex:1;background:#fff;border-radius:8px;text-align:center;padding:9px 4px;font-size:11.8px;font-weight:600;color:#0C6B4F;box-shadow:0 1px 1px rgba(0,0,0,.08)}
-
-/* invoice */
-.inv{padding:20px}
-.inv .ihd{display:flex;align-items:baseline;gap:10px;margin-bottom:15px}
-.inv .ihd b{font-size:15px;font-weight:600;letter-spacing:-.02em}
-.inv .ihd .mono{font-size:11.5px;color:var(--muted);margin-left:auto}
-.inv table{width:100%;border-collapse:collapse}
-.inv td{padding:9px 0;border-bottom:1px solid var(--line-2);font-size:13.2px}
-.inv td:last-child{text-align:right;font-family:"IBM Plex Mono";font-weight:500;font-size:12.6px}
-.inv td span{display:block;font-size:11.4px;color:var(--muted);margin-top:2px}
-.inv tr:last-child td{border-bottom:0;font-weight:700;padding-top:13px}
-.inv .tot{display:flex;justify-content:space-between;margin-top:14px;padding-top:13px;border-top:2px solid var(--ink);font-weight:700}
-.inv .tot .mono{font-size:15px}
-
-/* ── two sides ───────────────────────────────────────────── */
-.sides{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
-.sd{border:1px solid var(--line);border-radius:16px;padding:30px 30px 32px;background:#fff;box-shadow:var(--sh-sm)}
-.sd.dark{background:var(--ink);border-color:var(--ink);color:#fff}
-.sd h3{font-size:21px;margin:12px 0 8px}
-.sd>p{font-size:14.6px;color:var(--muted);margin-bottom:20px}
-.sd.dark>p{color:rgba(255,255,255,.6)}
-.sd ul{list-style:none}
-.sd li{padding:12px 0;border-top:1px solid var(--line-2);font-size:14.2px;color:var(--muted);line-height:1.52}
-.sd.dark li{border-color:rgba(255,255,255,.11);color:rgba(255,255,255,.66)}
-.sd li b{display:block;color:var(--ink);font-weight:600;font-size:14.2px;margin-bottom:2px}
-.sd.dark li b{color:#fff}
-.sd .btn{margin-top:22px}
-.sd.dark .tag{background:rgba(255,255,255,.1);color:#7FD9BC}
-
-/* ── coverage ────────────────────────────────────────────── */
-.cities{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:38px}
-.ct{border:1px solid var(--line);border-radius:11px;padding:15px 16px;background:#fff;display:flex;align-items:center;gap:9px}
-.ct b{font-size:14.8px;font-weight:600;letter-spacing:-.018em}
-.ct .pill{margin-left:auto}
-
-/* ── verification ────────────────────────────────────────── */
-.ver{display:grid;grid-template-columns:1.05fr 1fr;gap:52px;align-items:center}
-.ver .grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 30px;margin-top:26px}
-.ver .grid div{padding:16px 0;border-top:1px solid var(--line-2)}
-.ver .grid b{display:block;font-size:14.4px;font-weight:600;margin-bottom:4px}
-.ver .grid p{font-size:13.5px;color:var(--muted);line-height:1.52}
-.ver-pic{border-radius:16px;overflow:hidden;box-shadow:var(--sh);aspect-ratio:4/5}
-.ver-pic img{width:100%;height:100%;object-fit:cover}
-
-/* ── form ────────────────────────────────────────────────── */
-.fw{display:grid;grid-template-columns:340px 1fr;gap:52px;margin-top:40px;align-items:start}
-.fa p{font-size:14.5px;color:var(--muted);line-height:1.58;margin-top:12px}
-.fa .mailto{display:inline-block;margin-top:18px;font:500 13.8px "IBM Plex Mono";color:var(--accent);text-decoration:none}
-.fcard{border:1px solid var(--line);border-radius:16px;padding:28px;background:#fff;box-shadow:var(--sh-sm)}
-.seg{display:flex;gap:5px;background:var(--band);border-radius:10px;padding:4px;margin-bottom:24px}
-.seg button{flex:1;border:0;background:none;border-radius:7px;padding:10px 8px;font:600 13.6px "Schibsted Grotesk";color:var(--muted);cursor:pointer;letter-spacing:-.012em}
-.seg button.on{background:#fff;color:var(--ink);box-shadow:var(--sh-sm)}
-#f-title{font-size:19px;font-weight:600;letter-spacing:-.022em;margin-bottom:5px}
-#f-sub{font-size:14.2px;color:var(--muted);margin-bottom:22px}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-label.f{display:block;margin-bottom:14px}
-label.f b{display:block;font-size:12.8px;font-weight:600;color:var(--ink);margin-bottom:6px}
-input,textarea{width:100%;border:1px solid var(--line);border-radius:9px;background:#fff;padding:11px 13px;
-  font:400 14.6px "Schibsted Grotesk";color:var(--ink)}
-textarea{min-height:78px;resize:vertical;font-family:"Schibsted Grotesk"}
-input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-2)}
-.ffoot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:8px}
-.ffoot p{font-size:12.4px;color:var(--muted);max-width:38ch;line-height:1.48}
-
-/* ── footer ──────────────────────────────────────────────── */
-footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
-.ftop{display:flex;gap:48px;flex-wrap:wrap}
-.ftop>div:first-child{max-width:32ch}
-.ftop p{font-size:14px;color:var(--muted);margin-top:13px;line-height:1.58}
-.flinks{margin-left:auto;display:flex;gap:60px}
-.flinks b{display:block;font-size:12.6px;font-weight:600;margin-bottom:12px}
-.flinks a{display:block;font-size:14px;color:var(--muted);text-decoration:none;margin-bottom:9px}
-.flinks a:hover{color:var(--ink)}
-.legal{margin-top:40px;padding-top:22px;border-top:1px solid var(--line-2);display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-
-/* anonymous vendor tile in the product shot */
-.o-tile{width:46px;height:46px;border-radius:9px;flex:none;display:grid;place-items:center;
-  background:var(--accent-2);color:var(--accent);font:600 14px "IBM Plex Mono";letter-spacing:-.02em}
-.o-tile.mute{background:var(--band);color:var(--muted)}
-/* category icon tiles replace stock interiors */
-.cat .ph{aspect-ratio:16/9;display:grid;place-items:center;background:var(--band);border-bottom:1px solid var(--line-2)}
-.cat .ph svg{width:34px;height:34px;color:var(--accent)}
-/* place band */
-.placeband{position:relative;border-radius:16px;overflow:hidden;min-height:260px;display:flex;align-items:flex-end;box-shadow:var(--sh)}
-.placeband img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.placeband:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,12,15,.86) 0%,rgba(8,12,15,.55) 46%,rgba(8,12,15,.12) 100%)}
-.pb-txt{position:relative;padding:32px 34px;max-width:56ch;color:#fff}
-.pb-txt p{font-size:16.5px;line-height:1.55;color:rgba(255,255,255,.9)}
-@media(max-width:640px){.placeband:after{background:linear-gradient(180deg,rgba(8,12,15,.35),rgba(8,12,15,.9))}.pb-txt{padding:24px 20px}}
-
-@media(max-width:980px){
-  .cats,.steps,.cities,.strip{grid-template-columns:repeat(2,1fr)}
-  .strip div:nth-child(2){border-right:0}
-  .strip div:nth-child(-n+2){border-bottom:1px solid var(--line-2)}
-  .feat,.ver,.fw,.sides,.two,.ver .grid{grid-template-columns:1fr;gap:34px}
-  .feat.rev>div:first-child{order:0}
-  .ver .grid{gap:0}
-  .ver-pic{aspect-ratio:16/10}
-}
-@media(max-width:640px){
-  section{padding:60px 0}
-  .wrap{padding:0 20px}
-  .cats,.cities{grid-template-columns:1fr}
-  .nav .lnk{display:none}
-  .ui-head{gap:9px}
-  .cdown{margin-left:0}
-  .offer{grid-template-columns:1fr;align-items:flex-start}
-  .o-r{width:100%;justify-content:space-between}
-}
-</style>
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
 
 <nav class="nav">
   <div class="wrap">
-    <a class="logo" href="#top"><span class="mk"></span>Corlington</a>
+    <a class="logo" href="/"><span class="mk"></span>Corlington</a>
     <div class="lnk">
       <a href="#what">What we book</a>
       <a href="#how">How it works</a>
-      <a href="#vendors">For vendors</a>
       <a href="#coverage">Coverage</a>
     </div>
     <div class="act">
-      <a class="btn line sm" href="#request" data-open="vendor">List with us</a>
-      <a class="btn sm" href="#request" data-open="corporate">Request access</a>
+      <a class="btn line sm" href="/vendors.html">List with us</a>
+      <a class="btn sm" href="#request">Request access</a>
     </div>
   </div>
 </nav>
 
 <main id="top">
 
-  <!-- ── hero ─────────────────────────────────────────────── -->
   <div class="hero">
     <div class="wrap">
       <div class="hero-top">
@@ -300,7 +43,7 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
         <h1>The corporate booking desk for Pakistan.</h1>
         <p class="lede">Hotels, serviced apartments, vehicles and airport transfers. File one request — verified vendors compete for it inside a fixed window, at rates agreed with you in advance. Everything lands on one monthly invoice.</p>
         <div class="cta">
-          <a class="btn alt" href="#request" data-open="corporate">Request a company account</a>
+          <a class="btn alt" href="#request">Request a company account</a>
           <a class="btn line" href="#how">See how it works</a>
         </div>
         <p class="fine">Closed platform · accounts issued to registered companies · every vendor verified on site</p>
@@ -370,7 +113,6 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </div>
 
-  <!-- ── strip ────────────────────────────────────────────── -->
   <section style="padding-top:56px;padding-bottom:0">
     <div class="wrap">
       <div class="strip">
@@ -382,8 +124,6 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </section>
 
-
-  <!-- ── place band ───────────────────────────────────────── -->
   <section style="padding-top:60px;padding-bottom:0">
     <div class="wrap">
       <div class="placeband">
@@ -396,7 +136,6 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </section>
 
-  <!-- ── what we book ─────────────────────────────────────── -->
   <section id="what">
     <div class="wrap">
       <span class="tag">What we book</span>
@@ -404,26 +143,37 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
       <p class="sub">Four categories that would otherwise mean a dozen suppliers, a dozen rate negotiations and a dozen invoices to reconcile at month end.</p>
       <div class="cats">
         <div class="cat">
-          <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 20V7l7-4 7 4v13M9.5 20v-4h5v4M9 11h1.5M13.5 11H15"/></svg></div>
+          <div class="ph">
+            <img loading="lazy" alt="Hotel room" src="https://images.unsplash.com/photo-1731336478850-6bce7235e320?auto=format&fit=crop&w=700&q=68">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M5 20V7l7-4 7 4v13M9.5 20v-4h5v4M9 11h1.5M13.5 11H15"/></svg></span>
+          </div>
           <div class="bd"><div class="cd">P1 — P3</div><h3>Hotels</h3><p>Room only, bed and breakfast, or half board — against a countersigned rate card.</p></div>
         </div>
         <div class="cat">
-          <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V4h8v16M14 9h4v11M8.5 7.5h1.5M8.5 11h1.5M8.5 14.5h1.5"/></svg></div>
+          <div class="ph">
+            <img loading="lazy" alt="Serviced apartment" src="https://images.unsplash.com/photo-1647792855184-af42f1720b91?auto=format&fit=crop&w=700&q=68">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h16M6 20V4h8v16M14 9h4v11M8.5 7.5h1.5M8.5 11h1.5M8.5 14.5h1.5"/></svg></span>
+          </div>
           <div class="bd"><div class="cd">A1 — A4</div><h3>Serviced apartments</h3><p>Studio through two-bed, nightly for a visiting team or monthly for a posting.</p></div>
         </div>
         <div class="cat">
-          <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16.5h16M5.5 16.5V19H8v-2.5M16 16.5V19h2.5v-2.5M4.5 16.5l1-5.2A2 2 0 0 1 7.4 9.7h9.2a2 2 0 0 1 1.9 1.6l1 5.2M7 13.3h10"/></svg></div>
+          <div class="ph">
+            <img loading="lazy" alt="Vehicle on a Pakistani road" src="https://images.unsplash.com/photo-1621523818501-d4028b49d5bb?auto=format&fit=crop&w=700&q=68">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 16.5h16M5.5 16.5V19H8v-2.5M16 16.5V19h2.5v-2.5M4.5 16.5l1-5.2A2 2 0 0 1 7.4 9.7h9.2a2 2 0 0 1 1.9 1.6l1 5.2M7 13.3h10"/></svg></span>
+          </div>
           <div class="bd"><div class="cd">V1 — V3</div><h3>Vehicle hire</h3><p>Self-drive, with driver, or driver and fuel — insurance and tracker verified.</p></div>
         </div>
         <div class="cat">
-          <div class="ph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.35" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13.2l17-6.4M6.8 11.9L5.2 8.4l1.8-.7 3 2.7M9.6 17.6l1.5 3 1.8-.7-.3-4M4 17.5h4"/></svg></div>
+          <div class="ph">
+            <img loading="lazy" alt="City road and towers" src="https://images.unsplash.com/photo-1710232239063-ee788b5752ac?auto=format&fit=crop&w=700&q=68">
+            <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 13.2l17-6.4M6.8 11.9L5.2 8.4l1.8-.7 3 2.7M9.6 17.6l1.5 3 1.8-.7-.3-4M4 17.5h4"/></svg></span>
+          </div>
           <div class="bd"><div class="cd">TF</div><h3>Airport transfers</h3><p>Fixed contracted prices by zone, with meet-and-greet and a waiting allowance.</p></div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ── how it works ─────────────────────────────────────── -->
   <section id="how" class="band">
     <div class="wrap">
       <span class="tag">How it works</span>
@@ -460,53 +210,17 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </section>
 
-  <!-- ── vendor side ──────────────────────────────────────── -->
-  <section id="vendors">
-    <div class="wrap">
-      <div class="feat">
-        <div>
-          <span class="tag">For vendors</span>
-          <h2>Corporate demand. No dashboard to learn.</h2>
-          <p class="sub">Hotels, apartment operators and fleet owners answer on the tool they already use all day. There is no account to create and no portal to log into.</p>
-          <ul>
-            <li><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#0C6B4F" stroke-width="1.4"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#0C6B4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>One tap to answer</b>Accept at the agreed rate, counter with a different room, or decline — straight from the message.</span></li>
-            <li><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#0C6B4F" stroke-width="1.4"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#0C6B4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>You set the ceiling</b>Your rate card is countersigned before you go live, and nothing is ever sold below it.</span></li>
-            <li><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#0C6B4F" stroke-width="1.4"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#0C6B4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>No listing fee</b>Commission is a share of gross on bookings that complete, paid against a reconciled settlement run.</span></li>
-          </ul>
-          <a class="btn alt" href="#request" data-open="vendor" style="margin-top:26px">List your property or fleet</a>
-        </div>
-        <div>
-          <div class="phone">
-            <div class="wa-top"><span class="av">C</span><div><b>Corlington</b><span>Business account</span></div></div>
-            <div class="wa-body">
-              <div class="msg">
-                <div class="h">New request · CF-2613-KHI</div>
-                <div class="row"><span>Dates</span><span>14 → 17 Sept · 3 nights</span></div>
-                <div class="row"><span>Rooms</span><span>2 × twin, 1 × single</span></div>
-                <div class="row"><span>Package</span><span>P2 · with breakfast</span></div>
-                <div class="row"><span>Respond by</span><span>12:31 today</span></div>
-                <span class="lnk">link.corlington.com/r/k4m2xq</span>
-                <div class="t">09:31 ✓✓</div>
-              </div>
-              <div class="wa-btns"><span>Accept</span><span>Counter</span><span>Decline</span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── corporate side / invoice ─────────────────────────── -->
-  <section class="band">
+  <section>
     <div class="wrap">
       <div class="feat rev">
         <div>
-          <span class="tag">For corporates</span>
+          <span class="tag">Invoicing</span>
           <h2>One invoice. Every city, every category.</h2>
           <p class="sub">Consolidated monthly on your agreed credit terms, itemised down to the stay, and reconciled before it reaches you. Bank transfer only — nothing is payable at the desk.</p>
           <ul>
             <li><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#0C6B4F" stroke-width="1.4"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#0C6B4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Approval built in</b>Countersign sends anything above your threshold to a nominated approver before it is final.</span></li>
             <li><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#0C6B4F" stroke-width="1.4"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#0C6B4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Rates agreed in advance</b>You see the contracted rate, not a price discovered at checkout.</span></li>
+            <li><svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7.2" stroke="#0C6B4F" stroke-width="1.4"/><path d="M4.8 8.2l2.1 2.1 4.3-4.4" stroke="#0C6B4F" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><span><b>Verified supply only</b>Every vendor visited, photographed to a fixed list, amenities confirmed on site.</span></li>
           </ul>
         </div>
         <div class="shot-side">
@@ -526,8 +240,7 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </section>
 
-  <!-- ── verification ─────────────────────────────────────── -->
-  <section>
+  <section class="band">
     <div class="wrap">
       <div class="ver">
         <div>
@@ -548,8 +261,7 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </section>
 
-  <!-- ── coverage ─────────────────────────────────────────── -->
-  <section id="coverage" class="band">
+  <section id="coverage">
     <div class="wrap">
       <span class="tag">Coverage</span>
       <h2>National by design, city by city in practice.</h2>
@@ -567,59 +279,22 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
     </div>
   </section>
 
-  <!-- ── two sides ────────────────────────────────────────── -->
-  <section>
-    <div class="wrap">
-      <span class="tag">Two sides of one desk</span>
-      <h2>A marketplace, not a middleman you chase.</h2>
-      <div class="sides">
-        <div class="sd">
-          <span class="tag">For corporates</span>
-          <h3>Your travel desk, without the desk.</h3>
-          <p>For the person who books for everyone else and gets blamed for the invoice.</p>
-          <ul>
-            <li><b>Verified supply only</b>Every vendor visited, photographed to a fixed list, amenities confirmed on site.</li>
-            <li><b>One monthly invoice</b>Consolidated across cities and categories, on your credit terms.</li>
-            <li><b>Approval built in</b>Countersign above your own threshold, by your own approver.</li>
-          </ul>
-          <a class="btn alt" href="#request" data-open="corporate">Request a company account</a>
-        </div>
-        <div class="sd dark">
-          <span class="tag">For vendors</span>
-          <h3>Demand without the software.</h3>
-          <p>For hotels, apartment operators and fleet owners who want corporate business.</p>
-          <ul>
-            <li><b>Answer on WhatsApp</b>One tap to accept, counter or decline. No account, no password.</li>
-            <li><b>Parity and non-circumvention</b>Written into the agreement, binding in both directions.</li>
-            <li><b>Paid on agreed terms</b>Against a reconciled settlement run, not whenever a client gets round to it.</li>
-          </ul>
-          <a class="btn line" href="#request" data-open="vendor">List with us</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ── request ──────────────────────────────────────────── -->
   <section id="request" class="band">
     <div class="wrap">
       <span class="tag">Request access</span>
-      <h2>Tell us which side you are on.</h2>
+      <h2>Open a company account.</h2>
       <div class="fw">
         <div class="fa">
           <h3 style="font-size:17px">A closed platform, on purpose.</h3>
-          <p>Accounts are issued to registered companies, and vendors join after a verification visit. That is what lets us stand behind everything on the platform.</p>
+          <p>Accounts are issued to registered companies. We will come back with terms, set your bookers up, and configure approvals to match how your company already signs things off.</p>
           <a class="mailto" href="mailto:desk@corlington.com">desk@corlington.com</a>
         </div>
         <div class="fcard">
-          <div class="seg" role="tablist">
-            <button id="tab-corporate" class="on" onclick="pick('corporate')">I book for a company</button>
-            <button id="tab-vendor" onclick="pick('vendor')">I am a vendor</button>
-          </div>
-          <form id="frm" onsubmit="return send(event)">
+          <form id="frm">
             <div id="f-title">Request a company account</div>
             <p id="f-sub">We will come back with terms and set your team up.</p>
             <div class="two">
-              <label class="f"><b id="l-org">Company name</b><input name="org" required autocomplete="organization"></label>
+              <label class="f"><b>Company name</b><input name="org" required autocomplete="organization"></label>
               <label class="f"><b>Your name</b><input name="person" required autocomplete="name"></label>
             </div>
             <div class="two">
@@ -627,16 +302,30 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
               <label class="f"><b>Phone or WhatsApp</b><input name="phone" required autocomplete="tel"></label>
             </div>
             <div class="two">
-              <label class="f"><b id="l-city">Which cities</b><input name="city"></label>
-              <label class="f"><b id="l-extra">Rough monthly volume</b><input name="extra"></label>
+              <label class="f"><b>Which cities</b><input name="city"></label>
+              <label class="f"><b>Rough monthly volume</b><input name="extra"></label>
             </div>
+            <label class="f hp" aria-hidden="true"><b>Company website</b><input name="company_website" tabindex="-1" autocomplete="off"></label>
             <label class="f"><b>Anything we should know</b><textarea name="notes" placeholder="Optional"></textarea></label>
             <div class="ffoot">
               <button class="btn alt" type="submit">Send request</button>
-              <p>Opens your email app with the request filled in — nothing is submitted from this page.</p>
+              <p>We reply from desk@corlington.com, usually within one working day.</p>
             </div>
+            <p class="fmsg" id="f-note" role="status" aria-live="polite"></p>
           </form>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top:0">
+    <div class="wrap">
+      <div class="vband">
+        <div>
+          <h3>Do you run a hotel, apartment block or fleet?</h3>
+          <p>Corporate demand, answered on WhatsApp — no account to create and no software to learn.</p>
+        </div>
+        <a class="btn" href="/vendors.html">List with us →</a>
       </div>
     </div>
   </section>
@@ -647,20 +336,22 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
   <div class="wrap">
     <div class="ftop">
       <div>
-        <a class="logo" href="#top"><span class="mk"></span>Corlington</a>
+        <a class="logo" href="/"><span class="mk"></span>Corlington</a>
         <p>The corporate booking desk for Pakistan — hotels, serviced apartments, vehicle hire and transfers, booked against verified supply and settled on terms.</p>
       </div>
       <div class="flinks">
         <div>
-          <b>Platform</b>
+          <b>For corporates</b>
           <a href="#what">What we book</a>
           <a href="#how">How it works</a>
           <a href="#coverage">Coverage</a>
+          <a href="#request">Request access</a>
         </div>
         <div>
-          <b>Contact</b>
+          <b>For vendors</b>
+          <a href="/vendors.html">List with us</a>
+          <a href="/vendors.html#terms">Commercial terms</a>
           <a href="mailto:desk@corlington.com">desk@corlington.com</a>
-          <a href="#request">Request access</a>
         </div>
       </div>
     </div>
@@ -673,48 +364,7 @@ footer{border-top:1px solid var(--line-2);padding:52px 0 60px}
   </div>
 </footer>
 
-<script>
-var DESK = "desk@corlington.com";
-var MODE = {
-  corporate:{title:"Request a company account",sub:"We will come back with terms and set your team up.",
-    org:"Company name",city:"Which cities",extra:"Rough monthly volume",subject:"Company account request"},
-  vendor:{title:"List with us",sub:"We will arrange a verification visit and agree a rate card before anything goes live.",
-    org:"Business name",city:"City and area",extra:"Rooms or vehicles",subject:"Vendor listing request"}
-};
-var current = "corporate";
-function pick(w){
-  current = w; var m = MODE[w];
-  document.getElementById("f-title").textContent = m.title;
-  document.getElementById("f-sub").textContent = m.sub;
-  document.getElementById("l-org").textContent = m.org;
-  document.getElementById("l-city").textContent = m.city;
-  document.getElementById("l-extra").textContent = m.extra;
-  document.getElementById("tab-corporate").className = w === "corporate" ? "on" : "";
-  document.getElementById("tab-vendor").className = w === "vendor" ? "on" : "";
-}
-document.querySelectorAll("[data-open]").forEach(function(el){
-  el.addEventListener("click", function(){ pick(el.getAttribute("data-open")); });
-});
-function send(e){
-  e.preventDefault();
-  var f = e.target, m = MODE[current], v = function(n){ return (f[n].value || "").trim(); };
-  var body = [m.org+": "+v("org"),"Contact: "+v("person"),"Email: "+v("email"),"Phone: "+v("phone"),
-    m.city+" — "+v("city"),m.extra+" — "+v("extra"),"","Notes:",v("notes")||"—"].join("\n");
-  window.location.href = "mailto:"+DESK+"?subject="+encodeURIComponent("Corlington — "+m.subject+" — "+v("org"))
-    +"&body="+encodeURIComponent(body);
-  return false;
-}
-document.getElementById("yr").textContent = new Date().getFullYear();
-// Live countdown on the hero product shot.
-(function(){
-  var t = 6442, el = document.getElementById("cd");
-  if(!el) return;
-  setInterval(function(){
-    t = t > 0 ? t - 1 : 6442;
-    var h = Math.floor(t/3600), m = String(Math.floor(t%3600/60)).padStart(2,"0"), s = String(t%60).padStart(2,"0");
-    el.textContent = "0"+h+":"+m+":"+s;
-  }, 1000);
-})();
-</script>
+<script>window.FORM_MODE = "corporate";</script>
+<script src="/app.js"></script>
 </body>
 </html>

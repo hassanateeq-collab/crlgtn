@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { upsertCorporate, ApiError, type CorporatePayload } from '@/lib/api'
+import { setUserPassword, upsertCorporate, ApiError, type CorporatePayload } from '@/lib/api'
+import { generatePassword } from '@/lib/passwords'
 import {
   CORP_TIERS,
   TERMS_BY_TIER,
@@ -81,6 +82,7 @@ export function CorporateEditor() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [saved, setSaved] = useState<string | null>(null)
+  const [issued, setIssued] = useState<{ email: string; password: string } | null>(null)
   const [loaded, setLoaded] = useState(isNew)
 
   useEffect(() => {
@@ -137,6 +139,21 @@ export function CorporateEditor() {
 
   const setUser = (i: number, patch: Partial<UserDraft>) => setUsers((us) => us.map((u, j) => (j === i ? { ...u, ...patch } : u)))
 
+  async function issuePassword(email: string) {
+    setBusy(true)
+    setError(null)
+    setIssued(null)
+    try {
+      const password = generatePassword()
+      await setUserPassword(email, password)
+      setIssued({ email, password })
+    } catch (err: unknown) {
+      setError(err instanceof ApiError || err instanceof Error ? err.message : 'Failed')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   async function save() {
     setBusy(true)
     setError(null)
@@ -184,6 +201,7 @@ export function CorporateEditor() {
             }
           : {}),
       }
+      setIssued(null)
       const res = await upsertCorporate(payload)
       setUsers(res.users.map((x) => ({ role: x.role, name: x.name, email: x.email, phone: x.phone ?? '', linked: !!x.auth_user_id })))
       setSaved(
@@ -221,6 +239,14 @@ export function CorporateEditor() {
 
       <div className="grid items-start gap-5 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5">
+          {issued && (
+            <Notice tone="ok">
+              Password for <b className="tabular">{issued.email}</b>:&nbsp;
+              <b className="tabular select-all text-[15px]">{issued.password}</b>
+              <button type="button" className="ml-3 font-semibold text-pine" onClick={() => navigator.clipboard?.writeText(issued.password)}>copy</button>
+              <span className="mt-1 block text-[12px]">Shown once — share it over a safe channel. They sign in with it right away.</span>
+            </Notice>
+          )}
           <ACard title="Identity">
             <div className="grid gap-3 md:grid-cols-3">
               <AField label="Company name" className="md:col-span-2"><AInput value={name} onChange={(e) => setName(e.target.value)} /></AField>
@@ -307,8 +333,18 @@ export function CorporateEditor() {
                       {ROLES.map((r) => <option key={r.code} value={r.code}>{r.label}</option>)}
                     </ASelect>
                   </AField>
-                  <div className="pb-2.5">
+                  <div className="flex items-center gap-2 pb-2.5">
                     {u.linked ? <Chip tone="ok">can sign in</Chip> : <Chip tone="hot">account on save</Chip>}
+                    {u.linked && (
+                      <button
+                        type="button"
+                        className="text-[12px] font-semibold text-pine"
+                        disabled={busy}
+                        onClick={() => issuePassword(u.email)}
+                      >
+                        Issue password
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}

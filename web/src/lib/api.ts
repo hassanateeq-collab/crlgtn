@@ -207,6 +207,30 @@ export const upsertCorporate = (payload: CorporatePayload) =>
     payload as unknown as Record<string, unknown>,
   )
 
+// ---- Account management (ops admin) ----------------------------------------
+
+export interface OpsUser {
+  id: string
+  name: string
+  email: string
+  role: 'ops_agent' | 'ops_admin'
+  active: boolean
+  auth_user_id: string | null
+}
+
+export const upsertOpsUser = (input: { name: string; email: string; role: string }) =>
+  callFunction<{ ops_user: OpsUser }>('ef_manage_users', { action: 'upsert_ops', ...input })
+
+export const setUserPassword = (email: string, password: string) =>
+  callFunction<{ email: string; password_set: boolean }>('ef_manage_users', {
+    action: 'set_password',
+    email,
+    password,
+  })
+
+export const setOpsActive = (id: string, active: boolean) =>
+  callFunction<{ ops_user: OpsUser }>('ef_manage_users', { action: 'set_ops_active', id, active })
+
 // ---- M2: booking files ------------------------------------------------------
 
 export interface BookingFile {

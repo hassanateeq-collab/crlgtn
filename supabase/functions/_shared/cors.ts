@@ -11,14 +11,19 @@
 // the moment they're deployed. ALLOWED_ORIGINS overrides (it REPLACES this
 // list, so include every origin you want when setting it).
 const DEFAULT_ORIGINS = [
-  // Production hosts, one per audience (canonical domain: corlington.pk).
-  "https://book.corlington.pk", // corporate portal
-  "https://link.corlington.pk", // vendor magic-link pages
-  "https://atlas.corlington.pk", // ops console
-  // Cutover fallback — REMOVE once the .pk hosts are verified and serving.
+  // Public marketing site (its forms POST to ef_lead).
+  "https://corlington.com",
+  "https://www.corlington.com",
+  // Platform hosts, one per audience. Canonical domain: corlington.com —
+  // .pk and .com.pk are held defensively and redirect here.
+  "https://book.corlington.com", // corporate portal
+  "https://link.corlington.com", // vendor magic-link pages
+  "https://atlas.corlington.com", // ops console
+  // Cutover fallback — REMOVE once the custom domains are verified and serving.
   "https://crlgtn.vercel.app",
-  "http://localhost:5173",
+  "http://localhost:5173", // app dev server
   "http://127.0.0.1:5173",
+  "http://localhost:4173", // marketing site dev server
 ];
 
 function allowlist(): string[] {
