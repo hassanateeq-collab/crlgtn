@@ -231,6 +231,32 @@ export const setUserPassword = (email: string, password: string) =>
 export const setOpsActive = (id: string, active: boolean) =>
   callFunction<{ ops_user: OpsUser }>('ef_manage_users', { action: 'set_ops_active', id, active })
 
+// ---- Marketing leads (ops) --------------------------------------------------
+
+export type LeadKind = 'corporate' | 'vendor'
+export type LeadStatus = 'new' | 'contacted' | 'qualified' | 'converted' | 'rejected'
+
+export interface Lead {
+  id: string
+  kind: LeadKind
+  status: LeadStatus
+  org: string
+  person: string
+  email: string
+  phone: string
+  city: string | null
+  volume: string | null
+  notes: string | null
+  source_page: string | null
+  ops_note: string | null
+  handled_by: string | null
+  handled_at: string | null
+  created_at: string
+}
+
+export const updateLead = (input: { id: string; status?: LeadStatus; ops_note?: string }) =>
+  callFunction<Lead>('ef_update_lead', input as unknown as Record<string, unknown>)
+
 // ---- M2: booking files ------------------------------------------------------
 
 export interface BookingFile {

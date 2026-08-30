@@ -12,6 +12,7 @@ import { PropertyPage } from '@/routes/ops/PropertyPage'
 import { Corporates } from '@/routes/ops/Corporates'
 import { CorporateEditor } from '@/routes/ops/CorporateEditor'
 import { Money } from '@/routes/ops/Money'
+import { Leads } from '@/routes/ops/Leads'
 import { Team } from '@/routes/ops/Team'
 import { Invoices } from '@/routes/portal/Invoices'
 import { PortalLayout } from '@/routes/portal/PortalLayout'
@@ -80,6 +81,7 @@ function Gate() {
           <Route path="corporates/new" element={<CorporateEditor />} />
           <Route path="corporates/:id" element={<CorporateEditor />} />
           <Route path="money" element={<Money />} />
+          <Route path="leads" element={<Leads />} />
           <Route path="team" element={<Team />} />
           <Route path="diagnostics" element={<Foundations />} />
         </Route>
