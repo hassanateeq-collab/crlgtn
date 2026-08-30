@@ -101,10 +101,10 @@ export function VendorEditor() {
   const [phone, setPhone] = useState('')
   const [description, setDescription] = useState('')
   const [notes, setNotes] = useState('')
-  // front office
-  const [foName, setFoName] = useState('')
-  const [foWa, setFoWa] = useState('')
-  const [foEmail, setFoEmail] = useState('')
+  // front office — multiple contacts; the magic link goes to all of them
+  const [contacts, setContacts] = useState<{ name: string; whatsapp: string; email: string }[]>([
+    { name: '', whatsapp: '', email: '' },
+  ])
   // agreement & credit
   const [creditTier, setCreditTier] = useState<'HT1' | 'HT2' | 'HT3' | 'HT4'>('HT4')
   const [commission, setCommission] = useState('')
@@ -153,7 +153,7 @@ export function VendorEditor() {
         supabase.from('vendor_amenities').select('verified_at, amenities(code)').eq('vendor_id', id),
         supabase.from('inclusions').select('label').eq('vendor_id', id).order('label'),
         supabase.from('media').select('storage_path, caption, sort, listing_id, shot_type, listings(name)').eq('vendor_id', id).order('sort'),
-        supabase.from('vendor_users').select('name, whatsapp, email').eq('vendor_id', id).order('created_at').limit(1).maybeSingle(),
+        supabase.from('vendor_users').select('name, whatsapp, email').eq('vendor_id', id).order('created_at'),
         supabase.from('agreements').select('signed_digital_at, signed_physical_at, created_at').eq('party_type', 'vendor').eq('party_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ])
       if (v.error) {
@@ -182,11 +182,12 @@ export function VendorEditor() {
       setCheckoutTime(d.checkout_time ?? '')
       setCancellationPolicy(d.cancellation_policy ?? '')
       setNoshowPolicy(d.noshow_policy ?? '')
-      if (fo.data) {
-        setFoName(fo.data.name ?? '')
-        setFoWa(fo.data.whatsapp ?? '')
-        setFoEmail(fo.data.email ?? '')
-      }
+      const foRows = (fo.data ?? []).map((x) => ({
+        name: x.name ?? '',
+        whatsapp: x.whatsapp ?? '',
+        email: x.email ?? '',
+      }))
+      if (foRows.length) setContacts(foRows)
       if (ag.data) {
         const when = ag.data.signed_digital_at ?? ag.data.signed_physical_at
         setAgreementOnFile({ signed: !!when, when })
@@ -255,7 +256,7 @@ export function VendorEditor() {
     return {
       vendor_type: vendorType,
       profile_complete: !!(description.trim() && address.trim() && corridorId),
-      has_front_office: !!(foWa.trim() || foEmail.trim()),
+      has_front_office: contacts.some((c) => c.whatsapp.trim() || c.email.trim()),
       agreement_signed: !!agreementOnFile?.signed || (recordAgreement && (signedDigital || signedPhysical)),
       listings_active: active.length,
       listings_priced: priced.length,
@@ -264,7 +265,7 @@ export function VendorEditor() {
       photos_total: photos.length,
       listings_with_gallery: withGallery.length,
     }
-  }, [listings, photos, vendorType, description, address, corridorId, foWa, foEmail, agreementOnFile, recordAgreement, signedDigital, signedPhysical, verified])
+  }, [listings, photos, vendorType, description, address, corridorId, contacts, agreementOnFile, recordAgreement, signedDigital, signedPhysical, verified])
   const steps = vendorSteps(facts)
   const ready = allDone(steps)
 
@@ -383,7 +384,9 @@ export function VendorEditor() {
           is_cover: p.storage_path === coverPath,
           shot_type: p.shot_type,
         })),
-        front_office: { name: foName.trim() || 'Front office', whatsapp: foWa.trim() || null, email: foEmail.trim() || null },
+        front_office: contacts
+          .filter((c) => c.whatsapp.trim() || c.email.trim())
+          .map((c) => ({ name: c.name.trim() || 'Front office', whatsapp: c.whatsapp.trim() || null, email: c.email.trim() || null })),
         ...(recordAgreement
           ? {
               agreement: {
@@ -499,11 +502,36 @@ export function VendorEditor() {
           </ACard>
 
           {/* ---------------- front office ---------------- */}
-          <ACard title="Front office" sub="Where the magic links go. No password on their side — the link is the key.">
-            <div className="grid gap-3 md:grid-cols-3">
-              <AField label="Desk / contact name"><AInput value={foName} onChange={(e) => setFoName(e.target.value)} placeholder="Reservations desk" /></AField>
-              <AField label="WhatsApp"><AInput value={foWa} onChange={(e) => setFoWa(e.target.value)} placeholder="+92 3xx xxx xxxx" /></AField>
-              <AField label="Email"><AInput value={foEmail} onChange={(e) => setFoEmail(e.target.value)} placeholder="reservations@…" /></AField>
+          <ACard
+            title="Front office"
+            sub="Every contact here gets the request link, by WhatsApp and email — whoever answers first acts for the vendor."
+            right={contacts.length < 6 ? (
+              <ABtn variant="ghost" className="py-1.5" onClick={() => setContacts((cs) => [...cs, { name: '', whatsapp: '', email: '' }])}>
+                + Add contact
+              </ABtn>
+            ) : undefined}
+          >
+            <div className="space-y-2">
+              {contacts.map((c, i) => (
+                <div key={i} className="grid items-end gap-2 md:grid-cols-[1fr_1fr_1fr_2rem]">
+                  <AField label={i === 0 ? 'Contact / desk name' : ''}>
+                    <AInput value={c.name} onChange={(e) => setContacts((cs) => cs.map((x, j) => (j === i ? { ...x, name: e.target.value } : x)))} placeholder="Reservations desk" />
+                  </AField>
+                  <AField label={i === 0 ? 'WhatsApp' : ''}>
+                    <AInput value={c.whatsapp} onChange={(e) => setContacts((cs) => cs.map((x, j) => (j === i ? { ...x, whatsapp: e.target.value } : x)))} placeholder="+92 3xx xxx xxxx" />
+                  </AField>
+                  <AField label={i === 0 ? 'Email' : ''}>
+                    <AInput value={c.email} onChange={(e) => setContacts((cs) => cs.map((x, j) => (j === i ? { ...x, email: e.target.value } : x)))} placeholder="reservations@…" />
+                  </AField>
+                  {contacts.length > 1 ? (
+                    <button type="button" aria-label="Remove contact" className="pb-3 text-ink/35 hover:text-ink" onClick={() => setContacts((cs) => cs.filter((_, j) => j !== i))}>
+                      ✕
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+                </div>
+              ))}
             </div>
           </ACard>
 

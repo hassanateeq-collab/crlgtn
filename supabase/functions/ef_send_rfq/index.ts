@@ -155,15 +155,16 @@ serveEdge("ef_send_rfq", async ({ admin, actor, body, functionName }: EdgeContex
     .eq("status", "draft"); // no double-send even in a race
   if (fileErr) throw unprocessable(`file transition failed: ${fileErr.message}`);
 
-  // ---- notify: one email + one queued WhatsApp per vendor ------------------
+  // ---- notify: every front-office contact gets the SAME link ---------------
+  // Owner decision 2026-08-30: multiple emails/WhatsApp numbers per vendor;
+  // whoever responds first acts for the vendor (the offer status machine
+  // guarantees single action; later opens see the current state).
   for (const link of links) {
     const offerId = inserted?.find((o) => o.vendor_id === link.vendorId)?.id;
-    const { data: contact } = await admin
+    const { data: contacts } = await admin
       .from("vendor_users")
       .select("id, name, email, whatsapp")
-      .eq("vendor_id", link.vendorId)
-      .limit(1)
-      .maybeSingle();
+      .eq("vendor_id", link.vendorId);
 
     const stay = `${file.check_in} → ${file.check_out}`;
     const roomsTotal = (file.rooms as { guests: number }[]).length;
@@ -172,29 +173,36 @@ serveEdge("ef_send_rfq", async ({ admin, actor, body, functionName }: EdgeContex
       <p>${stay} · ${roomsTotal} room(s)</p>
       <p>Respond within <strong>${windowMinutes} minutes</strong>:</p>
       <p><a href="${link.url}">${link.url}</a></p>
-      <p>Accepting places a binding hold until the corporate decides or the window ends.</p>`;
+      <p>Accepting places a binding hold until the corporate decides or the window ends.
+      This link was sent to your whole front-office team — the first answer counts.</p>`;
 
-    await notify(admin, {
-      event: "rfq_sent",
-      recipientType: "vendor_user",
-      recipientId: contact?.id ?? null,
-      channel: "email",
-      template: "vendor_rfq",
-      payload: { offer_id: offerId, ref: file.ref, magic_link: link.url, window_minutes: windowMinutes },
-      dedupeKey: `rfq_sent:${offerId}:email`,
-      toEmail: contact?.email ?? undefined,
-      subject: `Corlington request ${file.ref} — respond within ${windowMinutes} min`,
-      html,
-    });
-    await notify(admin, {
-      event: "rfq_sent",
-      recipientType: "vendor_user",
-      recipientId: contact?.id ?? null,
-      channel: "whatsapp",
-      template: "vendor_rfq_wa",
-      payload: { offer_id: offerId, ref: file.ref, magic_link: link.url, whatsapp: contact?.whatsapp },
-      dedupeKey: `rfq_sent:${offerId}:whatsapp`,
-    });
+    for (const contact of contacts ?? []) {
+      if (contact.email) {
+        await notify(admin, {
+          event: "rfq_sent",
+          recipientType: "vendor_user",
+          recipientId: contact.id,
+          channel: "email",
+          template: "vendor_rfq",
+          payload: { offer_id: offerId, ref: file.ref, magic_link: link.url, window_minutes: windowMinutes },
+          dedupeKey: `rfq_sent:${offerId}:email:${contact.id}`,
+          toEmail: contact.email,
+          subject: `Corlington request ${file.ref} — respond within ${windowMinutes} min`,
+          html,
+        });
+      }
+      if (contact.whatsapp) {
+        await notify(admin, {
+          event: "rfq_sent",
+          recipientType: "vendor_user",
+          recipientId: contact.id,
+          channel: "whatsapp",
+          template: "vendor_rfq_wa",
+          payload: { offer_id: offerId, ref: file.ref, magic_link: link.url, whatsapp: contact.whatsapp },
+          dedupeKey: `rfq_sent:${offerId}:whatsapp:${contact.id}`,
+        });
+      }
+    }
   }
 
   // ---- audit ---------------------------------------------------------------

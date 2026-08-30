@@ -151,7 +151,7 @@ export interface VendorPayload {
     is_cover?: boolean
     shot_type?: string | null
   }[]
-  front_office?: { name?: string; whatsapp?: string | null; email?: string | null }
+  front_office?: { name?: string; whatsapp?: string | null; email?: string | null }[]
   agreement?: {
     tier?: string | null
     version?: string

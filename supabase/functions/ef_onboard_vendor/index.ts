@@ -92,10 +92,17 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     | { label: string; price_pkr: number; unit?: string }[]
     | undefined;
   const agreementIn = body.agreement as Record<string, unknown> | undefined;
-  // Front office = the vendor_users row magic links are sent to.
-  const frontOfficeIn = body.front_office as
-    | { name?: string; whatsapp?: string | null; email?: string | null }
-    | undefined;
+  // Front office = the vendor_users rows magic links are sent to. Accepts a
+  // single object (legacy) or an array; every contact with an email or
+  // WhatsApp gets the link — first to respond acts for the vendor.
+  type FrontOffice = { name?: string; whatsapp?: string | null; email?: string | null };
+  const frontOfficeRaw = body.front_office as FrontOffice | FrontOffice[] | undefined;
+  const frontOfficeIn = frontOfficeRaw === undefined
+    ? undefined
+    : (Array.isArray(frontOfficeRaw) ? frontOfficeRaw : [frontOfficeRaw]);
+  if (frontOfficeIn && frontOfficeIn.length > 6) {
+    throw unprocessable("at most 6 front-office contacts");
+  }
   if (vendorIn.credit_tier !== undefined && !CREDIT_TIERS.includes(String(vendorIn.credit_tier))) {
     throw unprocessable("credit_tier must be HT1–HT4");
   }
@@ -275,21 +282,21 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     }
   }
 
-  // ---- write: front office contact (one vendor_users row, upserted) -------
+  // ---- write: front office contacts (replace-all when key present) --------
   if (frontOfficeIn) {
-    const fo = {
-      vendor_id: vendorId,
-      name: frontOfficeIn.name?.trim() || "Front office",
-      whatsapp: frontOfficeIn.whatsapp?.trim() || null,
-      email: frontOfficeIn.email?.trim().toLowerCase() || null,
-    };
-    const { data: existing } = await admin
-      .from("vendor_users").select("id").eq("vendor_id", vendorId)
-      .order("created_at").limit(1).maybeSingle();
-    const { error } = existing
-      ? await admin.from("vendor_users").update(fo).eq("id", existing.id)
-      : await admin.from("vendor_users").insert(fo);
-    if (error) throw unprocessable(`front office: ${error.message}`);
+    const rows = frontOfficeIn
+      .map((f) => ({
+        vendor_id: vendorId,
+        name: f.name?.trim() || "Front office",
+        whatsapp: f.whatsapp?.trim() || null,
+        email: f.email?.trim().toLowerCase() || null,
+      }))
+      .filter((f) => f.whatsapp || f.email);
+    await admin.from("vendor_users").delete().eq("vendor_id", vendorId);
+    if (rows.length) {
+      const { error } = await admin.from("vendor_users").insert(rows);
+      if (error) throw unprocessable(`front office: ${error.message}`);
+    }
   }
 
   // ---- write: agreement record (append, never overwrite) ------------------
@@ -347,7 +354,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
         .order("created_at", { ascending: false }),
       admin.from("media").select("*").eq("vendor_id", vendorId).order("sort"),
       admin.from("vendor_users").select("id, name, whatsapp, email").eq("vendor_id", vendorId)
-        .order("created_at").limit(1).maybeSingle(),
+        .order("created_at"),
     ]);
 
   return {
@@ -359,6 +366,6 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     addons: addons.data ?? [],
     agreements: agreements.data ?? [],
     media: media.data ?? [],
-    front_office: frontOffice.data ?? null,
+    front_office: frontOffice.data ?? [],
   };
 });

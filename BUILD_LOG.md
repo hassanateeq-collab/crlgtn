@@ -911,3 +911,16 @@ existing engine (no backend changes needed beyond migration 020, already in):
 - Applied: editor shows a free room-category name for hotels (fixed dropdown
   only for cars/apartments); tier labels nulled off all hotel listings in the
   DB; listings.category stays as the typed slot for car/apartment classes.
+
+## 2026-08-30 — Multiple front-office contacts per vendor (owner decision)
+
+- Owner: allow multiple email addresses AND multiple WhatsApp numbers per
+  vendor for magic-link delivery; whoever responds first acts for the vendor.
+- Implemented end to end: vendor editor's Front office section is now a list
+  (up to 6 contacts, each name + WhatsApp + email, add/remove);
+  ef_onboard_vendor accepts an array (legacy single object still works) with
+  replace-all semantics on vendor_users; **ef_send_rfq fans the SAME offer
+  link out to every contact** by email and WhatsApp (per-contact dedupe keys)
+  — the offer's guarded status machine already ensures only the first response
+  acts, and later opens simply see the current state. The vendor email now
+  says "sent to your whole front-office team — the first answer counts."

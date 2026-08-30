@@ -1,0 +1,9 @@
+<!doctype html><meta charset=utf-8><title>sheet2</title>
+<style>body{margin:0;background:#111;font:11px monospace;color:#ccc}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:4px}
+figure{margin:0;position:relative}img{width:100%;height:110px;object-fit:cover;display:block;background:#222}
+figcaption{position:absolute;left:0;bottom:0;right:0;background:rgba(0,0,0,.75);font-size:9px;padding:2px}</style>
+<div class=g id=g></div><script>
+const ids=["photo-1715251642839-4929ae23eaf3","photo-1653390209390-4ffc8ec5ccad","photo-1622988592277-e55ded3816e7","photo-1693956964978-eaa42f2e4074","photo-1661926424572-88f5798d44e3","photo-1598461814968-639d9321f483","photo-1715615990733-5e43c7dd5511","photo-1572099900306-07fff8fbc9cc","photo-1576354302919-96748cb8299e","photo-1648132274182-1bd07089d2c9","photo-1613618902610-95d88084ee11","photo-1580313356744-6ac9eeb8ae7e","photo-1711059985570-4c32ed12a12c","photo-1629140727571-9b5c6f6267b4","photo-1731336478850-6bce7235e320","photo-1647792855184-af42f1720b91","photo-1706708189713-c95f008d2438","photo-1644585661505-6e1eb347f4ba","photo-1706175087971-604f674a5c8e","photo-1710232239063-ee788b5752ac","photo-1712849836889-ad4f25c2f6c1","photo-1621523818501-d4028b49d5bb","photo-1666113969491-dad6eb0176a1","photo-1666114028792-1347f474ac87"];
+g.innerHTML=ids.map((id,i)=>`<figure><img src="https://images.unsplash.com/${id}?auto=format&fit=crop&w=300&h=225&q=60"><figcaption>${i}·${id.slice(6,16)}</figcaption></figure>`).join('');
+</script>
