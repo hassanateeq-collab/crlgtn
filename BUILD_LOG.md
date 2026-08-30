@@ -879,3 +879,24 @@ existing engine (no backend changes needed beyond migration 020, already in):
   new file (Korangi → DHA suggestion) → save → results (DHA honestly empty →
   Anywhere: 4 live hotels, ladder with trip totals) → property page.
   Transfers & Invoices pages remain from M6/M7, functional; Atlas polish next.
+
+## 2026-08-30 — Two properties sample-filled end to end (owner request)
+
+- Owner asked for 1–2 properties filled completely "with pictures and all" so
+  every field is visible and editable in the setup screen. Filled the two
+  strongest real properties via ef_onboard_vendor (audit-logged): full
+  profiles, front office, words-first rate cards for all three categories
+  (P1/P2/P3 each), verified amenities, courtesies, add-ons, policies — and the
+  complete two-level photo set: all 8 property shots + 6 labeled photos per
+  room type (required bed/bedroom/bathroom/shower all present). Real photos
+  re-filed into the correct slots; gaps filled with licensed stock captioned
+  "Sample — replace with the real shot"; sample-valued fields (stars, sizes,
+  total rooms, non-published rates) flagged in ops notes. Both plans now read
+  6/7 — only "Agreement signed" left deliberately, a real signature being the
+  owner's to record. Editors verified in production: every field populated
+  and editable.
+- Bug found & fixed on the way: ef_onboard_vendor still validated the OLD
+  shot-type list (migration 020 updated only the DB constraint) — the editor
+  would have rejected new labels too. Function v4 deployed with the mirrored
+  list. Lesson: enum-like lists duplicated in functions must ship in the same
+  change as their migration.
