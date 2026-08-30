@@ -900,3 +900,14 @@ existing engine (no backend changes needed beyond migration 020, already in):
   would have rejected new labels too. Function v4 deployed with the mirrored
   list. Lesson: enum-like lists duplicated in functions must ship in the same
   change as their migration.
+
+## 2026-08-30 — Room categories are the HOTEL'S OWN (owner decision)
+
+- Owner: "hotels list their own categories and labels — we can't compare each
+  category of each hotel." The A·Standard/B·Superior/C·Suite hotel tiering is
+  DROPPED: the room name IS the category, in the hotel's own words; no forced
+  cross-hotel equivalence. Fixed sets remain only where comparison is real:
+  vehicle classes (Sedan/SUV/Premium, locked) and apartment types (F-003).
+- Applied: editor shows a free room-category name for hotels (fixed dropdown
+  only for cars/apartments); tier labels nulled off all hotel listings in the
+  DB; listings.category stays as the typed slot for car/apartment classes.

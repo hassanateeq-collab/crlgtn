@@ -136,7 +136,7 @@ export function VendorEditor() {
 
   const isCar = vendorType === 'rent_a_car'
   const packages = PACKAGES[vendorType] ?? PACKAGES.hotel
-  const categories = CATEGORIES[vendorType] ?? CATEGORIES.hotel
+  const categories = CATEGORIES[vendorType] ?? []
 
   useEffect(() => {
     supabase.from('corridors').select('id, name').order('sort').then(({ data }) => setCorridors(data ?? []))
@@ -546,7 +546,7 @@ export function VendorEditor() {
           <ACard
             title={isCar ? 'Vehicle classes & rate card' : 'Room categories & rate card'}
             sub="These rates are the contracted ceiling — hotels can only counter below them, never above."
-            right={<ABtn variant="ghost" className="py-1.5" onClick={() => setListings((ls) => [...ls, emptyListing(categories[Math.min(ls.length, categories.length - 1)])])}>+ Add</ABtn>}
+            right={<ABtn variant="ghost" className="py-1.5" onClick={() => setListings((ls) => [...ls, emptyListing(categories[Math.min(ls.length, Math.max(0, categories.length - 1))] ?? '')])}>+ Add</ABtn>}
           >
             {listings.length === 0 && <p className="text-sm text-ink/50">No {isCar ? 'vehicle classes' : 'categories'} yet.</p>}
             <div className="space-y-4">
@@ -555,15 +555,20 @@ export function VendorEditor() {
                 return (
                   <div key={i} className={`rounded-2xl border-[1.5px] border-hairline p-4 ${l.active ? '' : 'opacity-60'}`}>
                     <div className="grid gap-3 md:grid-cols-4">
-                      <AField label="Category">
-                        <ASelect value={l.category} onChange={(e) => setListing(i, { category: e.target.value })}>
-                          <option value="">—</option>
-                          {categories.map((c) => (
-                            <option key={c} value={c}>{c}</option>
-                          ))}
-                        </ASelect>
-                      </AField>
-                      <AField label={isCar ? 'Model' : 'Room name'} className="md:col-span-2">
+                      {categories.length > 0 && (
+                        <AField label={isCar ? 'Class' : 'Type'}>
+                          <ASelect value={l.category} onChange={(e) => setListing(i, { category: e.target.value })}>
+                            <option value="">—</option>
+                            {categories.map((c) => (
+                              <option key={c} value={c}>{c}</option>
+                            ))}
+                          </ASelect>
+                        </AField>
+                      )}
+                      <AField
+                        label={isCar ? 'Model' : "Room category — the hotel's own name for it"}
+                        className={categories.length > 0 ? 'md:col-span-2' : 'md:col-span-3'}
+                      >
                         <AInput value={l.name} onChange={(e) => setListing(i, { name: e.target.value })} placeholder={isCar ? 'Toyota Corolla Altis 1.6' : 'Standard twin'} />
                       </AField>
                       <AField label={isCar ? 'Passengers (max)' : 'Max occupancy'}>

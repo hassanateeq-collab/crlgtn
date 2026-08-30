@@ -59,8 +59,10 @@ export const VENDOR_TYPES = [
   { code: 'property', label: 'Apartments / serviced' },
 ] as const
 
+// Owner decision 2026-08-30: hotels name their OWN room categories — the room
+// name is the label, no forced cross-hotel tiering. Fixed sets exist only
+// where comparison is real: vehicle classes and (later) apartment types.
 export const CATEGORIES: Record<string, string[]> = {
-  hotel: ['A · Standard', 'B · Superior', 'C · Suite'],
   rent_a_car: ['Sedan', 'SUV', 'Premium'],
   property: ['Studio', '1-Bed', '2-Bed', 'Serviced'],
 }
