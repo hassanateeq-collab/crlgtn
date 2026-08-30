@@ -1075,3 +1075,34 @@ stored a lead end to end (test row deleted). APP_BASE_URL untouched.
 that should work — platform and marketing site both. Adding a host means
 re-saving the whole list. The baked defaults in cors.ts are a fallback for when
 the secret is unset, never a supplement to it.
+
+## 2026-08-30 — DNSSEC enabled on corlington.com
+
+Turned on at GoDaddy (managed: they are both registrar and DNS host, so the DS
+is pushed to Verisign automatically). Used 1 of 5 free DNSSEC credits — no
+purchase. Key-change notifications go to the account email.
+
+Two KSKs, algorithm 13 (ECDSA P-256), digest type 2 (SHA-256). Before trusting
+it, the DS digests GoDaddy published were recomputed independently from the
+live DNSKEY records and matched exactly:
+
+  49340  803695b6d43bd417fa50ccd99d598a84c8ed7557923967166e892bc5a7bc9e4c
+  38857  727f96d92afbff3f6e32dd72a82e1487277d2ac25aa78ec44856c01fc8199680
+
+That check is the point: a DS published at the parent for a zone that is not
+correctly signed takes the domain DARK for every validating resolver. Matching
+the digests first is what made this safe rather than hopeful.
+
+Verified after the DS landed at the .com registry: status NOERROR on 1.1.1.1,
+8.8.8.8 and 9.9.9.9; Google returns the **ad** (authenticated data) flag, so
+validation is actually happening rather than merely configured; the site still
+serves 200. Cloudflare had not picked up the DS yet at time of writing —
+caching, it follows on its own.
+
+**Scope of what this protects, stated honestly**: corlington.com carries the
+marketing site and — more importantly — the Zoho MX, SPF and DMARC records.
+Signing it protects mail routing lookups against tampering. It does NOT protect
+the platform: booker OTP sign-in and vendor magic links are served from
+corlington.pk, and the .pk TLD has no DS at the root, so those flows can never
+be DNSSEC-protected while they live there. That gap is a consequence of the
+.pk-as-primary decision, not something a setting can fix.
