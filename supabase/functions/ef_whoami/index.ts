@@ -31,6 +31,16 @@ serveEdge("ef_whoami", async ({ admin, actor, functionName }: EdgeContext) => {
     corporate = data ?? null;
   }
 
+  let vendor: { id: string; name: string; status: string } | null = null;
+  if (actor.vendorId) {
+    const { data } = await admin
+      .from("vendors")
+      .select("id, name, status")
+      .eq("id", actor.vendorId)
+      .maybeSingle();
+    vendor = data ?? null;
+  }
+
   const { count: visibleLiveVendors } = await admin
     .from("vendors")
     .select("id", { count: "exact", head: true })
@@ -39,7 +49,11 @@ serveEdge("ef_whoami", async ({ admin, actor, functionName }: EdgeContext) => {
   // ---- audit --------------------------------------------------------------
   await writeAudit(admin, actor, {
     action: functionName,
-    entity: actor.actorType === "ops_user" ? "ops_users" : "corporate_users",
+    entity: actor.actorType === "ops_user"
+      ? "ops_users"
+      : actor.actorType === "vendor_user"
+        ? "vendor_users"
+        : "corporate_users",
     entityId: actor.recordId,
     diff: { identity_checked_at: new Date().toISOString() },
   });
@@ -54,6 +68,7 @@ serveEdge("ef_whoami", async ({ admin, actor, functionName }: EdgeContext) => {
     opsRole: actor.opsRole,
     corporateRole: actor.corporateRole,
     corporate,
+    vendor,
     liveVendorCount: visibleLiveVendors ?? 0,
     serverTimeUtc: new Date().toISOString(),
   };

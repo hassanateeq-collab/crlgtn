@@ -1,0 +1,6 @@
+-- Corlington · migration 025 · offer secret columns re-locked (applied via MCP 2026-08-30)
+-- A blanket GRANT SELECT after migration 010 silently re-exposed
+-- rfq_offers.token_hash and ops_evidence to authenticated (hash only — the
+-- magic-link token is not derivable — but still not client business).
+-- Rebuilt as: revoke table select; grant back every column except the two.
+-- Verified: select=token_hash now 42501 for both corporate and vendor logins.

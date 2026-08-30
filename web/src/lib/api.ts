@@ -97,6 +97,7 @@ export interface WhoAmI {
     | 'corp_finance'
     | null
   corporate: { id: string; name: string; status: string } | null
+  vendor: { id: string; name: string; status: string } | null
   liveVendorCount: number
   serverTimeUtc: string
 }
@@ -230,6 +231,13 @@ export const setUserPassword = (email: string, password: string) =>
 
 export const setOpsActive = (id: string, active: boolean) =>
   callFunction<{ ops_user: OpsUser }>('ef_manage_users', { action: 'set_ops_active', id, active })
+
+/** Create (or find) the auth account behind a vendor front-office contact. */
+export const provisionVendorLogin = (vendorUserId: string) =>
+  callFunction<{ vendor_user_id: string; email: string; provisioned: boolean }>('ef_manage_users', {
+    action: 'provision_vendor',
+    vendor_user_id: vendorUserId,
+  })
 
 // ---- Marketing leads (ops) --------------------------------------------------
 

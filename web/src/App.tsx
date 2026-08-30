@@ -20,12 +20,16 @@ import { Files } from '@/routes/portal/Files'
 import { FileEditor } from '@/routes/portal/FileEditor'
 import { Results } from '@/routes/portal/Results'
 import { Transfers } from '@/routes/portal/Transfers'
+import { VendorLayout } from '@/routes/vendor/VendorLayout'
+import { VendorOverview } from '@/routes/vendor/Overview'
+import { VendorMoney } from '@/routes/vendor/Money'
 
 function Home() {
   const { identity, loading } = useIdentity()
   if (loading) return null
-  // Ops land in the console; corporate users in the portal.
+  // Ops land in the console; hotels in their portal; corporate users in theirs.
   if (identity?.isOps) return <Navigate to="/ops" replace />
+  if (identity?.actorType === 'vendor_user') return <Navigate to="/vendor" replace />
   return <Navigate to="/files" replace />
 }
 
@@ -70,6 +74,10 @@ function Gate() {
           <Route path="/property/:id" element={<PropertyPage />} />
           <Route path="/invoices" element={<Invoices />} />
           <Route path="/transfers" element={<Transfers />} />
+        </Route>
+        <Route path="/vendor" element={<VendorLayout />}>
+          <Route index element={<VendorOverview />} />
+          <Route path="money" element={<VendorMoney />} />
         </Route>
         <Route path="/ops" element={<OpsLayout />}>
           <Route index element={<Dashboard />} />

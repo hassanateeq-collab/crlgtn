@@ -124,5 +124,38 @@ serveEdge("ef_manage_users", async ({ admin, actor, body, functionName }: EdgeCo
     return { ops_user: row };
   }
 
-  throw badRequest("action must be upsert_ops, set_password or set_ops_active");
+  // ---- provision_vendor: give a front-office contact a portal login --------
+  if (action === "provision_vendor") {
+    const id = String(body.vendor_user_id ?? "");
+    if (!id) throw badRequest("vendor_user_id is required");
+    const { data: row } = await admin
+      .from("vendor_users").select("id, vendor_id, name, email, auth_user_id").eq("id", id).maybeSingle();
+    if (!row) throw notFound("No such front-office contact");
+    if (!row.email) throw unprocessable("The contact needs an email address first — portal logins are email accounts.");
+
+    let authId = row.auth_user_id as string | null;
+    if (!authId) {
+      const email = String(row.email).toLowerCase();
+      const created = await admin.auth.admin.createUser({
+        email,
+        email_confirm: true,
+        user_metadata: { name: row.name, corlington: "vendor_user" },
+      });
+      authId = created.data?.user?.id ?? (await findAuthUserByEmail(admin, email))?.id ?? null;
+      if (!authId) throw unprocessable("could not create or find the sign-in account");
+      const { error: linkErr } = await admin
+        .from("vendor_users").update({ auth_user_id: authId }).eq("id", row.id);
+      if (linkErr) throw unprocessable(`link failed: ${linkErr.message}`);
+    }
+
+    await writeAudit(admin, actor, {
+      action: functionName,
+      entity: "vendor_users",
+      entityId: row.id,
+      diff: { after: { op: "provision_vendor", email: row.email, vendor_id: row.vendor_id } },
+    });
+    return { vendor_user_id: row.id, email: row.email, provisioned: true };
+  }
+
+  throw badRequest("action must be upsert_ops, set_password, set_ops_active or provision_vendor");
 });

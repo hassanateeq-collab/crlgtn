@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { onboardVendor, ApiError, type VendorPayload } from '@/lib/api'
+import { onboardVendor, provisionVendorLogin, setUserPassword, ApiError, type VendorPayload } from '@/lib/api'
+import { generatePassword } from '@/lib/passwords'
 import {
   CATEGORIES,
   CATEGORY_REQUIRED,
@@ -102,9 +103,11 @@ export function VendorEditor() {
   const [description, setDescription] = useState('')
   const [notes, setNotes] = useState('')
   // front office — multiple contacts; the magic link goes to all of them
-  const [contacts, setContacts] = useState<{ name: string; whatsapp: string; email: string }[]>([
-    { name: '', whatsapp: '', email: '' },
-  ])
+  const [contacts, setContacts] = useState<
+    { name: string; whatsapp: string; email: string; id?: string | null; auth_user_id?: string | null }[]
+  >([{ name: '', whatsapp: '', email: '' }])
+  const [portalBusy, setPortalBusy] = useState<string | null>(null)
+  const [portalIssued, setPortalIssued] = useState<{ email: string; password: string } | null>(null)
   // agreement & credit
   const [creditTier, setCreditTier] = useState<'HT1' | 'HT2' | 'HT3' | 'HT4'>('HT4')
   const [commission, setCommission] = useState('')
@@ -153,7 +156,7 @@ export function VendorEditor() {
         supabase.from('vendor_amenities').select('verified_at, amenities(code)').eq('vendor_id', id),
         supabase.from('inclusions').select('label').eq('vendor_id', id).order('label'),
         supabase.from('media').select('storage_path, caption, sort, listing_id, shot_type, listings(name)').eq('vendor_id', id).order('sort'),
-        supabase.from('vendor_users').select('name, whatsapp, email').eq('vendor_id', id).order('created_at'),
+        supabase.from('vendor_users').select('id, name, whatsapp, email, auth_user_id').eq('vendor_id', id).order('created_at'),
         supabase.from('agreements').select('signed_digital_at, signed_physical_at, created_at').eq('party_type', 'vendor').eq('party_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ])
       if (v.error) {
@@ -186,6 +189,8 @@ export function VendorEditor() {
         name: x.name ?? '',
         whatsapp: x.whatsapp ?? '',
         email: x.email ?? '',
+        id: x.id as string,
+        auth_user_id: (x.auth_user_id ?? null) as string | null,
       }))
       if (foRows.length) setContacts(foRows)
       if (ag.data) {
@@ -314,6 +319,30 @@ export function VendorEditor() {
     setListings((ls) => ls.map((l, j) => (j === i ? { ...l, rates: { ...l.rates, [code]: v } } : l)))
 
   // ---- save -----------------------------------------------------------------
+  /**
+   * Portal access for one saved front-office contact: ensure the auth account
+   * exists (ef_manage_users provision_vendor), then issue a fresh password —
+   * generated client-side, shown once, never stored.
+   */
+  async function grantPortal(contactId: string) {
+    const c = contacts.find((x) => x.id === contactId)
+    if (!c?.email.trim()) return
+    setPortalBusy(contactId)
+    setError(null)
+    try {
+      await provisionVendorLogin(contactId)
+      const password = generatePassword()
+      const email = c.email.trim().toLowerCase()
+      await setUserPassword(email, password)
+      setPortalIssued({ email, password })
+      setContacts((cs) => cs.map((x) => (x.id === contactId ? { ...x, auth_user_id: x.auth_user_id ?? 'linked' } : x)))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not set up portal access.')
+    } finally {
+      setPortalBusy(null)
+    }
+  }
+
   async function save() {
     setBusy(true)
     setError(null)
@@ -533,6 +562,55 @@ export function VendorEditor() {
                 </div>
               ))}
             </div>
+
+            {/* Portal access — standing logins on top of the magic links. */}
+            {contacts.some((c) => c.email.trim()) && (
+              <div className="mt-4 border-t border-hairline pt-4">
+                <div className="mb-2 text-[12.5px] font-semibold text-ink/60">
+                  Vendor portal access
+                  <span className="ml-2 font-normal text-ink/45">
+                    Standing sign-in at corlington.pk — upcoming arrivals, guest names, settlements. Requests are still answered from the link.
+                  </span>
+                </div>
+                {portalIssued && (
+                  <Notice tone="ok">
+                    Password for <b className="tabular">{portalIssued.email}</b>:&nbsp;
+                    <b className="tabular select-all text-[15px]">{portalIssued.password}</b>
+                    <button
+                      type="button"
+                      className="ml-2 rounded-md bg-sage px-2 py-0.5 text-[11.5px] font-semibold text-deep"
+                      onClick={() => navigator.clipboard?.writeText(portalIssued.password)}
+                    >
+                      copy
+                    </button>
+                    <span className="ml-2 text-ink/55">Shown once — pass it to the hotel securely.</span>
+                  </Notice>
+                )}
+                <ul className="mt-2 space-y-1.5">
+                  {contacts.filter((c) => c.email.trim()).map((c) => (
+                    <li key={c.email} className="flex flex-wrap items-center gap-2.5 text-[13px]">
+                      <span className="min-w-0 flex-1 truncate">
+                        <b>{c.name || 'Front office'}</b> · {c.email.trim().toLowerCase()}
+                      </span>
+                      {c.auth_user_id ? <Chip tone="ok">portal on</Chip> : <Chip tone="wait">no login yet</Chip>}
+                      {c.id ? (
+                        <ABtn
+                          type="button"
+                          variant="ghost"
+                          className="px-3 py-1.5 text-[12.5px]"
+                          disabled={portalBusy === c.id}
+                          onClick={() => grantPortal(c.id!)}
+                        >
+                          {portalBusy === c.id ? 'Working…' : c.auth_user_id ? 'Issue new password' : 'Give access + password'}
+                        </ABtn>
+                      ) : (
+                        <span className="text-[11.5px] text-ink/45">save the vendor first</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </ACard>
 
           {/* ---------------- agreement & credit ---------------- */}

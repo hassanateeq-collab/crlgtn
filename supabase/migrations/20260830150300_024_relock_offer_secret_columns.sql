@@ -1,0 +1,3 @@
+-- Corlington · migration 024 · (superseded by 025)
+-- Attempted column-level revoke of token_hash / ops_evidence; ineffective
+-- because a later blanket table grant covered all columns. Kept for history.

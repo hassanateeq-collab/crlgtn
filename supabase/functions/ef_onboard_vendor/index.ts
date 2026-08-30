@@ -284,13 +284,27 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
 
   // ---- write: front office contacts (replace-all when key present) --------
   if (frontOfficeIn) {
+    // Portal logins (migration 022) live on these rows as auth_user_id.
+    // Replace-all must not sever them: carry the link across by email.
+    const { data: existing } = await admin
+      .from("vendor_users")
+      .select("email, auth_user_id")
+      .eq("vendor_id", vendorId)
+      .not("auth_user_id", "is", null);
+    const linkByEmail = new Map(
+      (existing ?? []).map((e) => [String(e.email).toLowerCase(), e.auth_user_id as string]),
+    );
     const rows = frontOfficeIn
-      .map((f) => ({
-        vendor_id: vendorId,
-        name: f.name?.trim() || "Front office",
-        whatsapp: f.whatsapp?.trim() || null,
-        email: f.email?.trim().toLowerCase() || null,
-      }))
+      .map((f) => {
+        const email = f.email?.trim().toLowerCase() || null;
+        return {
+          vendor_id: vendorId,
+          name: f.name?.trim() || "Front office",
+          whatsapp: f.whatsapp?.trim() || null,
+          email,
+          auth_user_id: email ? linkByEmail.get(email) ?? null : null,
+        };
+      })
       .filter((f) => f.whatsapp || f.email);
     await admin.from("vendor_users").delete().eq("vendor_id", vendorId);
     if (rows.length) {
@@ -353,7 +367,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
         .eq("party_id", vendorId)
         .order("created_at", { ascending: false }),
       admin.from("media").select("*").eq("vendor_id", vendorId).order("sort"),
-      admin.from("vendor_users").select("id, name, whatsapp, email").eq("vendor_id", vendorId)
+      admin.from("vendor_users").select("id, name, whatsapp, email, auth_user_id").eq("vendor_id", vendorId)
         .order("created_at"),
     ]);
 

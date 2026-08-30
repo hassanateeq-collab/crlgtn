@@ -1106,3 +1106,54 @@ the platform: booker OTP sign-in and vendor magic links are served from
 corlington.pk, and the .pk TLD has no DS at the root, so those flows can never
 be DNSSEC-protected while they live there. That gap is a consequence of the
 .pk-as-primary decision, not something a setting can fix.
+
+## 2026-08-30 · Vendor portal live (migrations 022–025, functions v-bump, /vendor routes)
+
+Owner: "Portals should also have a portal where they can see their upcoming
+bookings and pending invoices and everything too." Built as a standing,
+**read-only** portal beside the magic links — hotels still answer requests
+from the link (first answer counts); the portal is the view around those
+moments.
+
+**Database (022)**: vendor_users.auth_user_id → auth.users;
+app.current_vendor_id(); vendor-scoped SELECT policies on vendors, listings,
+listing_rates (base rows), media, vendor_amenities, rfq_offers, bookings,
+booking_files (engaged only), travelers (booked only), vouchers, settlements,
+vendor_users (own team). **023**: the cross-table policies recursed
+(booking_files ⇄ rfq_offers policy evaluation); fixed with security-definer
+helpers app.vendor_engaged_file / vendor_booked_file / vendor_owns_booking —
+same pattern as app.current_corporate_id.
+
+**Security find (024/025)**: while probing, discovered a blanket GRANT after
+migration 010 had silently re-exposed rfq_offers.token_hash and ops_evidence
+to all signed-in clients (column REVOKE cannot subtract from a table-level
+grant — the 010 technique only holds until anyone grants table-wide again).
+Hash-only exposure, magic-link tokens not derivable, but re-locked properly:
+table grant dropped, every non-secret column granted back explicitly.
+Verified 42501 on token_hash for corporate and vendor logins; all app queries
+already used explicit column lists, so nothing broke.
+
+**Functions**: context.ts resolves a third actor — vendor_user (after ops
+claim and corporate lookup miss) with vendorId; ef_whoami returns vendor
+{id,name,status}; ef_manage_users gains provision_vendor (auth account for a
+front-office contact; set_password then works as for everyone else);
+ef_onboard_vendor's replace-all front-office write now carries auth_user_id
+across by email so saving a vendor never severs portal logins.
+
+**App**: /vendor (Overview: needs-answer countdowns, upcoming arrivals with
+guest names + voucher refs, recent stays) and /vendor/money (monthly
+settlements gross→commission→net with status, recent confirmed stays).
+Home routes vendor actors to /vendor; PortalLayout now admits only
+corporate_user (was: any non-ops). VendorEditor front-office rows show portal
+status and a "Give access + password" / "Issue new password" action (password
+generated client-side, shown once — same discipline as Team).
+
+**Anonymity (F-004) holds**: corporates has no vendor policy; a vendor login
+probing /rest/v1/corporates gets []. Files show ref, dates, rooms — never who
+is coming, only that someone is. Verified end-to-end against Faisal Court
+Executive (TEST): provision → password → sign-in → portal shows CF-2608-KHI
+arrival with guest name, Rs 25,200 settlement owed; /ops and /files bounce a
+vendor back to /vendor.
+
+Booking status enum note for future screens: confirmed / checked_in /
+checked_out / no_show / cancelled — there is no "completed".

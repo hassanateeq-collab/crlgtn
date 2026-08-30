@@ -1,0 +1,5 @@
+-- Corlington · migration 023 · vendor policy recursion fix (applied via MCP 2026-08-30)
+-- 022's cross-table vendor policies recursed (booking_files ⇄ rfq_offers).
+-- Added security-definer helpers app.vendor_engaged_file / vendor_booked_file /
+-- vendor_owns_booking and rebuilt the booking_files / travelers / vouchers
+-- vendor policies on top of them.

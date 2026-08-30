@@ -36,6 +36,8 @@ export interface Actor {
   corporateId: string | null;
   corporateRole: CorporateRole | null;
   opsRole: OpsRole | null;
+  /** Set when the actor is a vendor front-office login (vendor portal). */
+  vendorId: string | null;
 }
 
 export const isOps = (a: Actor) => a.actorType === "ops_user";
@@ -101,6 +103,7 @@ export async function resolveActor(
       corporateRole: null,
       // The registry row wins over the claim if they ever disagree.
       opsRole: ops.role as OpsRole,
+      vendorId: null,
     };
   }
 
@@ -110,20 +113,44 @@ export async function resolveActor(
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
-  if (!corp) {
-    // Authenticated with Supabase but not provisioned by ops. Corlington is
-    // closed-access; an unlinked auth user is not yet anybody.
-    throw unauthorized("No Corlington profile linked to this account");
+  if (corp) {
+    return {
+      authUserId: user.id,
+      actorType: "corporate_user",
+      recordId: corp.id,
+      name: corp.name,
+      email: corp.email,
+      corporateId: corp.corporate_id,
+      corporateRole: corp.role as CorporateRole,
+      opsRole: null,
+      vendorId: null,
+    };
   }
 
-  return {
-    authUserId: user.id,
-    actorType: "corporate_user",
-    recordId: corp.id,
-    name: corp.name,
-    email: corp.email,
-    corporateId: corp.corporate_id,
-    corporateRole: corp.role as CorporateRole,
-    opsRole: null,
-  };
+  // Vendor portal logins (migration 022): a front-office contact with an
+  // auth account. Read-only by design — every write function gates on ops or
+  // corporate roles, so a vendor actor can see (via RLS) but never mutate.
+  const { data: vend } = await admin
+    .from("vendor_users")
+    .select("id, vendor_id, name, email")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+
+  if (vend) {
+    return {
+      authUserId: user.id,
+      actorType: "vendor_user",
+      recordId: vend.id,
+      name: vend.name,
+      email: vend.email ?? "",
+      corporateId: null,
+      corporateRole: null,
+      opsRole: null,
+      vendorId: vend.vendor_id,
+    };
+  }
+
+  // Authenticated with Supabase but not provisioned by ops. Corlington is
+  // closed-access; an unlinked auth user is not yet anybody.
+  throw unauthorized("No Corlington profile linked to this account");
 }

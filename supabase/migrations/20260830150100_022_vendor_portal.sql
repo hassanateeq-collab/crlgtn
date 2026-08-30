@@ -1,0 +1,8 @@
+-- Corlington · migration 022 · Vendor portal (owner 2026-08-30)
+-- Applied to production via MCP same day; repo record.
+-- vendor_users.auth_user_id + app.current_vendor_id() + vendor-scoped
+-- SELECT policies on: vendor_users (self), vendors, listings, listing_rates
+-- (base rows only), media, vendor_amenities, rfq_offers, bookings,
+-- booking_files (engaged only), travelers (booked only), vouchers,
+-- settlements. Anonymity (F-004) holds: corporates has no vendor policy, so
+-- corporate_id remains an opaque uuid to vendors.
