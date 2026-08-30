@@ -1035,3 +1035,17 @@ adding the domain in Vercel — owner access required).
   owner to re-sign-in, then set (or Claude continues after sign-in).
 - Note: local routers may take hours to see the new .pk delegation; Google
   DNS (8.8.8.8) already resolves it worldwide.
+
+## 2026-08-30 — Launch chain complete on corlington.pk
+
+- Owner signed into Supabase; secrets set from the dashboard:
+  ALLOWED_ORIGINS (corlington.pk + www + com.pk + vercel.app + localhost) and
+  APP_BASE_URL=https://corlington.pk. Verified: CORS preflight returns
+  access-control-allow-origin for https://corlington.pk AND the vercel.app
+  origin — the platform is fully functional on the owner's own domain, and
+  vendor magic links will now be minted on corlington.pk.
+- corlington.com.pk A-record propagation still pending (zone new); redirect
+  will come alive on its own.
+- Still open from LAUNCH.md: Resend email secrets (OTP emails queue until
+  then — desk-issued passwords cover sign-ins meanwhile), auth email template
+  {{ .Token }} fix, WABA registration, test-data purge before real clients.
