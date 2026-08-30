@@ -1017,3 +1017,21 @@ visitor's mail client; they POST and land in the database.
 **Still open**: registered legal entity name for both footers · confirmation of
 the city list and per-city statuses · the DNS cutover itself (GoDaddy records +
 adding the domain in Vercel — owner access required).
+
+## 2026-08-30 — corlington.pk is live (domain decision + wiring)
+
+- Owner owns corlington.pk AND corlington.com.pk (both already delegated to
+  Vercel nameservers at PKNIC). Decision: **corlington.pk is the primary**;
+  www and corlington.com.pk 308-redirect to it.
+- Wired via the Vercel dashboard: all three attached to project crlgtn; zone
+  auto-enabled on Vercel DNS; certificate issued. Verified from outside:
+  https://corlington.pk serves the platform (200, title "Corlington");
+  https://www.corlington.pk → 308 → corlington.pk. corlington.com.pk zone
+  still propagating (added minutes later, same machinery).
+- Remaining for full function on the new origin: Supabase edge-function
+  secrets ALLOWED_ORIGINS (must include https://corlington.pk, www, com.pk,
+  https://crlgtn.vercel.app, http://localhost:5173 — it REPLACES the baked
+  list) and APP_BASE_URL=https://corlington.pk. Dashboard session expired;
+  owner to re-sign-in, then set (or Claude continues after sign-in).
+- Note: local routers may take hours to see the new .pk delegation; Google
+  DNS (8.8.8.8) already resolves it worldwide.
