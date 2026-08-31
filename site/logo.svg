@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 172" role="img" aria-label="Corlington">
+  <title>Corlington</title>
+  <!-- Recreated wordmark. textLength pins the width to 920 so the swash stays
+       aligned under the R even if a fallback face is substituted. Uses
+       currentColor throughout so one file serves light and dark contexts. -->
+  <text x="0" y="120" textLength="920" lengthAdjust="spacingAndGlyphs"
+        font-family="Jost, 'Exo 2', 'Schibsted Grotesk', system-ui, sans-serif"
+        font-style="italic" font-weight="500" font-size="132"
+        fill="currentColor">CORLINGTON</text>
+  <!-- Swash: leaves the R's leg, sweeps beneath LIN, tapers to a point. -->
+  <path fill="currentColor" d="M244 104 C266 148 324 166 448 138 C352 156 292 140 258 102 Z"/>
+</svg>

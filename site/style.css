@@ -16,9 +16,14 @@ img{max-width:100%;display:block}
 /* ── nav ─────────────────────────────────────────────────── */
 .nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.82);backdrop-filter:saturate(180%) blur(14px);border-bottom:1px solid var(--line-2)}
 .nav .wrap{display:flex;align-items:center;gap:30px;height:62px}
-.logo{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18.5px;letter-spacing:-.028em;text-decoration:none}
-.logo .mk{width:17px;height:17px;border-radius:5px;background:var(--accent);position:relative;flex:none}
-.logo .mk:after{content:"";position:absolute;inset:5px 5px auto auto;width:5px;height:5px;border-radius:50%;background:#fff}
+.logo{display:inline-flex;align-items:center;color:var(--ink);text-decoration:none;line-height:0}
+/* The wordmark is one inline SVG using currentColor, so nav (ink) and any dark
+   surface (white) are the same asset with no second file. */
+.logo svg{height:23px;width:auto;display:block;fill:currentColor;overflow:visible}
+/* The wordmark's face is set here, not on the element, so it is defined once. */
+.logo svg text{font-family:'Jost','Exo 2','Schibsted Grotesk',system-ui,sans-serif}
+.logo:hover{opacity:.72}
+footer .logo svg{height:26px}
 .nav .lnk{display:flex;gap:24px;margin-left:6px}
 .nav .lnk a{font-size:14px;font-weight:500;color:var(--muted);text-decoration:none}
 .nav .lnk a:hover{color:var(--ink)}
