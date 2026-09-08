@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { opsOverrideAccept, ApiError } from '@/lib/api'
+import { usePolling } from '@/lib/usePolling'
 import { countdown, datePkt, dateTimePkt, pkrPlain } from '@/lib/format'
 import { Button, Card, Input, Notice } from '@/components/ui'
 
@@ -28,6 +29,7 @@ export function Dashboard() {
   const [counts, setCounts] = useState<Counts | null>(null)
 
   useEffect(() => {
+    let cancelled = false
     async function load() {
       const count = (table: string, filter?: (q: any) => any) => {
         let q = supabase.from(table).select('id', { count: 'exact', head: true })
@@ -43,9 +45,13 @@ export function Dashboard() {
           count('listings', (q) => q.eq('active', true)),
           count('listing_rates', (q) => q.is('corporate_id', null).is('valid_to', null)),
         ])
+      if (cancelled) return
       setCounts({ vendorsLive, vendorsTotal, corporates, corporateUsers, roomsActive, ratesBase })
     }
     load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const stat = (label: string, value: number | string, to?: string) => (
@@ -85,7 +91,10 @@ export function Dashboard() {
 
 /**
  * Live request board (spec §9): every open RFQ across all hotels, decision
- * windows, SLA flags, and the evidence-gated override. Polls every 10s.
+ * windows, SLA flags, and the evidence-gated override. Polls every 10s through
+ * usePolling — one timer, no overlapping loads, stale responses dropped, paused
+ * while the tab is hidden. Files and offers arrive as one snapshot so the board
+ * never renders an offer list from a different moment than its file list.
  */
 interface LiveFile {
   id: string
@@ -105,8 +114,6 @@ interface LiveOffer {
 }
 
 function LiveBoard() {
-  const [files, setFiles] = useState<LiveFile[]>([])
-  const [offers, setOffers] = useState<LiveOffer[]>([])
   const [now, setNow] = useState(Date.now())
   const [overrideFor, setOverrideFor] = useState<string | null>(null)
   const [waId, setWaId] = useState('')
@@ -114,31 +121,40 @@ function LiveBoard() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function load() {
-    const [f, o] = await Promise.all([
-      supabase
-        .from('booking_files')
-        .select('id, ref, name, status, window_expires_at, corporates(name)')
-        .in('status', ['requested', 'responded'])
-        .order('window_expires_at'),
-      supabase
-        .from('rfq_offers')
-        .select('id, booking_file_id, priority, status, sla_flagged_at, vendors(name)')
-        .order('priority'),
-    ])
-    setFiles((f.data ?? []) as unknown as LiveFile[])
-    setOffers((o.data ?? []) as unknown as LiveOffer[])
-  }
+  const { data, error: loadError, refresh } = usePolling(
+    async () => {
+      const [f, o] = await Promise.all([
+        supabase
+          .from('booking_files')
+          .select('id, ref, name, status, window_expires_at, corporates(name)')
+          .in('status', ['requested', 'responded'])
+          .order('window_expires_at'),
+        supabase
+          .from('rfq_offers')
+          .select('id, booking_file_id, priority, status, sla_flagged_at, vendors(name)')
+          .order('priority'),
+      ])
+      if (f.error) throw new Error(f.error.message)
+      if (o.error) throw new Error(o.error.message)
+      return {
+        files: (f.data ?? []) as unknown as LiveFile[],
+        offers: (o.data ?? []) as unknown as LiveOffer[],
+      }
+    },
+    [],
+    { intervalMs: 10000 },
+  )
+  const files = data?.files ?? []
+  const offers = data?.offers ?? []
 
+  // The countdown clock only needs to run while something is counting down.
+  const anyOpen = files.length > 0
   useEffect(() => {
-    load()
-    const poll = setInterval(load, 10000)
+    if (!anyOpen) return
+    setNow(Date.now())
     const tick = setInterval(() => setNow(Date.now()), 1000)
-    return () => {
-      clearInterval(poll)
-      clearInterval(tick)
-    }
-  }, [])
+    return () => clearInterval(tick)
+  }, [anyOpen])
 
   async function doOverride(offerId: string) {
     setBusy(true)
@@ -148,7 +164,9 @@ function LiveBoard() {
       setOverrideFor(null)
       setWaId('')
       setEmailId('')
-      await load()
+      // Forced reload supersedes any poll already in flight, so an older
+      // response cannot re-render the offer as still "sent".
+      await refresh()
     } catch (err: unknown) {
       setError(err instanceof ApiError ? err.message : 'Override failed')
     } finally {
@@ -163,9 +181,13 @@ function LiveBoard() {
         WhatsApp and email message ids.
       </span>
     }>
-      {error && <div className="mb-3"><Notice tone="error">{error}</Notice></div>}
+      {(error ?? loadError) && (
+        <div className="mb-3"><Notice tone="error">{error ?? loadError}</Notice></div>
+      )}
       {files.length === 0 ? (
-        <p className="py-6 text-center text-sm text-ink/40">No open requests right now.</p>
+        <p className="py-6 text-center text-sm text-ink/40">
+          {data === null ? 'Loading…' : 'No open requests right now.'}
+        </p>
       ) : (
         <div className="space-y-3">
           {files.map((f) => {
@@ -263,6 +285,7 @@ function Reservations() {
   const [rows, setRows] = useState<ReservationRow[]>([])
 
   useEffect(() => {
+    let cancelled = false
     supabase
       .from('bookings')
       .select(
@@ -270,7 +293,12 @@ function Reservations() {
       )
       .order('created_at', { ascending: false })
       .limit(50)
-      .then(({ data }) => setRows((data ?? []) as unknown as ReservationRow[]))
+      .then(({ data }) => {
+        if (!cancelled) setRows((data ?? []) as unknown as ReservationRow[])
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   return (

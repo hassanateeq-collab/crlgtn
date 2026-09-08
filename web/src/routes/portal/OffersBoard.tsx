@@ -1,15 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { bookOffer, ApiError } from '@/lib/api'
 import { useIdentity } from '@/lib/identity'
+import { usePolling } from '@/lib/usePolling'
 import { pkrPlain, dateTimePkt } from '@/lib/format'
 import { PKG_LABEL } from '@/lib/onboarding'
 import { ABtn, Chip, Notice } from '@/components/atlas'
 
 /**
  * The offers board (Atlas): live offer statuses for a sent file, polling every
- * 5 seconds while the window is open. Booking goes through ef_book_offer —
- * one atomic transaction that books, releases siblings, and raises the invoice.
+ * 5 seconds while the window is open (via usePolling: one timer, no overlapping
+ * or out-of-order loads, paused while the tab is hidden). Booking goes through
+ * ef_book_offer — one atomic transaction that books, releases siblings, and
+ * raises the invoice — and is followed by a forced refresh that supersedes any
+ * poll already in flight, so the board can never flick back to "hold".
  *
  * NOTE the explicit column list: token_hash and ops_evidence are revoked at
  * the column level for corporate roles, so a `select *` here would 403.
@@ -64,7 +68,6 @@ export function OffersBoard({
   roomsCount: number
   onBooked?: () => void
 }) {
-  const [offers, setOffers] = useState<BoardOffer[]>([])
   const { identity } = useIdentity()
   const [bookingId, setBookingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -72,38 +75,52 @@ export function OffersBoard({
   const canBook =
     identity?.corporateRole === 'corp_booker' || identity?.corporateRole === 'corp_admin'
 
-  async function book(offerId: string) {
-    setBookingId(offerId)
-    setError(null)
-    try {
-      await bookOffer(offerId)
-      onBooked?.()
-    } catch (err: unknown) {
-      setError(err instanceof ApiError ? err.message : 'Booking failed')
-    } finally {
-      setBookingId(null)
-    }
-  }
-
-  useEffect(() => {
-    let active = true
-    async function load() {
-      const { data } = await supabase
+  const { data, refresh } = usePolling(
+    async () => {
+      const { data: rows, error: loadError } = await supabase
         .from('rfq_offers')
         .select(
           'id, package_code, rate_pkr, priority, status, sent_at, viewed_at, responded_at, counter, vendors(name), listings(name)',
         )
         .eq('booking_file_id', fileId)
         .order('priority')
-      if (active && data) setOffers(data as unknown as BoardOffer[])
+      if (loadError) throw new Error(loadError.message)
+      return (rows ?? []) as unknown as BoardOffer[]
+    },
+    [fileId],
+    { intervalMs: 5000, live: windowOpen },
+  )
+  const offers = data ?? []
+
+  // Tell the parent when a booking lands — from this screen, another tab, or
+  // the server's auto-accept — but only on the transition. Firing on the first
+  // paint of an already-booked file would make the parent reload for nothing.
+  const onBookedRef = useRef(onBooked)
+  onBookedRef.current = onBooked
+  const seen = useRef<{ fileId: string; booked: boolean } | null>(null)
+  useEffect(() => {
+    if (data === null) return
+    const booked = data.some((o) => o.status === 'booked')
+    const prev = seen.current
+    if (prev && prev.fileId === fileId && !prev.booked && booked) onBookedRef.current?.()
+    seen.current = { fileId, booked }
+  }, [data, fileId])
+
+  async function book(offerId: string) {
+    setBookingId(offerId)
+    setError(null)
+    try {
+      await bookOffer(offerId)
+      // Forced reload: invalidates any poll response still on the wire, so the
+      // booked state is what renders next. The transition effect above then
+      // notifies the parent exactly once.
+      await refresh()
+    } catch (err: unknown) {
+      setError(err instanceof ApiError ? err.message : 'Booking failed')
+    } finally {
+      setBookingId(null)
     }
-    load()
-    const timer = windowOpen ? setInterval(load, 5000) : null
-    return () => {
-      active = false
-      if (timer) clearInterval(timer)
-    }
-  }, [fileId, windowOpen])
+  }
 
   if (offers.length === 0) return null
 

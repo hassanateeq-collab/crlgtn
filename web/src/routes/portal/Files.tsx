@@ -51,6 +51,7 @@ export function Files() {
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
+    let cancelled = false
     async function load() {
       const [f, b, t] = await Promise.all([
         supabase.from('booking_files').select('*').order('updated_at', { ascending: false }),
@@ -60,12 +61,16 @@ export function Files() {
           .order('created_at', { ascending: false }),
         supabase.from('transfer_bookings').select('*').order('travel_at', { ascending: false }),
       ])
+      if (cancelled) return
       if (f.error) setError(f.error.message)
       setFiles((f.data ?? []) as BookingFile[])
       setBookings((b.data ?? []) as unknown as BookingRow[])
       setTransfers((t.data ?? []) as TransferRow[])
     }
     load()
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   // One ticking clock for every countdown on the page.

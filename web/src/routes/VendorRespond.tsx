@@ -20,21 +20,34 @@ export function VendorRespond() {
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
+    // Guarded so a stale 'view' response (previous token, or the page already
+    // gone) can never land on top of newer state.
+    let cancelled = false
     vendorRespond(token, 'view')
-      .then(setOffer)
-      .catch((e: unknown) =>
+      .then((o) => {
+        if (!cancelled) setOffer(o)
+      })
+      .catch((e: unknown) => {
+        if (cancelled) return
         setError(
           e instanceof ApiError
             ? { code: e.code, message: e.message }
             : { code: 'unknown', message: 'Something went wrong' },
-        ),
-      )
+        )
+      })
+    return () => {
+      cancelled = true
+    }
   }, [token])
 
+  // The clock only matters while the offer is still open for an answer.
+  const clockNeeded = offer !== null && ['sent', 'viewed'].includes(offer.status)
   useEffect(() => {
+    if (!clockNeeded) return
+    setNow(Date.now())
     const t = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(t)
-  }, [])
+  }, [clockNeeded])
 
   const remaining = useMemo(
     () => (offer ? new Date(offer.window_expires_at).getTime() - now : 0),

@@ -91,11 +91,17 @@ export function FileEditor() {
 
   useEffect(() => {
     if (isNew) return
+    // `cancelled` guards the whole load: a reload (refreshKey bump after a
+    // booking) or a route change can start a newer load while this one is on
+    // the wire, and the older response must never overwrite the newer state —
+    // that is how a just-booked file used to flick back to "requested".
+    let cancelled = false
     async function load() {
       const [f, t] = await Promise.all([
         supabase.from('booking_files').select('*').eq('id', id).single(),
         supabase.from('travelers').select('name, email, phone').eq('booking_file_id', id).order('name'),
       ])
+      if (cancelled) return
       if (f.error) {
         setError(f.error.message)
         return
@@ -118,12 +124,18 @@ export function FileEditor() {
           .select('grand_total_pkr, nights, vendors(name)')
           .eq('booking_file_id', id)
           .maybeSingle()
+        if (cancelled) return
         setBooking((bk as never) ?? null)
+      } else {
+        setBooking(null)
       }
       setTravelers((t.data ?? []).map((x) => ({ name: x.name, email: x.email ?? '', phone: x.phone ?? '' })))
       setLoaded(true)
     }
     load()
+    return () => {
+      cancelled = true
+    }
   }, [id, isNew, refreshKey])
 
   const nights = useMemo(() => {
