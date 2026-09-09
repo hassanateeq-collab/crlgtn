@@ -14,7 +14,18 @@ import { supabase } from './supabase'
  * `loading` matters: on a hard refresh the session is restored asynchronously
  * from storage, and rendering the sign-in screen during that gap would bounce a
  * signed-in booker out of a draft file.
+ *
+ * Auth events are noisy: supabase-js re-emits SIGNED_IN every time the tab
+ * regains focus, TOKEN_REFRESHED on every token rotation, and it relays both
+ * from other tabs. Each carries a fresh Session object for the same user, and
+ * publishing every one of them re-rendered the whole tree as if the user had
+ * just signed in — pages unmounted, drafts vanished, every list refetched. So
+ * the stored session only changes when something the app actually keys on
+ * changes: who is signed in, or whether anyone is.
  */
+
+const sameSession = (a: Session | null, b: Session | null) =>
+  a === b || (!!a && !!b && a.user.id === b.user.id && a.access_token === b.access_token)
 
 interface SessionState {
   session: Session | null
@@ -33,14 +44,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return
-      setSession(data.session)
+      setSession((cur) => (sameSession(cur, data.session) ? cur : data.session))
       setLoading(false)
     })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, next) => {
-      setSession(next)
+      setSession((cur) => (sameSession(cur, next) ? cur : next))
       setLoading(false)
     })
 
