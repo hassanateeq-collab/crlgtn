@@ -138,6 +138,8 @@ export function VendorEditor() {
   const [photos, setPhotos] = useState<PhotoDraft[]>([])
   const [uploading, setUploading] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  /** Room type whose inline "Delete Room" confirmation is open. */
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null)
   // policies
   const [checkinTime, setCheckinTime] = useState('')
   const [checkoutTime, setCheckoutTime] = useState('')
@@ -334,21 +336,18 @@ export function VendorEditor() {
   const setListing = (i: number, patch: Partial<ListingDraft>) =>
     setListings((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
   /**
-   * Delete one room type. A saved one is removed on the server right away
-   * (ef_delete_listing: hard delete, or archive when bookings still point at
-   * it); an unsaved draft simply leaves the form. Its photos go with it;
-   * nothing else on the vendor is touched.
+   * Delete one room type — offered only once it is Inactive, and only after
+   * the in-card confirmation. A saved one is removed on the server right away
+   * (ef_delete_listing, scoped to that listing id: hard delete, or archive
+   * when bookings still point at it); an unsaved draft simply leaves the form.
+   * Its photos go with it; the property and every other room type are untouched.
    */
   async function removeListing(key: string) {
     const l = listings.find((x) => x.key === key)
-    if (!l) return
+    if (!l || l.active) return
     const noun = isCar ? 'vehicle class' : 'room type'
     const label = l.name.trim() || `this ${noun}`
-    const n = photos.filter((p) => p.listing_key === key).length
-    const ok = window.confirm(
-      `Delete ${label}?${n ? ` Its ${n} photo${n === 1 ? '' : 's'} will be removed too.` : ''} Other ${noun}s and existing bookings are not affected.`,
-    )
-    if (!ok) return
+    setConfirmDeleteKey(null)
     setError(null)
     setSaved(null)
     if (l.id) {
@@ -770,16 +769,36 @@ export function VendorEditor() {
                         <span className="mt-1.5 block text-xs text-ink/50">{l.active ? 'shown to corporates' : 'hidden from corporates'}</span>
                       </div>
                     </div>
-                    <div className="mt-2 flex justify-end">
-                      <button
-                        type="button"
-                        className="text-[12px] font-semibold text-[#8f3b2e]/80 hover:text-[#8f3b2e] disabled:opacity-50"
-                        disabled={deleting === l.key || busy}
-                        onClick={() => removeListing(l.key)}
-                      >
-                        {deleting === l.key ? 'Deleting…' : `Delete this ${isCar ? 'vehicle class' : 'room type'}`}
-                      </button>
-                    </div>
+                    {/* Delete is offered only for an inactive room type: make it Inactive first, then decide to reactivate or delete. */}
+                    {!l.active && (
+                      <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+                        {confirmDeleteKey === l.key ? (
+                          <div role="alertdialog" aria-label="Confirm delete" className="flex flex-wrap items-center gap-2 rounded-xl bg-[#f7e9e6] px-3 py-2 text-[12.5px] text-[#8f3b2e]">
+                            <span>Are you sure you want to permanently delete this room type? This action cannot be undone.</span>
+                            <ABtn type="button" variant="ghost" className="px-3 py-1.5 text-[12.5px]" onClick={() => setConfirmDeleteKey(null)}>
+                              Cancel
+                            </ABtn>
+                            <button
+                              type="button"
+                              className="rounded-lg bg-[#8f3b2e] px-3 py-1.5 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                              disabled={deleting === l.key || busy}
+                              onClick={() => removeListing(l.key)}
+                            >
+                              {deleting === l.key ? 'Deleting…' : 'Delete Room'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-[12px] font-semibold text-[#8f3b2e]/80 hover:text-[#8f3b2e] disabled:opacity-50"
+                            disabled={deleting === l.key || busy}
+                            onClick={() => setConfirmDeleteKey(l.key)}
+                          >
+                            {isCar ? 'Delete vehicle class' : 'Delete Room'}
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {/* gallery */}
                     <div className="mt-3 border-t border-paper pt-3">
