@@ -2,10 +2,17 @@
  * ef_onboard_vendor (M1) — the ops onboarding flow in one call:
  * vendor → listings → base-catalog rates → amenity checklist → agreement record.
  *
- * Ops-only. Non-destructive by default: listings are upserted by name and
- * never deleted (deactivate with active:false); inclusions/addons use
- * replace-all semantics only when their key is present in the payload;
- * each agreement submission appends a new versioned row.
+ * Ops-only. Non-destructive by default: a listing that carries its `id` is
+ * updated in place (so renames never spawn a duplicate row); one without an id
+ * is upserted by name. Nothing here deletes a listing — that is
+ * ef_delete_listing. Inclusions/addons use replace-all semantics only when
+ * their key is present in the payload; each agreement submission appends a
+ * new versioned row.
+ *
+ * Media rows point at a listing by its stable identity: `listing_id` for a
+ * saved room type, or `listing_ref` — the client's draft key, echoed back on
+ * the matching listing's `ref` — for one created in this same save. The old
+ * `listing_name` field is still accepted for callers that predate this.
  *
  * Rates land in the base catalog (corporate_id NULL). Negotiated per-corporate
  * deals are Phase 2 tooling; nothing here writes them.
@@ -17,6 +24,10 @@ import { isOps } from "../_shared/context.ts";
 import { badRequest, forbidden, unprocessable } from "../_shared/errors.ts";
 
 interface ListingInput {
+  /** Existing listing → update in place. Absent → upsert by name. */
+  id?: string | null;
+  /** Client draft key; media rows created in the same save point at it. */
+  ref?: string | null;
   name: string;
   listing_type?: string;
   /** Sedan / SUV / Premium · Studio / 1-Bed / 2-Bed / Serviced · hotel A / B / C label. */
@@ -31,7 +42,10 @@ interface ListingInput {
 
 interface MediaInput {
   storage_path: string;
-  /** NULL/absent = property-level photo; set = photo of that room type. */
+  /** All three NULL/absent = property-level photo. Resolution order below. */
+  listing_id?: string | null;
+  listing_ref?: string | null;
+  /** Legacy: name-based link. Kept for older callers; ids win when present. */
   listing_name?: string | null;
   caption?: string | null;
   sort?: number;
@@ -51,6 +65,9 @@ const SHOT_TYPES = [
   "lobby", "standard_room", "wardrobe_desk", "category",
 ];
 const CREDIT_TIERS = ["HT1", "HT2", "HT3", "HT4"];
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const mediaTarget = (m: MediaInput) => m.listing_id || m.listing_ref || m.listing_name || null;
 
 serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: EdgeContext) => {
   // ---- validate -----------------------------------------------------------
@@ -63,8 +80,14 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
 
   const listingsIn = (body.listings ?? []) as ListingInput[];
   if (!Array.isArray(listingsIn)) throw badRequest("listings must be an array");
+  const listingIds = new Set<string>();
   for (const l of listingsIn) {
     if (!l.name?.trim()) throw badRequest("every listing needs a name");
+    if (l.id) {
+      if (!UUID_RE.test(l.id)) throw badRequest(`listing ${l.name}: id must be a uuid`);
+      if (listingIds.has(l.id)) throw badRequest(`listing ${l.name}: id sent twice`);
+      listingIds.add(l.id);
+    }
     for (const [code, rate] of Object.entries(l.rates ?? {})) {
       if (!/^[PV][1-9]$/.test(code)) throw unprocessable(`unknown package code ${code}`);
       if (!Number.isInteger(rate) || rate <= 0) {
@@ -77,11 +100,14 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   if (mediaIn) {
     for (const m of mediaIn) {
       if (!m.storage_path?.trim()) throw badRequest("every media row needs storage_path");
+      if (m.listing_id && !UUID_RE.test(m.listing_id)) {
+        throw badRequest(`media ${m.storage_path}: listing_id must be a uuid`);
+      }
       if (m.shot_type && !SHOT_TYPES.includes(m.shot_type)) {
         throw unprocessable(`unknown shot_type ${m.shot_type}`);
       }
     }
-    if (mediaIn.filter((m) => m.is_cover && !m.listing_name).length > 1) {
+    if (mediaIn.filter((m) => m.is_cover && !mediaTarget(m)).length > 1) {
       throw unprocessable("only one property-level photo can be the cover");
     }
   }
@@ -160,28 +186,68 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   }
 
   // ---- write: listings + base rates --------------------------------------
+  // Existing rows (payload carries `id`) are updated in place: renaming a room
+  // type must never leave a stale duplicate behind. Rows without an id are
+  // upserted by name; a same-named listing archived by ef_delete_listing is
+  // revived rather than duplicated (the name is unique per vendor).
+  if (listingIds.size) {
+    const { data: owned, error } = await admin
+      .from("listings")
+      .select("id")
+      .eq("vendor_id", vendorId)
+      .in("id", [...listingIds]);
+    if (error) throw unprocessable(`listings: ${error.message}`);
+    const ownedIds = new Set((owned ?? []).map((r) => r.id as string));
+    for (const l of listingsIn) {
+      if (l.id && !ownedIds.has(l.id)) {
+        throw unprocessable(`listing ${l.name} does not belong to this vendor (or no longer exists)`);
+      }
+    }
+  }
+
+  const listingIdByRef = new Map<string, string>();
   const listingIdByName = new Map<string, string>();
   for (const l of listingsIn) {
-    const { data: listing, error } = await admin
-      .from("listings")
-      .upsert(
-        {
-          vendor_id: vendorId,
-          name: l.name.trim(),
-          listing_type: l.listing_type ?? "room_type",
-          max_occupancy: l.max_occupancy ?? 2,
-          active: l.active ?? true,
-          description: l.description ?? null,
-          bed_config: l.bed_config ?? null,
-          size_sqm: l.size_sqm ?? null,
-          category: l.category?.trim() || null,
-        },
-        { onConflict: "vendor_id,name" },
-      )
-      .select("id")
-      .single();
-    if (error) throw unprocessable(`listing ${l.name}: ${error.message}`);
-    listingIdByName.set(l.name.trim(), listing.id);
+    const row = {
+      name: l.name.trim(),
+      listing_type: l.listing_type ?? "room_type",
+      max_occupancy: l.max_occupancy ?? 2,
+      // Exactly what the console sent: Active → true, Inactive → false.
+      active: l.active ?? true,
+      description: l.description ?? null,
+      bed_config: l.bed_config ?? null,
+      size_sqm: l.size_sqm ?? null,
+      category: l.category?.trim() || null,
+    };
+    let listingId: string;
+    if (l.id) {
+      const { data: listing, error } = await admin
+        .from("listings")
+        .update(row)
+        .eq("id", l.id)
+        .eq("vendor_id", vendorId)
+        .select("id")
+        .single();
+      if (error) {
+        throw unprocessable(
+          error.code === "23505"
+            ? `A room type named "${row.name}" already exists for this vendor — rename or delete the other one first.`
+            : `listing ${l.name}: ${error.message}`,
+        );
+      }
+      listingId = listing.id;
+    } else {
+      const { data: listing, error } = await admin
+        .from("listings")
+        .upsert({ ...row, vendor_id: vendorId, deleted_at: null }, { onConflict: "vendor_id,name" })
+        .select("id")
+        .single();
+      if (error) throw unprocessable(`listing ${l.name}: ${error.message}`);
+      listingId = listing.id;
+    }
+    listingIdByName.set(row.name, listingId);
+    listingIdByRef.set(listingId, listingId);
+    if (l.ref) listingIdByRef.set(String(l.ref), listingId);
 
     for (const [code, rate] of Object.entries(l.rates ?? {})) {
       // Replace the open-ended base rate for this listing+package. History via
@@ -189,14 +255,14 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
       const { error: delErr } = await admin
         .from("listing_rates")
         .delete()
-        .eq("listing_id", listing.id)
+        .eq("listing_id", listingId)
         .eq("package_code", code)
         .is("corporate_id", null)
         .is("valid_to", null);
       if (delErr) throw unprocessable(`rate ${l.name}/${code}: ${delErr.message}`);
 
       const { error: insErr } = await admin.from("listing_rates").insert({
-        listing_id: listing.id,
+        listing_id: listingId,
         package_code: code,
         corporate_id: null,
         rate_pkr: rate,
@@ -258,14 +324,33 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   // this call; here we only (re)register the rows that give them order,
   // captions and the cover flag. Orphaned storage objects are swept at M8.
   if (mediaIn) {
+    // Room-type photos resolve to a listing id — by id, by this save's draft
+    // ref, or (legacy) by name — against every live listing the vendor has,
+    // not only the ones in this payload.
+    const { data: liveListings, error: llErr } = await admin
+      .from("listings")
+      .select("id, name")
+      .eq("vendor_id", vendorId)
+      .is("deleted_at", null);
+    if (llErr) throw unprocessable(`listings: ${llErr.message}`);
+    for (const l of liveListings ?? []) {
+      listingIdByRef.set(l.id as string, l.id as string);
+      if (!listingIdByName.has(l.name as string)) listingIdByName.set(l.name as string, l.id as string);
+    }
+    const resolveListing = (m: MediaInput): string | null => {
+      if (m.listing_id) return listingIdByRef.get(m.listing_id) ?? null;
+      if (m.listing_ref) return listingIdByRef.get(String(m.listing_ref)) ?? null;
+      if (m.listing_name) return listingIdByName.get(m.listing_name.trim()) ?? null;
+      return null;
+    };
+
     await admin.from("media").delete().eq("vendor_id", vendorId);
     if (mediaIn.length) {
       const rows = mediaIn.map((m, i) => {
-        const listingId = m.listing_name
-          ? listingIdByName.get(m.listing_name.trim()) ?? null
-          : null;
-        if (m.listing_name && !listingId) {
-          throw unprocessable(`media references unknown listing ${m.listing_name}`);
+        const target = mediaTarget(m);
+        const listingId = target ? resolveListing(m) : null;
+        if (target && !listingId) {
+          throw unprocessable(`media references unknown listing ${target}`);
         }
         return {
           vendor_id: vendorId,
@@ -349,7 +434,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   const [vendor, listings, rates, vendorAmenities, inclusions, addons, agreements, media, frontOffice] =
     await Promise.all([
       admin.from("vendors").select("*").eq("id", vendorId).single(),
-      admin.from("listings").select("*").eq("vendor_id", vendorId).order("name"),
+      admin.from("listings").select("*").eq("vendor_id", vendorId).is("deleted_at", null).order("name"),
       admin
         .from("listing_rates")
         .select("*, listings!inner(vendor_id)")
@@ -374,6 +459,10 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   return {
     vendor: vendor.data,
     listings: listings.data ?? [],
+    /** Client draft ref → saved listing id, so the console can adopt ids without a reload. */
+    listing_ids_by_ref: Object.fromEntries(
+      listingsIn.filter((l) => l.ref).map((l) => [String(l.ref), listingIdByRef.get(String(l.ref))]),
+    ),
     rates: (rates.data ?? []).map(({ listings: _l, ...r }) => r),
     amenities: vendorAmenities.data ?? [],
     inclusions: inclusions.data ?? [],

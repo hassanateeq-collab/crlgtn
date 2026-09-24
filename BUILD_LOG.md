@@ -1157,3 +1157,35 @@ vendor back to /vendor.
 
 Booking status enum note for future screens: confirmed / checked_in /
 checked_out / no_show / cancelled — there is no "completed".
+
+## 2026-09-11 · Room types: status, visibility, delete, photo identity (migration 026, ef_onboard_vendor v9, ef_delete_listing v1)
+
+**Root cause** of "media references unknown listing King Room", stale/duplicate
+room cards and the status confusion: room types were identified by display
+name end to end. ef_onboard_vendor upserted listings on (vendor_id, name), so
+renaming "King Room" → "KING ROOM" created a second row and left the first one
+live and public; photos were linked by `listing_name`, so after a rename (or
+whitespace/case change) the save rejected the whole payload. The single
+Active/Inactive chip showed the *current* state and flipped it on click, which
+read as inverted.
+
+- **026** `listings.deleted_at` (+ partial index). Additive, applied via MCP.
+- **ef_onboard_vendor v9** — listings carry `id` (update in place) and `ref`
+  (client draft key); media carry `listing_id` / `listing_ref`; `listing_name`
+  still accepted as legacy. Duplicate-name rename returns a clear 422.
+  Response adds `listing_ids_by_ref`.
+- **ef_delete_listing v1** (new) — ops-only. Hard delete when nothing
+  references the row; archive (active=false, deleted_at) when rfq_offers /
+  counters / transfer_bookings do (both FKs are RESTRICT). Rates, allotments
+  and media rows of the room go either way; nothing else is touched.
+- **VendorEditor** — drafts keyed by listing id (uuid before first save);
+  photos keyed the same way; explicit Active / Inactive chips; per-room
+  Delete with confirm; ids adopted from the save response.
+- **PropertyPage** — archived rows never render; ops preview labels inactive
+  rooms "inactive — hidden from corporates".
+- Verified: tsc/oxlint/vite clean; `deno check` on both functions; a
+  Playwright run of the real editor + property page against a mocked backend
+  (25 checks: status chips, rename keeps photos, upload attaches to the right
+  room, payload identity, delete confirm/cancel, other rooms untouched,
+  corporate page hides inactive, ops preview shows it). Live click-through
+  against production still needs an ops login (owner).

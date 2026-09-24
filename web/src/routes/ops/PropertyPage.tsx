@@ -45,6 +45,7 @@ interface Room {
   size_sqm: number | null
   description: string | null
   active: boolean
+  deleted_at: string | null
 }
 
 interface MediaItem {
@@ -93,7 +94,8 @@ export function PropertyPage() {
           )
           .eq('id', id)
           .single(),
-        supabase.from('listings').select('*').eq('vendor_id', id).order('name'),
+        // Archived room types (deleted while bookings still referenced them) never render.
+        supabase.from('listings').select('*').eq('vendor_id', id).is('deleted_at', null).order('name'),
         supabase
           .from('listing_rates')
           .select('listing_id, package_code, rate_pkr, corporate_id')
@@ -113,7 +115,7 @@ export function PropertyPage() {
         return
       }
       setProperty(v.data as unknown as Property)
-      setRooms((ls.data ?? []) as Room[])
+      setRooms(((ls.data ?? []) as Room[]).filter((r) => !r.deleted_at))
 
       // Negotiated wins over base, exactly as on the results page.
       const myCorp = me.data?.corporate_id ?? null
@@ -352,6 +354,7 @@ export function PropertyPage() {
       <section>
         <h2 className="mb-3 text-[20px]">Room categories</h2>
         <div className="space-y-4">
+          {/* Corporates see active room types only (RLS enforces the same); ops preview shows inactive ones, marked. */}
           {rooms.filter((r) => r.active || inOps).map((room) => {
             const r = rates.get(room.id) ?? {}
             const photos = roomPhotos(room.id)
@@ -392,7 +395,7 @@ export function PropertyPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <h3 className="text-[17px]">{room.name}</h3>
                       {room.category && <Chip tone="sage">{room.category}</Chip>}
-                      {!room.active && inOps && <Chip tone="wait">inactive</Chip>}
+                      {!room.active && inOps && <Chip tone="wait">inactive — hidden from corporates</Chip>}
                     </div>
                     <p className="mt-0.5 text-[12.5px] text-ink/55">
                       {[room.bed_config, room.size_sqm ? `${room.size_sqm} m²` : null, `up to ${room.max_occupancy} guest${room.max_occupancy > 1 ? 's' : ''}`]

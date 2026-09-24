@@ -132,6 +132,10 @@ export interface VendorPayload {
     courtesies?: string[]
   }
   listings?: {
+    /** Saved listing id — update in place. Omit for a new room type. */
+    id?: string | null
+    /** Client draft key; media rows of a not-yet-saved room type point at it. */
+    ref?: string | null
     name: string
     category?: string | null
     max_occupancy?: number
@@ -146,7 +150,9 @@ export interface VendorPayload {
   addons?: { label: string; price_pkr: number; unit?: string }[]
   media?: {
     storage_path: string
-    listing_name?: string | null
+    /** Room-type photo: the saved listing id, or the draft ref for a room type created in this save. Both null = property-level. */
+    listing_id?: string | null
+    listing_ref?: string | null
     caption?: string | null
     sort?: number
     is_cover?: boolean
@@ -163,9 +169,22 @@ export interface VendorPayload {
 }
 
 export const onboardVendor = (payload: VendorPayload) =>
-  callFunction<{ vendor: { id: string } }>(
-    'ef_onboard_vendor',
-    payload as unknown as Record<string, unknown>,
+  callFunction<{
+    vendor: { id: string }
+    listings: { id: string; name: string; active: boolean }[]
+    /** Draft ref → saved listing id for the room types in this save. */
+    listing_ids_by_ref: Record<string, string | undefined>
+  }>('ef_onboard_vendor', payload as unknown as Record<string, unknown>)
+
+/**
+ * Remove one room type. The server hard-deletes when nothing references it
+ * and archives (inactive + deleted_at) when offers or bookings still do —
+ * either way it is gone from the editor, the property page and search.
+ */
+export const deleteListing = (listingId: string) =>
+  callFunction<{ listing_id: string; vendor_id: string; mode: 'deleted' | 'archived' }>(
+    'ef_delete_listing',
+    { listing_id: listingId },
   )
 
 export interface CorporatePayload {

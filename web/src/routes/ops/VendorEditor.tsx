@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
-import { onboardVendor, provisionVendorLogin, setUserPassword, ApiError, type VendorPayload } from '@/lib/api'
+import { deleteListing, onboardVendor, provisionVendorLogin, setUserPassword, ApiError, type VendorPayload } from '@/lib/api'
 import { generatePassword } from '@/lib/passwords'
 import {
   CATEGORIES,
@@ -41,9 +41,18 @@ import {
  * straight to the private `media` bucket and are registered on save with their
  * shot type. The plan panel mirrors the vendor_onboarding view on live form
  * state, so ops see exactly what's left before go-live.
+ *
+ * Room types are identified by a stable draft key — the saved listing id, or a
+ * client uuid until the first save — never by their display name. Renaming a
+ * room type therefore keeps its photos and updates the same row; deleting one
+ * goes through ef_delete_listing immediately, on its own.
  */
 
 interface ListingDraft {
+  /** Saved listing id; null until the first save. */
+  id: string | null
+  /** Stable identity for this draft: the listing id once saved, a client uuid before. */
+  key: string
   name: string
   category: string
   max_occupancy: number
@@ -56,13 +65,15 @@ interface ListingDraft {
 
 interface PhotoDraft {
   storage_path: string
-  listing_name: string // '' = property-level
+  listing_key: string // ListingDraft.key · '' = property-level
   shot_type: string // SHOT key, 'category', or 'other'
   caption: string
   previewUrl: string
 }
 
 const emptyListing = (cat: string): ListingDraft => ({
+  id: null,
+  key: crypto.randomUUID(),
   name: '',
   category: cat,
   max_occupancy: 2,
@@ -126,6 +137,9 @@ export function VendorEditor() {
   // photos
   const [photos, setPhotos] = useState<PhotoDraft[]>([])
   const [uploading, setUploading] = useState<string | null>(null)
+  const [deleting, setDeleting] = useState<string | null>(null)
+  /** Room type whose inline "Delete Room" confirmation is open. */
+  const [confirmDeleteKey, setConfirmDeleteKey] = useState<string | null>(null)
   // policies
   const [checkinTime, setCheckinTime] = useState('')
   const [checkoutTime, setCheckoutTime] = useState('')
@@ -151,11 +165,12 @@ export function VendorEditor() {
     async function load() {
       const [v, ls, rates, va, inc, med, fo, ag] = await Promise.all([
         supabase.from('vendors').select('*').eq('id', id).single(),
-        supabase.from('listings').select('*').eq('vendor_id', id).order('name'),
+        // Archived room types (deleted while bookings still referenced them) stay out of the editor.
+        supabase.from('listings').select('*').eq('vendor_id', id).is('deleted_at', null).order('name'),
         supabase.from('listing_rates').select('listing_id, package_code, rate_pkr').is('corporate_id', null).is('valid_to', null),
         supabase.from('vendor_amenities').select('verified_at, amenities(code)').eq('vendor_id', id),
         supabase.from('inclusions').select('label').eq('vendor_id', id).order('label'),
-        supabase.from('media').select('storage_path, caption, sort, listing_id, shot_type, listings(name)').eq('vendor_id', id).order('sort'),
+        supabase.from('media').select('storage_path, caption, sort, listing_id, shot_type').eq('vendor_id', id).order('sort'),
         supabase.from('vendor_users').select('id, name, whatsapp, email, auth_user_id').eq('vendor_id', id).order('created_at'),
         supabase.from('agreements').select('signed_digital_at, signed_physical_at, created_at').eq('party_type', 'vendor').eq('party_id', id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
       ])
@@ -206,6 +221,8 @@ export function VendorEditor() {
       }
       setListings(
         (ls.data ?? []).map((l) => ({
+          id: l.id as string,
+          key: l.id as string,
           name: l.name,
           category: l.category ?? '',
           max_occupancy: l.max_occupancy,
@@ -224,19 +241,22 @@ export function VendorEditor() {
       setVerified(vMap)
       setInclusions((inc.data ?? []).map((i) => i.label).join('\n'))
 
-      const medRows = (med.data ?? []) as unknown as {
+      // A photo must point at a room type that is still on the books; a row
+      // left behind by a removed one is dropped here and, on the next save,
+      // from the registry (media is replace-all).
+      const liveListingIds = new Set((ls.data ?? []).map((l) => l.id as string))
+      const medRows = ((med.data ?? []) as unknown as {
         storage_path: string
         caption: string | null
         shot_type: string | null
         listing_id: string | null
-        listings: { name: string } | null
-      }[]
+      }[]).filter((m) => !m.listing_id || liveListingIds.has(m.listing_id))
       if (medRows.length) {
         const { data: signed } = await supabase.storage.from('media').createSignedUrls(medRows.map((m) => m.storage_path), 3600)
         setPhotos(
           medRows.map((m, i) => ({
             storage_path: m.storage_path,
-            listing_name: m.listings?.name ?? '',
+            listing_key: m.listing_id ?? '',
             shot_type: m.shot_type ?? (m.listing_id ? 'category' : 'other'),
             caption: m.caption ?? '',
             previewUrl: signed?.[i]?.signedUrl ?? '',
@@ -252,9 +272,9 @@ export function VendorEditor() {
   const facts: VendorFacts = useMemo(() => {
     const active = listings.filter((l) => l.active && l.name.trim())
     const priced = active.filter((l) => Object.values(l.rates).some((r) => toInt(r)))
-    const propertyShots = new Set(photos.filter((p) => !p.listing_name && SHOT_KEYS.includes(p.shot_type)).map((p) => p.shot_type))
+    const propertyShots = new Set(photos.filter((p) => !p.listing_key && SHOT_KEYS.includes(p.shot_type)).map((p) => p.shot_type))
     const withGallery = active.filter((l) => {
-      const g = photos.filter((p) => p.listing_name === l.name)
+      const g = photos.filter((p) => p.listing_key === l.key)
       const types = new Set(g.map((p) => p.shot_type))
       return g.length >= GALLERY_MIN && CATEGORY_REQUIRED.every((k) => types.has(k))
     })
@@ -275,9 +295,9 @@ export function VendorEditor() {
   const ready = allDone(steps)
 
   // ---- photo uploads --------------------------------------------------------
-  async function upload(files: FileList | null, target: { shot_type: string; listing_name: string }) {
+  async function upload(files: FileList | null, target: { shot_type: string; listing_key: string }) {
     if (!files?.length) return
-    setUploading(target.listing_name || target.shot_type)
+    setUploading(target.listing_key || target.shot_type)
     setError(null)
     try {
       const added: PhotoDraft[] = []
@@ -287,12 +307,12 @@ export function VendorEditor() {
         const { error: upErr } = await supabase.storage.from('media').upload(path, file)
         if (upErr) throw new Error(`${file.name}: ${upErr.message}`)
         const { data: signed } = await supabase.storage.from('media').createSignedUrl(path, 3600)
-        added.push({ storage_path: path, listing_name: target.listing_name, shot_type: target.shot_type, caption: '', previewUrl: signed?.signedUrl ?? '' })
+        added.push({ storage_path: path, listing_key: target.listing_key, shot_type: target.shot_type, caption: '', previewUrl: signed?.signedUrl ?? '' })
       }
       setPhotos((p) => {
         // A shot-list slot holds exactly one photo: replace, don't stack.
-        const isSlot = SHOT_KEYS.includes(target.shot_type) && !target.listing_name
-        const kept = isSlot ? p.filter((x) => !(x.shot_type === target.shot_type && !x.listing_name)) : p
+        const isSlot = SHOT_KEYS.includes(target.shot_type) && !target.listing_key
+        const kept = isSlot ? p.filter((x) => !(x.shot_type === target.shot_type && !x.listing_key)) : p
         return [...kept, ...added]
       })
     } catch (err: unknown) {
@@ -308,13 +328,43 @@ export function VendorEditor() {
   const assignShot = (path: string, key: string) =>
     setPhotos((p) =>
       p
-        .filter((x) => !(x.shot_type === key && !x.listing_name && x.storage_path !== path))
-        .map((x) => (x.storage_path === path ? { ...x, shot_type: key, listing_name: '' } : x)),
+        .filter((x) => !(x.shot_type === key && !x.listing_key && x.storage_path !== path))
+        .map((x) => (x.storage_path === path ? { ...x, shot_type: key, listing_key: '' } : x)),
     )
 
   // ---- listings -------------------------------------------------------------
   const setListing = (i: number, patch: Partial<ListingDraft>) =>
     setListings((ls) => ls.map((l, j) => (j === i ? { ...l, ...patch } : l)))
+  /**
+   * Delete one room type — offered only once it is Inactive, and only after
+   * the in-card confirmation. A saved one is removed on the server right away
+   * (ef_delete_listing, scoped to that listing id: hard delete, or archive
+   * when bookings still point at it); an unsaved draft simply leaves the form.
+   * Its photos go with it; the property and every other room type are untouched.
+   */
+  async function removeListing(key: string) {
+    const l = listings.find((x) => x.key === key)
+    if (!l || l.active) return
+    const noun = isCar ? 'vehicle class' : 'room type'
+    const label = l.name.trim() || `this ${noun}`
+    setConfirmDeleteKey(null)
+    setError(null)
+    setSaved(null)
+    if (l.id) {
+      setDeleting(key)
+      try {
+        const res = await deleteListing(l.id)
+        setSaved(res.mode === 'archived' ? `${label} removed. Past bookings keep its name on file.` : `${label} deleted.`)
+      } catch (err) {
+        setError(err instanceof ApiError || err instanceof Error ? err.message : `Could not delete ${label}.`)
+        return
+      } finally {
+        setDeleting(null)
+      }
+    }
+    setListings((ls) => ls.filter((x) => x.key !== key))
+    setPhotos((ps) => ps.filter((p) => p.listing_key !== key))
+  }
   const setRate = (i: number, code: string, v: string) =>
     setListings((ls) => ls.map((l, j) => (j === i ? { ...l, rates: { ...l.rates, [code]: v } } : l)))
 
@@ -360,8 +410,15 @@ export function VendorEditor() {
         docUrl = path
       }
       // Cover = the front-door shot, else the first property photo.
-      const propertyPhotos = photos.filter((p) => !p.listing_name)
+      const propertyPhotos = photos.filter((p) => !p.listing_key)
       const coverPath = (propertyPhotos.find((p) => p.shot_type === 'front_door') ?? propertyPhotos[0])?.storage_path ?? null
+      // Room-type photos travel with the room's stable identity: the saved
+      // listing id, or the draft key for a room type created in this save.
+      const namedByKey = new Map(listings.filter((l) => l.name.trim()).map((l) => [l.key, l]))
+      const orphan = photos.find((p) => p.listing_key && !namedByKey.has(p.listing_key))
+      if (orphan) {
+        throw new Error(`Name the ${isCar ? 'vehicle class' : 'room type'} that has photos before saving, or remove its photos.`)
+      }
 
       const payload: VendorPayload = {
         vendor: {
@@ -390,6 +447,8 @@ export function VendorEditor() {
         listings: listings
           .filter((l) => l.name.trim())
           .map((l) => ({
+            id: l.id ?? undefined,
+            ref: l.key,
             name: l.name.trim(),
             category: l.category || null,
             max_occupancy: l.max_occupancy,
@@ -407,7 +466,8 @@ export function VendorEditor() {
         inclusions: inclusions.split('\n').map((s) => s.trim()).filter(Boolean),
         media: photos.map((p, i) => ({
           storage_path: p.storage_path,
-          listing_name: p.listing_name || null,
+          listing_id: (p.listing_key && namedByKey.get(p.listing_key)?.id) || null,
+          listing_ref: p.listing_key && !namedByKey.get(p.listing_key)?.id ? p.listing_key : null,
           caption: p.caption || null,
           sort: i,
           is_cover: p.storage_path === coverPath,
@@ -428,6 +488,10 @@ export function VendorEditor() {
           : {}),
       }
       const res = await onboardVendor(payload)
+      // Room types created in this save now have ids — adopt them so a later
+      // rename or delete addresses the saved row, not a name.
+      const idsByRef = res.listing_ids_by_ref ?? {}
+      setListings((ls) => ls.map((l) => (l.id ? l : { ...l, id: idsByRef[l.key] ?? null })))
       setSaved(status === 'live' ? 'Saved — this vendor is live.' : 'Saved.')
       if (recordAgreement) {
         setAgreementOnFile({ signed: signedDigital || signedPhysical, when: new Date().toISOString() })
@@ -443,8 +507,8 @@ export function VendorEditor() {
 
   if (!loaded && !error) return <p className="text-sm text-ink/50">Loading…</p>
 
-  const propertyPhoto = (key: string) => photos.find((p) => p.shot_type === key && !p.listing_name)
-  const otherPhotos = photos.filter((p) => !p.listing_name && !SHOT_KEYS.includes(p.shot_type))
+  const propertyPhoto = (key: string) => photos.find((p) => p.shot_type === key && !p.listing_key)
+  const otherPhotos = photos.filter((p) => !p.listing_key && !SHOT_KEYS.includes(p.shot_type))
 
   return (
     <div>
@@ -657,9 +721,9 @@ export function VendorEditor() {
             {listings.length === 0 && <p className="text-sm text-ink/50">No {isCar ? 'vehicle classes' : 'categories'} yet.</p>}
             <div className="space-y-4">
               {listings.map((l, i) => {
-                const gallery = photos.filter((p) => p.listing_name === l.name)
+                const gallery = photos.filter((p) => p.listing_key === l.key)
                 return (
-                  <div key={i} className={`rounded-2xl border-[1.5px] border-hairline p-4 ${l.active ? '' : 'opacity-60'}`}>
+                  <div key={l.key} className={`rounded-2xl border-[1.5px] border-hairline p-4 ${l.active ? '' : 'opacity-60'}`}>
                     <div className="grid gap-3 md:grid-cols-4">
                       {categories.length > 0 && (
                         <AField label={isCar ? 'Class' : 'Type'}>
@@ -695,10 +759,46 @@ export function VendorEditor() {
                           <AInput inputMode="numeric" value={l.rates[p.code] ?? ''} onChange={(e) => setRate(i, p.code, e.target.value)} placeholder="PKR" className="tabular text-right" />
                         </AField>
                       ))}
-                      <div className="flex items-end gap-2 pb-5">
-                        <ChipToggle on={l.active} onClick={() => setListing(i, { active: !l.active })}>{l.active ? 'Active' : 'Inactive'}</ChipToggle>
+                      {/* Not an AField: a <label> would make the first chip its control. Two explicit choices — the highlighted one is what gets saved. */}
+                      <div className="block">
+                        <span className="mb-1.5 block text-[12.5px] font-semibold text-ink/60">Status</span>
+                        <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label={`${l.name.trim() || (isCar ? 'Vehicle class' : 'Room type')} status`}>
+                          <ChipToggle on={l.active} onClick={() => setListing(i, { active: true })}>Active</ChipToggle>
+                          <ChipToggle on={!l.active} onClick={() => setListing(i, { active: false })}>Inactive</ChipToggle>
+                        </div>
+                        <span className="mt-1.5 block text-xs text-ink/50">{l.active ? 'shown to corporates' : 'hidden from corporates'}</span>
                       </div>
                     </div>
+                    {/* Delete is offered only for an inactive room type: make it Inactive first, then decide to reactivate or delete. */}
+                    {!l.active && (
+                      <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+                        {confirmDeleteKey === l.key ? (
+                          <div role="alertdialog" aria-label="Confirm delete" className="flex flex-wrap items-center gap-2 rounded-xl bg-[#f7e9e6] px-3 py-2 text-[12.5px] text-[#8f3b2e]">
+                            <span>Are you sure you want to permanently delete this room type? This action cannot be undone.</span>
+                            <ABtn type="button" variant="ghost" className="px-3 py-1.5 text-[12.5px]" onClick={() => setConfirmDeleteKey(null)}>
+                              Cancel
+                            </ABtn>
+                            <button
+                              type="button"
+                              className="rounded-lg bg-[#8f3b2e] px-3 py-1.5 text-[12.5px] font-semibold text-white disabled:opacity-50"
+                              disabled={deleting === l.key || busy}
+                              onClick={() => removeListing(l.key)}
+                            >
+                              {deleting === l.key ? 'Deleting…' : 'Delete Room'}
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="text-[12px] font-semibold text-[#8f3b2e]/80 hover:text-[#8f3b2e] disabled:opacity-50"
+                            disabled={deleting === l.key || busy}
+                            onClick={() => setConfirmDeleteKey(l.key)}
+                          >
+                            {isCar ? 'Delete vehicle class' : 'Delete Room'}
+                          </button>
+                        )}
+                      </div>
+                    )}
 
                     {/* gallery */}
                     <div className="mt-3 border-t border-paper pt-3">
@@ -735,8 +835,8 @@ export function VendorEditor() {
                             label="+ Add photos"
                             hint={isCar ? 'real vehicles' : 'label each after upload'}
                             multiple
-                            busy={uploading === l.name}
-                            onFiles={(f) => upload(f, { shot_type: isCar ? 'category' : 'detail', listing_name: l.name })}
+                            busy={uploading === l.key}
+                            onFiles={(f) => upload(f, { shot_type: isCar ? 'category' : 'detail', listing_key: l.key })}
                           />
                         )}
                       </div>
@@ -759,13 +859,13 @@ export function VendorEditor() {
                       <div className="flex items-center justify-between px-2 py-1.5 text-[11.5px]">
                         <span className="font-semibold text-deep">✓ {s.label}</span>
                         <span className="flex gap-2">
-                          <label className="cursor-pointer text-pine">replace<input type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files, { shot_type: s.key, listing_name: '' })} /></label>
+                          <label className="cursor-pointer text-pine">replace<input type="file" accept="image/*" className="hidden" onChange={(e) => upload(e.target.files, { shot_type: s.key, listing_key: '' })} /></label>
                           <button type="button" className="text-ink/40" onClick={() => assignShot(p.storage_path, 'other')}>unassign</button>
                         </span>
                       </div>
                     </div>
                   ) : (
-                    <UploadBox key={s.key} label={s.label} hint={s.hint} busy={uploading === s.key} onFiles={(f) => upload(f, { shot_type: s.key, listing_name: '' })} tall />
+                    <UploadBox key={s.key} label={s.label} hint={s.hint} busy={uploading === s.key} onFiles={(f) => upload(f, { shot_type: s.key, listing_key: '' })} tall />
                   )
                 })}
               </div>
@@ -788,7 +888,7 @@ export function VendorEditor() {
                       </select>
                     </div>
                   ))}
-                  <UploadBox label="+ Add" hint="exterior, dining, meeting rooms" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_name: '' })} />
+                  <UploadBox label="+ Add" hint="exterior, dining, meeting rooms" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_key: '' })} />
                 </div>
               </div>
             </ACard>
@@ -796,7 +896,7 @@ export function VendorEditor() {
             <ACard title="Fleet photos" sub="Real vehicles, not brochure renders — at least three across the fleet.">
               <div className="flex flex-wrap gap-2">
                 {otherPhotos.map((p) => <Thumb key={p.storage_path} photo={p} onRemove={() => removePhoto(p.storage_path)} />)}
-                <UploadBox label="+ Add photos" hint="fleet, interiors, documents" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_name: '' })} />
+                <UploadBox label="+ Add photos" hint="fleet, interiors, documents" multiple busy={uploading === 'other'} onFiles={(f) => upload(f, { shot_type: 'other', listing_key: '' })} />
               </div>
             </ACard>
           )}
