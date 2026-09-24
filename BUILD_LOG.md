@@ -1216,3 +1216,27 @@ corporates only ever see status = live.
 "✕ Remove — not saved yet" directly (no Inactive gate, no server call) —
 the gate stays for saved rooms, where deletion is real. Fixes the
 accidentally-added-room annoyance during property creation.
+
+## 2026-09-24 · Duplicate-property bug fixed at the root (ef_onboard_vendor v10)
+
+Owner: "Every time I am saving changes, it is adding a new property."
+Diagnosis from the audit trail: COMFORT REZIDOR GUESTHOUSE existed four
+times, three of them shells (rooms, no photos, no contacts, zero audit rows).
+The create flow writes vendor → listings → media → contacts sequentially,
+not in one transaction — when a later step failed, the vendor row already
+existed, the console showed the error and stayed on the New page, and the
+retry inserted a fresh twin.
+
+**Fix — adopt-by-name on create**: a save without a vendor id whose name
+matches an existing property (case-insensitive, exact) now UPDATES that
+property instead of inserting. Duplicates become impossible by construction,
+and a failed first save converges on retry instead of multiplying. The
+response and audit carry `reused_existing`; the console tells the ops user
+"your changes were saved onto it, no duplicate created."
+
+Proved against production: a no-id save with the existing name returned
+reused_existing=true and the row count stayed at one. The three shell
+duplicates were removed; the surviving row's profile fields (nulled by the
+minimal-payload test — the function defaults omitted fields) were restored
+verbatim from its 19 Sep audit snapshot. Lesson recorded twice now: the
+audit log keeps paying for itself.

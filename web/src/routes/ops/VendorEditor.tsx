@@ -494,7 +494,13 @@ export function VendorEditor() {
       // rename or delete addresses the saved row, not a name.
       const idsByRef = res.listing_ids_by_ref ?? {}
       setListings((ls) => ls.map((l) => (l.id ? l : { ...l, id: idsByRef[l.key] ?? null })))
-      setSaved(status === 'live' ? 'Saved — this vendor is live.' : 'Saved.')
+      setSaved(
+        res.reused_existing
+          ? 'A property with this name already existed — your changes were saved onto it, no duplicate created.'
+          : status === 'live'
+            ? 'Saved — this vendor is live.'
+            : 'Saved.',
+      )
       if (recordAgreement) {
         setAgreementOnFile({ signed: signedDigital || signedPhysical, when: new Date().toISOString() })
         setRecordAgreement(false)

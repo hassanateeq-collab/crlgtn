@@ -171,6 +171,8 @@ export interface VendorPayload {
 export const onboardVendor = (payload: VendorPayload) =>
   callFunction<{
     vendor: { id: string }
+    /** A no-id save matched an existing property by name and updated it instead of creating a twin. */
+    reused_existing?: boolean
     listings: { id: string; name: string; active: boolean }[]
     /** Draft ref → saved listing id for the room types in this save. */
     listing_ids_by_ref: Record<string, string | undefined>

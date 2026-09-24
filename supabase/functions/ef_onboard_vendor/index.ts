@@ -175,6 +175,24 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
   };
 
   let vendorId = vendorIn.id as string | undefined;
+  // Duplicate guard (owner, 2026-09-24): a save without an id whose name
+  // matches an existing property ADOPTS that property and updates it, instead
+  // of inserting a twin. This also makes create retry-safe: the multi-step
+  // write is not one transaction, so a failed first save can leave the vendor
+  // row behind — the retry now converges onto it rather than duplicating.
+  let reusedExisting = false;
+  if (!vendorId) {
+    const { data: dup } = await admin
+      .from("vendors")
+      .select("id")
+      .ilike("name", vendorRow.name.replace(/([%_\\])/g, "\\$1"))
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (dup?.length) {
+      vendorId = dup[0].id as string;
+      reusedExisting = true;
+    }
+  }
   if (vendorId) {
     const { error } = await admin.from("vendors").update(vendorRow).eq("id", vendorId);
     if (error) throw unprocessable(`vendor update failed: ${error.message}`);
@@ -420,6 +438,7 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
     diff: {
       after: {
         vendor: vendorRow,
+        reused_existing: reusedExisting,
         listings: listingsIn.length,
         amenities: amenitiesIn.length,
         inclusions: inclusionsIn?.length ?? "untouched",
@@ -458,6 +477,8 @@ serveEdge("ef_onboard_vendor", async ({ admin, actor, body, functionName }: Edge
 
   return {
     vendor: vendor.data,
+    /** True when a no-id save matched an existing property by name and updated it. */
+    reused_existing: reusedExisting,
     listings: listings.data ?? [],
     /** Client draft ref → saved listing id, so the console can adopt ids without a reload. */
     listing_ids_by_ref: Object.fromEntries(
