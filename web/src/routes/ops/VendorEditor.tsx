@@ -344,7 +344,9 @@ export function VendorEditor() {
    */
   async function removeListing(key: string) {
     const l = listings.find((x) => x.key === key)
-    if (!l || l.active) return
+    // A saved room type must be made Inactive before deletion; an unsaved
+    // draft is just a form row and can go regardless.
+    if (!l || (l.active && l.id)) return
     const noun = isCar ? 'vehicle class' : 'room type'
     const label = l.name.trim() || `this ${noun}`
     setConfirmDeleteKey(null)
@@ -769,8 +771,20 @@ export function VendorEditor() {
                         <span className="mt-1.5 block text-xs text-ink/50">{l.active ? 'shown to corporates' : 'hidden from corporates'}</span>
                       </div>
                     </div>
-                    {/* Delete is offered only for an inactive room type: make it Inactive first, then decide to reactivate or delete. */}
-                    {!l.active && (
+                    {/* An unsaved draft can simply be removed — nothing exists on the server yet. */}
+                    {!l.id && (
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          className="text-[12px] font-semibold text-ink/45 hover:text-[#8f3b2e]"
+                          onClick={() => removeListing(l.key)}
+                        >
+                          ✕ Remove {isCar ? 'this vehicle class' : 'this room type'} — not saved yet
+                        </button>
+                      </div>
+                    )}
+                    {/* Delete is offered only for a SAVED, inactive room type: make it Inactive first, then decide to reactivate or delete. */}
+                    {!!l.id && !l.active && (
                       <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
                         {confirmDeleteKey === l.key ? (
                           <div role="alertdialog" aria-label="Confirm delete" className="flex flex-wrap items-center gap-2 rounded-xl bg-[#f7e9e6] px-3 py-2 text-[12.5px] text-[#8f3b2e]">
@@ -963,10 +977,16 @@ export function VendorEditor() {
               <ASelect value={status} onChange={(e) => setStatus(e.target.value)}>
                 <option value="prospect">Prospect</option>
                 <option value="onboarding">Onboarding</option>
-                <option value="live" disabled={!ready && !wasLive}>Live{ready || wasLive ? '' : ' — plan incomplete'}</option>
-                <option value="suspended">Suspended</option>
+                <option value="live" disabled={!ready && !wasLive}>Live — visible to corporates{ready || wasLive ? '' : ' (plan incomplete)'}</option>
+                <option value="suspended">Hidden — not shown to corporates</option>
               </ASelect>
             </AField>
+            {status === 'suspended' && (
+              <p className="mt-1.5 text-xs text-ink/50">
+                Hidden keeps everything — photos, rates, contacts, history — and the property can go
+                Live again anytime. Properties are never deleted, only hidden.
+              </p>
+            )}
             <div className="mt-4">
               <Plan steps={steps} />
             </div>

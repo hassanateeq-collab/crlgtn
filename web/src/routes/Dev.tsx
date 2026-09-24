@@ -20,7 +20,8 @@ const ACCOUNTS = [
   { email: 'nadia@northbridge.test', label: 'Corporate — admin', detail: 'Northbridge Textiles (TEST)', portal: 'Corporate portal' },
   { email: 'bilal@northbridge.test', label: 'Corporate — booker', detail: 'Northbridge Textiles (TEST)', portal: 'Corporate portal' },
   { email: 'zeeshan@meridian.test', label: 'Corporate — booker', detail: 'Meridian Logistics (TEST)', portal: 'Corporate portal' },
-  { email: 'res@faisalcourt.test', label: 'Vendor — front office', detail: 'Faisal Court Executive (TEST)', portal: 'Vendor portal' },
+  // The vendor sample login went with the sample properties purge (2026-09-24).
+  // Grant a real hotel access from its editor's Front office card instead.
 ]
 
 export function Dev() {

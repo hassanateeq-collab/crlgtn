@@ -1189,3 +1189,30 @@ read as inverted.
   room, payload identity, delete confirm/cancel, other rooms untouched,
   corporate page hides inactive, ops preview shows it). Live click-through
   against production still needs an ops login (owner).
+
+## 2026-09-24 · Sample supply purged; properties are hidden, never deleted
+
+**Purge (production, via MCP SQL, transactional)**: the six seeded sample
+properties — Harbourline Grand, Faisal Court Executive, Airside Transit
+Lodge, Saddar Heritage Inn, Karachi Executive Cars, Corniche Suites — deleted
+with all dependent data in FK order: payments → invoices → settlements →
+transfer_bookings → vouchers → bookings → rfq_offers → their contacts'
+notifications → orphaned non-draft booking_files (+travelers) → media /
+allotments / rates / listings / amenities / inclusions / addons / vendor
+agreements → vendor_users → vendors → the res@faisalcourt.test auth account.
+Corniche's five stock photos deleted from the media bucket. audit_log kept,
+as always. **Flakes Hotel (TEST) deliberately kept** — owner-created on
+1 Sep with real uploaded photos; not one of the original seeds. /dev page
+loses its vendor button until a real hotel contact is granted portal access.
+
+**Owner rule locked**: properties can be edited and hidden, never deleted.
+There is no vendor-delete path anywhere (none existed; none added). The
+editor's status now says it in plain words — "Live — visible to corporates" /
+"Hidden — not shown to corporates" — with a note that Hidden keeps
+everything and is reversible. RLS has enforced this from migration 002:
+corporates only ever see status = live.
+
+**Room types while creating**: an unsaved draft row now carries
+"✕ Remove — not saved yet" directly (no Inactive gate, no server call) —
+the gate stays for saved rooms, where deletion is real. Fixes the
+accidentally-added-room annoyance during property creation.
