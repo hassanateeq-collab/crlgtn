@@ -30,3 +30,4 @@ supabase/.env
 npm-debug.log*
 yarn-error.log*
 *.log
+.vercel
